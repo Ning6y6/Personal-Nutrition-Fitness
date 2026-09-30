@@ -1,0 +1,16 @@
+{
+  "id": "nutrition-score-uk-v1",
+  "version": 1,
+  "mandatoryFields": ["energy", "fat", "saturatedFat", "carbohydrate", "sugar", "protein", "salt"],
+  "optionalFields": ["fibre"],
+  "categoryWeights": {
+    "protein_main": {"protein_density": 0.35, "fibre": 0.05, "saturated_fat": 0.25, "sugar": 0.05, "salt": 0.15, "energy_density": 0.15},
+    "staple_grain": {"protein_density": 0.15, "fibre": 0.30, "saturated_fat": 0.10, "sugar": 0.10, "salt": 0.15, "energy_density": 0.20},
+    "mixed_meal": {"protein_density": 0.25, "fibre": 0.15, "saturated_fat": 0.20, "sugar": 0.10, "salt": 0.15, "energy_density": 0.15},
+    "snack_dessert": {"protein_density": 0.10, "fibre": 0.15, "saturated_fat": 0.25, "sugar": 0.25, "salt": 0.10, "energy_density": 0.15},
+    "beverage": {"protein_density": 0.10, "fibre": 0.05, "saturated_fat": 0.10, "sugar": 0.40, "salt": 0.10, "energy_density": 0.25},
+    "oil": {"saturated_fat_ratio": 0.80, "salt": 0.05, "energy_density": 0.15},
+    "sauce": {"protein_density": 0.05, "fibre": 0.05, "saturated_fat": 0.15, "sugar": 0.25, "salt": 0.40, "energy_density": 0.10}
+  }
+}
+

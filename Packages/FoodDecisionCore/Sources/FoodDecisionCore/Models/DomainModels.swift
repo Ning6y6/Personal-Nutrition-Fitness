@@ -169,20 +169,19 @@ public struct ReviewQueueItem: Codable, Identifiable, Sendable, Equatable {
     }
 }
 
-public enum MealCompleteness: String, Codable, Sendable {
-    case complete
-    case estimated
-    case incomplete
-}
-
 public struct MealLog: Codable, Identifiable, Sendable, Equatable {
     public var id: UUID
     public var eatenAt: Date
     public var title: String
     public var consumedWeightGrams: Double
     public var nutrients: NutrientValues
-    public var completeness: MealCompleteness
+    public var coverageStatus: MealCoverageStatus
+    public var estimateEvidenceGrade: EstimateEvidenceGrade
     public var healthKitSyncVersion: Int
+
+    public var isCompleteForDailyCoverage: Bool {
+        coverageStatus == .complete
+    }
 
     public init(
         id: UUID = UUID(),
@@ -190,7 +189,8 @@ public struct MealLog: Codable, Identifiable, Sendable, Equatable {
         title: String,
         consumedWeightGrams: Double,
         nutrients: NutrientValues,
-        completeness: MealCompleteness,
+        coverageStatus: MealCoverageStatus,
+        estimateEvidenceGrade: EstimateEvidenceGrade,
         healthKitSyncVersion: Int = 1
     ) {
         self.id = id
@@ -198,7 +198,8 @@ public struct MealLog: Codable, Identifiable, Sendable, Equatable {
         self.title = title
         self.consumedWeightGrams = consumedWeightGrams
         self.nutrients = nutrients
-        self.completeness = completeness
+        self.coverageStatus = coverageStatus
+        self.estimateEvidenceGrade = estimateEvidenceGrade
         self.healthKitSyncVersion = healthKitSyncVersion
     }
 }
@@ -274,4 +275,3 @@ public struct Assessment: Codable, Identifiable, Sendable, Equatable {
         self.ruleVersion = ruleVersion
     }
 }
-

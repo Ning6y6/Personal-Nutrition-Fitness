@@ -12,7 +12,12 @@ struct StoreProtectionProbe {
             try verify()
         } catch {
             // Do not let thrown record errors expose personal UUIDs/field contents in logs.
-            let message = "Protected-store verification failed (\(type(of: error))); private contents omitted.\n"
+            let diagnostic: String
+            if let error = error as? ProbeError { diagnostic = error.rawValue }
+            else if let error = error as? LocalStoreBootstrapError { diagnostic = String(describing: error) }
+            else if let error = error as? StoreSchemaCompatibilityError { diagnostic = String(describing: error) }
+            else { diagnostic = String(describing: type(of: error)) }
+            let message = "Protected-store verification failed (\(diagnostic)); private contents omitted.\n"
             FileHandle.standardError.write(Data(message.utf8))
             exit(1)
         }
@@ -54,6 +59,29 @@ struct StoreProtectionProbe {
         let restored = try LocalStoreBackupCodec.decode(restoredData)
         guard original.records == restored.records else { throw ProbeError.recordMismatch }
         print("Protected sample export/restore/reopen: identical records and relationships")
+        try autoreleasepool {
+            let bootstrap = LocalStoreBootstrap(
+                defaultStoreURL: oldURL, restoreDirectory: output,
+                selectionURL: output.appending(path: "active-store.json"),
+                pathValidator: LocalStorePathValidator(trustedDirectory: output)
+            )
+            if let failure = bootstrap.failure { throw failure }
+            guard bootstrap.failure == nil, let opened = bootstrap.container else { throw ProbeError.initialStartupFailed }
+            guard try LocalStoreBackupService.records(from: opened) == original.canonicalRecords else { throw ProbeError.initialRecordsMismatch }
+            try bootstrap.activateRestoredStore(at: restoredURL)
+        }
+        try autoreleasepool {
+            let restarted = LocalStoreBootstrap(
+                defaultStoreURL: oldURL, restoreDirectory: output,
+                selectionURL: output.appending(path: "active-store.json"),
+                pathValidator: LocalStorePathValidator(trustedDirectory: output)
+            )
+            if let failure = restarted.failure { throw failure }
+            guard restarted.failure == nil, restarted.activeStoreURL == restoredURL,
+                  let reopened = restarted.container else { throw ProbeError.restoredStartupFailed }
+            guard try LocalStoreBackupService.records(from: reopened) == original.canonicalRecords else { throw ProbeError.restoredRecordsMismatch }
+        }
+        print("Protected working-copy startup/activation/restart: identical records and relationships")
         print("Record count: \(original.records.count); record contents intentionally omitted")
     }
 
@@ -84,7 +112,8 @@ struct StoreProtectionProbe {
         return try LocalStoreBackupService.export(from: container)
     }
 
-    enum ProbeError: Error {
+    enum ProbeError: String, Error {
         case arguments, outputExists, unidentifiedSchema, recordMismatch
+        case initialStartupFailed, initialRecordsMismatch, restoredStartupFailed, restoredRecordsMismatch
     }
 }

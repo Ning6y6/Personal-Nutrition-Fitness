@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A80000000000000000000001 /* LocalStorePathValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000001 /* LocalStorePathValidator.swift */; };
+		A80000000000000000000002 /* LocalStorePathValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000002 /* LocalStorePathValidatorTests.swift */; };
 		A70000000000000000000001 /* FibreSummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70000000000000000000001 /* FibreSummaryRow.swift */; };
 		A70000000000000000000002 /* FibreSummaryIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70000000000000000000002 /* FibreSummaryIntegrationTests.swift */; };
 		A60000000000000000000001 /* NutritionProgressPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60000000000000000000001 /* NutritionProgressPresentation.swift */; };
@@ -60,6 +62,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B80000000000000000000001 /* LocalStorePathValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorePathValidator.swift; sourceTree = "<group>"; };
+		B80000000000000000000002 /* LocalStorePathValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorePathValidatorTests.swift; sourceTree = "<group>"; };
 		B70000000000000000000001 /* FibreSummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FibreSummaryRow.swift; sourceTree = "<group>"; };
 		B70000000000000000000002 /* FibreSummaryIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FibreSummaryIntegrationTests.swift; sourceTree = "<group>"; };
 		B60000000000000000000001 /* NutritionProgressPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionProgressPresentation.swift; sourceTree = "<group>"; };
@@ -123,6 +127,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C80000000000000000000001 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				B80000000000000000000002 /* LocalStorePathValidatorTests.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
 		7C70F41D3070297A0089CDBC /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,6 +145,7 @@
 				B20000000000000000000005 /* LocalStoreBackupService.swift */,
 				B20000000000000000000006 /* LocalStoreBackupRestoration.swift */,
 				B30000000000000000000001 /* LocalStoreBootstrap.swift */,
+				B80000000000000000000001 /* LocalStorePathValidator.swift */,
 				B30000000000000000000002 /* StoreSchemaCompatibility.swift */,
 				B30000000000000000000003 /* ShiHengMigrationPlan.swift */,
 				B50000000000000000000002 /* GoalSaveCommand.swift */,
@@ -143,6 +156,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				C80000000000000000000001 /* Persistence */,
 				7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */,
 				B20000000000000000000004 /* BackupServiceTests.swift */,
 				B30000000000000000000004 /* StoreBootstrapTests.swift */,
@@ -320,6 +334,7 @@
 				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
 				A20000000000000000000004 /* BackupServiceTests.swift in Sources */,
 				A30000000000000000000004 /* StoreBootstrapTests.swift in Sources */,
+				A80000000000000000000002 /* LocalStorePathValidatorTests.swift in Sources */,
 				A30000000000000000000008 /* BackupImportReaderTests.swift in Sources */,
 				A40000000000000000000002 /* MealReadValidationTests.swift in Sources */,
 				A40000000000000000000003 /* DomainBoundaryPersistenceTests.swift in Sources */,
@@ -355,6 +370,7 @@
 				A20000000000000000000005 /* LocalStoreBackupService.swift in Sources */,
 				A20000000000000000000006 /* LocalStoreBackupRestoration.swift in Sources */,
 				A30000000000000000000001 /* LocalStoreBootstrap.swift in Sources */,
+				A80000000000000000000001 /* LocalStorePathValidator.swift in Sources */,
 				A30000000000000000000002 /* StoreSchemaCompatibility.swift in Sources */,
 				A30000000000000000000003 /* ShiHengMigrationPlan.swift in Sources */,
 				A30000000000000000000005 /* StoreRecoveryView.swift in Sources */,

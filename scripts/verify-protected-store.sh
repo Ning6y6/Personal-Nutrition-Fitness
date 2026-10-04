@@ -20,6 +20,8 @@ swiftc -swift-version 6 -parse-as-library -module-name FoodDecisionAssistant \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackup.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackupService.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackupRestoration.swift" \
+  "$project_root/FoodDecisionAssistant/Persistence/LocalStorePathValidator.swift" \
+  "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBootstrap.swift" \
   "$project_root/scripts/StoreProtectionProbe.swift" \
   -o "$probe_directory/probe"
 "$probe_directory/probe" "$source_directory" "$probe_directory/result"

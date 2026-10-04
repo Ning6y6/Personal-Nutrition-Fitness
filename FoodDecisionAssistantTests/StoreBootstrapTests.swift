@@ -1,4 +1,5 @@
 import CoreData
+import Darwin
 import FoodDecisionCore
 import Foundation
 import SwiftData
@@ -8,10 +9,98 @@ import Testing
 
 @MainActor
 struct StoreBootstrapTests {
+    @Test("Startup and restart do not inspect sandbox-external ancestors")
+    func sandboxAncestorsDoNotBlockStartup() throws {
+        let fixture = try Fixture()
+        defer { fixture.remove() }
+        var inspected: [String] = []
+        let boundary = fixture.directory.pathComponents
+        let validator = LocalStorePathValidator(trustedDirectory: fixture.directory) { path in
+            inspected.append(path)
+            guard URL(fileURLWithPath: path).pathComponents.starts(with: boundary) else {
+                throw NSError(domain: NSPOSIXErrorDomain, code: Int(EPERM))
+            }
+            return try FileManager.default.attributesOfItem(atPath: path)
+        }
+        try autoreleasepool {
+            let bootstrap = fixture.bootstrap(pathValidator: validator)
+            let container = try #require(bootstrap.container)
+            #expect(bootstrap.failure == nil)
+            container.mainContext.insert(try meal(title: "synthetic preserved meal"))
+            try container.mainContext.save()
+        }
+        let restart = fixture.bootstrap(pathValidator: validator)
+        let reopened = try #require(restart.container)
+        #expect(restart.failure == nil)
+        #expect(try reopened.mainContext.fetch(FetchDescriptor<PersistentMealLog>()).count == 1)
+        #expect(inspected.isEmpty == false)
+        #expect(inspected.allSatisfy { URL(fileURLWithPath: $0).pathComponents.starts(with: boundary) })
+    }
+
+    @Test("An internal permission failure preserves the selected store and never invokes its opener")
+    func internalPermissionFailureCannotRecreateStore() throws {
+        let fixture = try Fixture()
+        defer { fixture.remove() }
+        try autoreleasepool {
+            let bootstrap = fixture.bootstrap()
+            try #require(bootstrap.container != nil)
+        }
+        let originalMarker = try Data(contentsOf: fixture.selectionURL)
+        let originalStore = try Data(contentsOf: fixture.defaultStoreURL)
+        var openAttempts = 0
+        let validator = LocalStorePathValidator(trustedDirectory: fixture.directory) { path in
+            if path == fixture.selectionURL.path {
+                throw NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoPermissionError)
+            }
+            return try FileManager.default.attributesOfItem(atPath: path)
+        }
+        let failed = fixture.bootstrap(pathValidator: validator) { url in
+            openAttempts += 1
+            return try LocalStoreBootstrap.openStore(at: url)
+        }
+        #expect(failed.failure as? LocalStoreBootstrapError == .storePathUnreadable)
+        #expect(failed.container == nil)
+        #expect(openAttempts == 0)
+        #expect(try Data(contentsOf: fixture.selectionURL) == originalMarker)
+        #expect(try Data(contentsOf: fixture.defaultStoreURL) == originalStore)
+    }
+
     @Test("Explicit local configuration retains the legacy default store URL without opening it")
     func defaultLocationDoesNotChange() {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         #expect(ModelConfiguration(schema: schema).url == ModelConfiguration(schema: schema, cloudKitDatabase: .none).url)
+    }
+
+    @Test("System-provided production paths pass the same sandbox-boundary validator")
+    func defaultLocationsStayInsideAppContainer() throws {
+        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let validator = LocalStorePathValidator()
+        for url in [
+            ModelConfiguration(schema: schema, cloudKitDatabase: .none).url,
+            URL.applicationSupportDirectory.appendingPathComponent("active-store.json"),
+            URL.applicationSupportDirectory.appendingPathComponent("BackupVerification", isDirectory: true),
+        ] {
+            #expect(throws: Never.self) { try validator.validate(url) }
+            #expect(try validator.relativeComponents(for: url).isEmpty == false)
+        }
+    }
+
+    @Test("Non-file SQLite sidecars are rejected before opening or creating a store", arguments: ["-wal", "-shm"])
+    func directorySidecarCannotBecomeStore(suffix: String) throws {
+        let fixture = try Fixture()
+        defer { fixture.remove() }
+        let sidecar = URL(fileURLWithPath: fixture.defaultStoreURL.path + suffix)
+        try FileManager.default.createDirectory(at: sidecar, withIntermediateDirectories: false)
+        var openAttempts = 0
+        let bootstrap = fixture.bootstrap { url in
+            openAttempts += 1
+            return try LocalStoreBootstrap.openStore(at: url)
+        }
+        #expect(bootstrap.failure as? LocalStoreBootstrapError == .unsafeStorePath)
+        #expect(bootstrap.container == nil)
+        #expect(openAttempts == 0)
+        #expect(FileManager.default.fileExists(atPath: sidecar.path))
+        #expect(FileManager.default.fileExists(atPath: fixture.defaultStoreURL.path) == false)
     }
 
     @Test("A file-backed twelve-entity schema exactly matches the frozen metadata hashes")
@@ -373,8 +462,15 @@ struct StoreBootstrapTests {
         }
 
         @MainActor
-        func bootstrap(opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore) -> LocalStoreBootstrap {
-            LocalStoreBootstrap(defaultStoreURL: defaultStoreURL, restoreDirectory: restoreDirectory, selectionURL: selectionURL, opener: opener)
+        func bootstrap(
+            pathValidator: LocalStorePathValidator? = nil,
+            opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore
+        ) -> LocalStoreBootstrap {
+            LocalStoreBootstrap(
+                defaultStoreURL: defaultStoreURL, restoreDirectory: restoreDirectory,
+                selectionURL: selectionURL,
+                pathValidator: pathValidator ?? LocalStorePathValidator(trustedDirectory: directory), opener: opener
+            )
         }
 
         @MainActor

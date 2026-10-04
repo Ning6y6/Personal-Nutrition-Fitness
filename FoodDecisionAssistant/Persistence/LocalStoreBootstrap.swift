@@ -10,6 +10,7 @@ enum LocalStoreBootstrapError: Error, Equatable, LocalizedError {
     case missingSelectedStore
     case orphanedStoreSidecars
     case unsafeStorePath
+    case storePathUnreadable
     case openFailed
     case backupUnavailable
     case invalidBackup
@@ -25,7 +26,8 @@ enum LocalStoreBootstrapError: Error, Equatable, LocalizedError {
         case .unsupportedSelectionVersion: "数据库选择文件版本不受支持，原选择保留。"
         case .missingSelectedStore: "曾使用的数据库文件已丢失，未自动建立空数据库。请重试或使用备份。"
         case .orphanedStoreSidecars: "主数据库缺失但日志文件仍存在；未新建或覆盖数据库。"
-        case .unsafeStorePath: "数据库路径不安全：只接受隔离恢复目录中的普通文件，不接受符号链接或路径跳转。"
+        case .unsafeStorePath: "数据库路径不安全：不接受 App 数据目录之外的路径、符号链接或路径跳转。原数据保留。"
+        case .storePathUnreadable: "无法读取 App 数据目录或文件属性，可能是权限或文件访问状态问题。原数据保留，请解锁设备后重试；不会自动新建空库。"
         case .openFailed: "数据库打开失败，原数据库和原选择均保留。"
         case .backupUnavailable: "恢复库缺少对应的原始备份文件，无法再次核对。"
         case .invalidBackup: "对应的原始备份无法通过结构校验，未切换数据库。"
@@ -71,12 +73,14 @@ final class LocalStoreBootstrap {
 
     @ObservationIgnored private let defaultStoreURL: URL
     @ObservationIgnored private let selectionURL: URL
+    @ObservationIgnored private let pathValidator: LocalStorePathValidator
     @ObservationIgnored private let opener: @MainActor (URL) throws -> ModelContainer
 
     init(
         defaultStoreURL: URL? = nil,
         restoreDirectory: URL? = nil,
         selectionURL: URL? = nil,
+        pathValidator: LocalStorePathValidator = LocalStorePathValidator(),
         opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore
     ) {
         // Keep precisely the default location used before startup protection was introduced.
@@ -84,6 +88,7 @@ final class LocalStoreBootstrap {
         self.defaultStoreURL = defaultStoreURL ?? ModelConfiguration(schema: schema, cloudKitDatabase: .none).url
         self.restoreDirectory = restoreDirectory ?? URL.applicationSupportDirectory.appendingPathComponent("BackupVerification", isDirectory: true)
         self.selectionURL = selectionURL ?? URL.applicationSupportDirectory.appendingPathComponent("active-store.json")
+        self.pathValidator = pathValidator
         self.opener = opener
         retry()
     }
@@ -216,12 +221,14 @@ final class LocalStoreBootstrap {
 
     private func validateRestoredPath(_ url: URL, requireBackup: Bool) throws {
         guard url.isFileURL, restoreDirectory.isFileURL,
-              url.path == url.standardizedFileURL.path,
               url.lastPathComponent == "restored.store" else { throw LocalStoreBootstrapError.unsafeStorePath }
         let directory = url.deletingLastPathComponent()
         let directoryID = directory.lastPathComponent
+        let relativeStore = try pathValidator.relativeComponents(for: url)
+        let relativeRestoreRoot = try pathValidator.relativeComponents(for: restoreDirectory)
         guard let id = UUID(uuidString: directoryID), id.uuidString == directoryID,
-              directory.deletingLastPathComponent().standardizedFileURL == restoreDirectory.standardizedFileURL else {
+              relativeStore.count == relativeRestoreRoot.count + 2,
+              relativeStore.starts(with: relativeRestoreRoot) else {
             throw LocalStoreBootstrapError.unsafeStorePath
         }
         try validateNoSymbolicLinks(restoreDirectory)
@@ -232,34 +239,18 @@ final class LocalStoreBootstrap {
     }
 
     private func validateStoreFiles(_ url: URL) throws {
-        guard url.isFileURL, url.path == url.standardizedFileURL.path else { throw LocalStoreBootstrapError.invalidConfiguration }
-        try validateNoSymbolicLinks(url)
-        for sidecar in sidecarURLs(for: url) { try validateNoSymbolicLinks(sidecar) }
-        if FileManager.default.fileExists(atPath: url.path),
-           try FileManager.default.attributesOfItem(atPath: url.path)[.type] as? FileAttributeType != .typeRegular {
-            throw LocalStoreBootstrapError.unsafeStorePath
+        guard url.isFileURL else { throw LocalStoreBootstrapError.invalidConfiguration }
+        for file in [url] + sidecarURLs(for: url) {
+            try validateNoSymbolicLinks(file)
+            if FileManager.default.fileExists(atPath: file.path),
+               try FileManager.default.attributesOfItem(atPath: file.path)[.type] as? FileAttributeType != .typeRegular {
+                throw LocalStoreBootstrapError.unsafeStorePath
+            }
         }
     }
 
     private func validateNoSymbolicLinks(_ url: URL) throws {
-        guard url.isFileURL else { throw LocalStoreBootstrapError.invalidConfiguration }
-        var path = ""
-        for component in url.standardizedFileURL.pathComponents {
-            path = component == "/" ? "/" : (path == "/" ? "/\(component)" : "\(path)/\(component)")
-            let attributes: [FileAttributeKey: Any]
-            do { attributes = try FileManager.default.attributesOfItem(atPath: path) }
-            catch let error as NSError where error.domain == NSCocoaErrorDomain && (error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError) { continue }
-            catch { throw LocalStoreBootstrapError.unsafeStorePath }
-            if attributes[.type] as? FileAttributeType == .typeSymbolicLink {
-                // Standard Apple filesystem aliases are not user-selected links. All other links,
-                // including a replaced restore root or a linked store/sidecar, are rejected.
-                let systemAlias = ["/var": "/private/var", "/tmp": "/private/tmp"]
-                guard let target = systemAlias[path],
-                      URL(fileURLWithPath: path).resolvingSymlinksInPath().path == target else {
-                    throw LocalStoreBootstrapError.unsafeStorePath
-                }
-            }
-        }
+        try pathValidator.validate(url)
     }
 
     private func sidecarURLs(for url: URL) -> [URL] {

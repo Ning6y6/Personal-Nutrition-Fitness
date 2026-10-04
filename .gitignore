@@ -7,3 +7,10 @@ DerivedData/
 xcuserdata/
 .swiftpm/
 artifacts/
+# Private SwiftData stores and exported personal backups are never source artifacts.
+*.store
+*.store-shm
+*.store-wal
+*.shihengbackup
+ShiHeng-backup*.json
+private-backups/

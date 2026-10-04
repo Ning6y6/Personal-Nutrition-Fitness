@@ -7,7 +7,7 @@ enum LocalStoreBackupRestoration {
     static func container(at storeURL: URL) throws -> ModelContainer {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         let configuration = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
-        return try ModelContainer(for: schema, configurations: configuration)
+        return try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: configuration)
     }
 
     static func write(document: LocalStoreBackupDocument, storeURL: URL) throws {

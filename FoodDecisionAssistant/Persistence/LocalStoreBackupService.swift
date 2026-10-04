@@ -50,14 +50,22 @@ enum LocalStoreBackupService {
         guard directory.isFileURL else { throw LocalStoreBackupError.invalidDirectory }
         let stageDirectory = directory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let storeURL = stageDirectory.appendingPathComponent("restored.store")
+        var directoryAttributes: [FileAttributeKey: Any] = [.posixPermissions: 0o700]
+        #if os(iOS)
+        directoryAttributes[.protectionKey] = FileProtectionType.completeUntilFirstUserAuthentication
+        #endif
         try FileManager.default.createDirectory(
             at: stageDirectory, withIntermediateDirectories: true,
-            attributes: [.posixPermissions: 0o700]
+            attributes: directoryAttributes
         )
 
         do {
             let sourceURL = stageDirectory.appendingPathComponent("source-backup.shihengbackup")
+            #if os(iOS)
+            try data.write(to: sourceURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            #else
             try data.write(to: sourceURL, options: .atomic)
+            #endif
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: sourceURL.path)
             try autoreleasepool {
                 try LocalStoreBackupRestoration.write(document: document, storeURL: storeURL)
@@ -72,7 +80,11 @@ enum LocalStoreBackupService {
             for fileURL in try FileManager.default.contentsOfDirectory(
                 at: stageDirectory, includingPropertiesForKeys: [.isRegularFileKey]
             ) where try fileURL.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true {
-                try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
+                var attributes: [FileAttributeKey: Any] = [.posixPermissions: 0o600]
+                #if os(iOS)
+                attributes[.protectionKey] = FileProtectionType.completeUntilFirstUserAuthentication
+                #endif
+                try FileManager.default.setAttributes(attributes, ofItemAtPath: fileURL.path)
             }
             return storeURL
         } catch {

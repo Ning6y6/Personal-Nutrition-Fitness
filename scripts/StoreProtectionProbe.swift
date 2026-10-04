@@ -72,14 +72,15 @@ struct StoreProtectionProbe {
     private static func createCurrentStore(at url: URL) throws {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
-        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [configuration])
         try container.mainContext.save()
     }
 
     private static func exportStore(at url: URL) throws -> Data {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
-        let container = try ModelContainer(for: schema, configurations: [configuration])
+        try StoreSchemaCompatibility.validateExistingStore(at: url)
+        let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [configuration])
         return try LocalStoreBackupService.export(from: container)
     }
 

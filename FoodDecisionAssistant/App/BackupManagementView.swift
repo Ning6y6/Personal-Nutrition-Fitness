@@ -5,12 +5,15 @@ import UniformTypeIdentifiers
 struct BackupManagementView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.storeBootstrap) private var bootstrap
     @State private var document = BackupFileDocument()
     @State private var isExporting = false
     @State private var isImporting = false
     @State private var summary: LocalStoreBackupSummary?
     @State private var resultMessage: String?
     @State private var operationError: String?
+    @State private var restoredURL: URL?
+    @State private var isConfirmingRestore = false
 
     var body: some View {
         NavigationStack {
@@ -24,7 +27,7 @@ struct BackupManagementView: View {
                 } header: {
                     Text("数据保护")
                 } footer: {
-                    Text("当前切片将备份恢复到独立文件库并校验，不覆盖现用库。正式切换恢复库将在启动恢复切片提供。相册原图、API Key和签名材料不包含在备份中。")
+                    Text("先在独立文件库恢复并校验，确认后才切换。原数据库保留，不合并或覆盖。相册原图、API Key和签名材料不包含在备份中。")
                 }
 
                 if let summary {
@@ -36,6 +39,11 @@ struct BackupManagementView: View {
                         if !summary.imageWarnings.isEmpty {
                             Label("\(summary.imageWarnings.count)个图片引用未包含可恢复图片；餐食数据仍已保存。", systemImage: "photo.badge.exclamationmark")
                                 .foregroundStyle(.secondary)
+                        }
+                        if restoredURL != nil, bootstrap != nil {
+                            Button("切换到已验证的恢复库", systemImage: "arrow.triangle.2.circlepath") {
+                                isConfirmingRestore = true
+                            }
                         }
                     }
                 }
@@ -69,6 +77,12 @@ struct BackupManagementView: View {
                 case .failure(let error): operationError = error.localizedDescription
                 }
             }
+            .confirmationDialog("切换到恢复库？", isPresented: $isConfirmingRestore, titleVisibility: .visible) {
+                Button("使用恢复库", action: activateRestore)
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("现用数据库保留不动。确认后使用独立恢复库，今后记录保存到该库；本操作不会合并数据。")
+            }
             .alert("备份操作未完成", isPresented: Binding(
                 get: { operationError != nil },
                 set: { if !$0 { operationError = nil } }
@@ -82,6 +96,7 @@ struct BackupManagementView: View {
 
     private func exportBackup() {
         resultMessage = nil
+        restoredURL = nil
         do {
             let data = try LocalStoreBackupService.export(from: modelContext.container)
             summary = try LocalStoreBackupService.inspect(data: data)
@@ -94,19 +109,22 @@ struct BackupManagementView: View {
 
     private func verifyBackup(at url: URL) {
         resultMessage = nil
-        let access = url.startAccessingSecurityScopedResource()
-        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        restoredURL = nil
+        summary = nil
         do {
-            // Bound input before reading; selected files are untrusted, even offline.
-            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-            guard size <= 64 * 1024 * 1024 else { throw CocoaError(.fileReadTooLarge) }
-            let data = try Data(contentsOf: url)
-            let directory = URL.applicationSupportDirectory.appending(path: "BackupVerification", directoryHint: .isDirectory)
-            _ = try LocalStoreBackupService.stageRestore(data: data, directory: directory)
+            let data = try BackupImportReader.read(from: url)
+            let directory = bootstrap?.restoreDirectory ?? URL.applicationSupportDirectory.appending(path: "BackupVerification", directoryHint: .isDirectory)
+            restoredURL = try LocalStoreBackupService.stageRestore(data: data, directory: directory)
             summary = try LocalStoreBackupService.inspect(data: data)
             resultMessage = "已在独立文件库恢复并核对，现用数据未改变。"
         } catch {
             operationError = error.localizedDescription
         }
+    }
+
+    private func activateRestore() {
+        guard let restoredURL, let bootstrap else { return }
+        do { try bootstrap.activateRestoredStore(at: restoredURL) }
+        catch { operationError = error.localizedDescription }
     }
 }

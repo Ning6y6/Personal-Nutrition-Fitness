@@ -2,6 +2,9 @@ import FoodDecisionCore
 import Foundation
 import SwiftData
 
+/// Frozen 2026-10-04 after verifying the deployed twelve-entity physical store.
+/// Do not edit stored properties/relationships/constraints in place. A future storage change
+/// requires a new version, an explicit migration stage and protected-store regression tests.
 enum VersionedSchemaV1: VersionedSchema {
     static var versionIdentifier: Schema.Version {
         Schema.Version(1, 0, 0)

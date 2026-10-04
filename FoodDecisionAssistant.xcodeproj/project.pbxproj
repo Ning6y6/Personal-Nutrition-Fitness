@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A30000000000000000000008 /* BackupImportReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000008 /* BackupImportReaderTests.swift */; };
+		A30000000000000000000001 /* LocalStoreBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000001 /* LocalStoreBootstrap.swift */; };
+		A30000000000000000000002 /* StoreSchemaCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000002 /* StoreSchemaCompatibility.swift */; };
+		A30000000000000000000003 /* ShiHengMigrationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000003 /* ShiHengMigrationPlan.swift */; };
+		A30000000000000000000004 /* StoreBootstrapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000004 /* StoreBootstrapTests.swift */; };
+		A30000000000000000000005 /* StoreRecoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000005 /* StoreRecoveryView.swift */; };
+		A30000000000000000000006 /* StoreBootstrapEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* StoreBootstrapEnvironment.swift */; };
+		A30000000000000000000007 /* BackupImportReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000007 /* BackupImportReader.swift */; };
 		7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */; };
 		7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */; };
 		7C70F42D30702A5B0089CDBC /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000005 /* FoodDecisionCore */; };
@@ -42,6 +50,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B30000000000000000000008 /* BackupImportReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupImportReaderTests.swift; sourceTree = "<group>"; };
+		B30000000000000000000001 /* LocalStoreBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreBootstrap.swift; sourceTree = "<group>"; };
+		B30000000000000000000002 /* StoreSchemaCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSchemaCompatibility.swift; sourceTree = "<group>"; };
+		B30000000000000000000003 /* ShiHengMigrationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiHengMigrationPlan.swift; sourceTree = "<group>"; };
+		B30000000000000000000004 /* StoreBootstrapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreBootstrapTests.swift; sourceTree = "<group>"; };
+		B30000000000000000000005 /* StoreRecoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreRecoveryView.swift; sourceTree = "<group>"; };
+		B30000000000000000000006 /* StoreBootstrapEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreBootstrapEnvironment.swift; sourceTree = "<group>"; };
+		B30000000000000000000007 /* BackupImportReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupImportReader.swift; sourceTree = "<group>"; };
 		7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionedSchemaV1.swift; sourceTree = "<group>"; };
 		7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceModelTests.swift; sourceTree = "<group>"; };
 		7C70F42330702A5B0089CDBC /* FoodDecisionAssistantTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FoodDecisionAssistantTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,6 +112,9 @@
 				B20000000000000000000001 /* LocalStoreBackup.swift */,
 				B20000000000000000000005 /* LocalStoreBackupService.swift */,
 				B20000000000000000000006 /* LocalStoreBackupRestoration.swift */,
+				B30000000000000000000001 /* LocalStoreBootstrap.swift */,
+				B30000000000000000000002 /* StoreSchemaCompatibility.swift */,
+				B30000000000000000000003 /* ShiHengMigrationPlan.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -105,6 +124,8 @@
 			children = (
 				7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */,
 				B20000000000000000000004 /* BackupServiceTests.swift */,
+				B30000000000000000000004 /* StoreBootstrapTests.swift */,
+				B30000000000000000000008 /* BackupImportReaderTests.swift */,
 			);
 			path = FoodDecisionAssistantTests;
 			sourceTree = "<group>";
@@ -143,6 +164,9 @@
 				B1000000000000000000000A /* MealTemplateManagerView.swift */,
 				B20000000000000000000002 /* BackupFileDocument.swift */,
 				B20000000000000000000003 /* BackupManagementView.swift */,
+				B30000000000000000000005 /* StoreRecoveryView.swift */,
+				B30000000000000000000006 /* StoreBootstrapEnvironment.swift */,
+				B30000000000000000000007 /* BackupImportReader.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -265,6 +289,8 @@
 			files = (
 				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
 				A20000000000000000000004 /* BackupServiceTests.swift in Sources */,
+				A30000000000000000000004 /* StoreBootstrapTests.swift in Sources */,
+				A30000000000000000000008 /* BackupImportReaderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,6 +314,12 @@
 				A20000000000000000000001 /* LocalStoreBackup.swift in Sources */,
 				A20000000000000000000005 /* LocalStoreBackupService.swift in Sources */,
 				A20000000000000000000006 /* LocalStoreBackupRestoration.swift in Sources */,
+				A30000000000000000000001 /* LocalStoreBootstrap.swift in Sources */,
+				A30000000000000000000002 /* StoreSchemaCompatibility.swift in Sources */,
+				A30000000000000000000003 /* ShiHengMigrationPlan.swift in Sources */,
+				A30000000000000000000005 /* StoreRecoveryView.swift in Sources */,
+				A30000000000000000000006 /* StoreBootstrapEnvironment.swift in Sources */,
+				A30000000000000000000007 /* BackupImportReader.swift in Sources */,
 				A20000000000000000000002 /* BackupFileDocument.swift in Sources */,
 				A20000000000000000000003 /* BackupManagementView.swift in Sources */,
 			);

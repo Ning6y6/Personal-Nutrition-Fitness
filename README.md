@@ -11,7 +11,8 @@
 - 查看全部历史餐食与营养快照，并编辑或删除记录；今日汇总会随修改立即重算。
 - 从最近吃过或个人常用菜模板生成独立餐食草稿，只修改本次重量后保存。
 - 从历史餐食另存常用模板，并新建、重命名、编辑默认克重或删除模板。
-- 导出全部本地业务数据的版本化JSON，并在独立文件库验证恢复；不覆盖现用库。
+- 导出全部本地业务数据的版本化JSON，验证独立恢复库后经二次确认切换；保留原库，不合并或覆盖原库。
+- 数据库无法打开时显示恢复页，允许重试或恢复已有JSON，不自动删库。
 
 拍照 AI、食品标签 OCR、HealthKit 和 CloudKit 尚未接入。复用与模板切片的落实和待完成真机验收见 [`docs/MEAL_REUSE_TEMPLATE_PLAN.md`](docs/MEAL_REUSE_TEMPLATE_PLAN.md)。
 
@@ -37,5 +38,7 @@ swift test --package-path Packages/FoodDecisionCore
 ```
 
 脚本自动选择可用iPhone模拟器；可用`SHIHENG_SIMULATOR_DESTINATION='platform=iOS Simulator,id=<UUID>'`指定。已保护旧库可运行`./scripts/verify-protected-store.sh /absolute/private/sample-directory`，目录须包含default.store及其sidecar。探针只打开新工作副本；不要把个人备份或探针输出提交Git。备份不含图片字节、Key或签名资料，JSON未加密；NaN/无穷值仅保留原始JSON，不会强行写回SQLite。
+
+Xcode失败后的诊断收集可能耗时很久；需要快速取得测试结果时可用`./scripts/test-ios.sh -parallel-testing-enabled NO -collect-test-diagnostics never`。当前冻结经真机磁盘哈希确认的12实体V1，早期9/10实体结构没有部署样本，不宣称自动迁移支持。详见[兼容与恢复契约](docs/STORE_COMPATIBILITY.md)。模拟器不报告iOS文件保护等级；真机锁屏保护、文件选择和恢复操作仍需人工验收。
 
 正式显示名称为 `食衡`，英文产品名为 `ShiHeng`，应用标识为 `com.ning6y6.ShiHeng`。真机运行前需要在 Xcode 中选择已登录的开发团队。

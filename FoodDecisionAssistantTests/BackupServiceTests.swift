@@ -298,8 +298,13 @@ struct BackupServiceTests {
         let permissions = try FileManager.default.attributesOfItem(atPath: stage.path)[.posixPermissions] as? NSNumber
         #expect(permissions?.intValue == 0o700)
         for file in try FileManager.default.contentsOfDirectory(at: stage, includingPropertiesForKeys: nil) {
-            let filePermissions = try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? NSNumber
+            let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+            let filePermissions = attributes[.posixPermissions] as? NSNumber
             #expect(filePermissions?.intValue == 0o600)
+            // Simulator does not expose Data Protection attributes; verify this on device.
+            #if os(iOS) && !targetEnvironment(simulator)
+            #expect(attributes[.protectionKey] as? String == FileProtectionType.completeUntilFirstUserAuthentication.rawValue)
+            #endif
         }
     }
 

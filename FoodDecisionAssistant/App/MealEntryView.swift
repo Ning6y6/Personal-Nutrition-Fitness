@@ -7,6 +7,8 @@ struct MealEntryView: View {
     @Environment(\.modelContext) private var modelContext
 
     private let mealToEdit: PersistentMealLog?
+    private let sourceTemplateID: UUID?
+    private let onSaved: () -> Void
 
     @Query(sort: \PersistentFoodItem.name)
     private var foodItems: [PersistentFoodItem]
@@ -15,33 +17,44 @@ struct MealEntryView: View {
     @State private var eatenAt: Date
     @State private var entryMethod: MealEntryMethod
     @State private var coverageStatus: MealCoverageStatus
-    @State private var rows: [MealEntryRow]
+    @State private var rows: [MealEntryDraftComponent]
     @State private var saveError: Error?
     @State private var seedImportError: Error?
     @State private var isShowingAdvancedOptions = false
 
     @FocusState private var focusedField: FocusedField?
 
-    init(meal: PersistentMealLog? = nil) {
+    init(
+        meal: PersistentMealLog? = nil,
+        draft: MealEntryDraft? = nil,
+        onSaved: @escaping () -> Void = {}
+    ) {
+        precondition(meal == nil || draft == nil, "An entry cannot edit a meal and load a draft together.")
         mealToEdit = meal
-        _title = State(initialValue: meal?.title ?? Self.defaultMealTitle())
-        _eatenAt = State(initialValue: meal?.eatenAt ?? .now)
+        sourceTemplateID = draft?.sourceTemplateID
+        self.onSaved = onSaved
+        _title = State(initialValue: meal?.title ?? draft?.title ?? Self.defaultMealTitle())
+        _eatenAt = State(initialValue: meal?.eatenAt ?? draft?.eatenAt ?? .now)
         _entryMethod = State(
-            initialValue: meal.flatMap { MealEntryMethod(rawValue: $0.entryMethodRawValue) } ?? .weighed
+            initialValue: meal.flatMap { MealEntryMethod(rawValue: $0.entryMethodRawValue) }
+                ?? draft?.entryMethod
+                ?? .weighed
         )
         _coverageStatus = State(
             initialValue: meal.flatMap { MealCoverageStatus(rawValue: $0.coverageStatusRawValue) }
+                ?? draft?.coverageStatus
                 ?? .complete
         )
         _rows = State(
             initialValue: meal?.components
                 .sorted { $0.sortIndex < $1.sortIndex }
                 .map {
-                    MealEntryRow(
+                    MealEntryDraftComponent(
                         foodItemID: $0.foodItemID,
+                        foodName: $0.foodName,
                         weightGrams: $0.consumedWeightGrams
                     )
-                } ?? []
+                } ?? draft?.components ?? []
         )
     }
 
@@ -300,7 +313,7 @@ struct MealEntryView: View {
         do {
             try SeedFoodCatalog.importIfNeeded(into: modelContext)
             if rows.isEmpty, !foodItems.isEmpty {
-                rows = [MealEntryRow()]
+                rows = [MealEntryDraftComponent()]
             }
         } catch {
             seedImportError = error
@@ -308,7 +321,7 @@ struct MealEntryView: View {
     }
 
     private func addRow() {
-        rows.append(MealEntryRow())
+        rows.append(MealEntryDraftComponent())
     }
 
     private func deleteRows(at offsets: IndexSet) {
@@ -331,8 +344,16 @@ struct MealEntryView: View {
             } else {
                 modelContext.insert(PersistentMealLog(domain: meal))
             }
+            if let sourceTemplateID {
+                let templateID = sourceTemplateID
+                let descriptor = FetchDescriptor<PersistentMealTemplate>(
+                    predicate: #Predicate { $0.id == templateID }
+                )
+                try modelContext.fetch(descriptor).first?.markUsed(at: .now)
+            }
             try modelContext.save()
             dismiss()
+            onSaved()
         } catch {
             modelContext.rollback()
             saveError = error
@@ -353,18 +374,6 @@ struct MealEntryView: View {
 private enum FocusedField: Hashable {
     case title
     case weight(UUID)
-}
-
-private struct MealEntryRow: Identifiable {
-    let id: UUID
-    var foodItemID: UUID?
-    var weightGrams: Double?
-
-    init(id: UUID = UUID(), foodItemID: UUID? = nil, weightGrams: Double? = nil) {
-        self.id = id
-        self.foodItemID = foodItemID
-        self.weightGrams = weightGrams
-    }
 }
 
 #Preview {

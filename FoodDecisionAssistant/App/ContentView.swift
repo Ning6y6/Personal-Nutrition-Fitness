@@ -12,7 +12,7 @@ struct ContentView: View {
     private var mealLogs: [PersistentMealLog]
 
     @State private var isShowingGoalSettings = false
-    @State private var isShowingMealEntry = false
+    @State private var isShowingMealStart = false
     @State private var isShowingMealHistory = false
     @State private var selectedMeal: PersistentMealLog?
     @State private var seedImportError: Error?
@@ -39,7 +39,7 @@ struct ContentView: View {
                         mealCount: todayMeals.count
                     )
                     Button {
-                        isShowingMealEntry = true
+                        isShowingMealStart = true
                     } label: {
                         HomeActionCard(
                             title: "记录一餐",
@@ -82,8 +82,8 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingGoalSettings) {
                 GoalSettingsView()
             }
-            .sheet(isPresented: $isShowingMealEntry) {
-                MealEntryView()
+            .sheet(isPresented: $isShowingMealStart) {
+                MealStartView()
             }
             .sheet(isPresented: $isShowingMealHistory) {
                 MealHistoryView()

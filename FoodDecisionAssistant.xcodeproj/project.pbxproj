@@ -16,6 +16,10 @@
 		A10000000000000000000004 /* EnergyProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* EnergyProgressRing.swift */; };
 		A10000000000000000000005 /* NutritionProgressRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* NutritionProgressRow.swift */; };
 		A10000000000000000000006 /* MealHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* MealHistoryView.swift */; };
+		A10000000000000000000007 /* MealTemplatePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* MealTemplatePersistence.swift */; };
+		A10000000000000000000008 /* MealStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* MealStartView.swift */; };
+		A10000000000000000000009 /* MealTemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* MealTemplateEditorView.swift */; };
+		A1000000000000000000000A /* MealTemplateManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000A /* MealTemplateManagerView.swift */; };
 		A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* FoodDecisionAssistantApp.swift */; };
 		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* ContentView.swift */; };
 		A00000000000000000000003 /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000002 /* FoodDecisionCore */; };
@@ -41,6 +45,10 @@
 		B10000000000000000000004 /* EnergyProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyProgressRing.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* NutritionProgressRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionProgressRow.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* MealHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealHistoryView.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* MealTemplatePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTemplatePersistence.swift; sourceTree = "<group>"; };
+		B10000000000000000000008 /* MealStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStartView.swift; sourceTree = "<group>"; };
+		B10000000000000000000009 /* MealTemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTemplateEditorView.swift; sourceTree = "<group>"; };
+		B1000000000000000000000A /* MealTemplateManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTemplateManagerView.swift; sourceTree = "<group>"; };
 		B00000000000000000000001 /* FoodDecisionAssistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantApp.swift; sourceTree = "<group>"; };
 		B00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B00000000000000000000003 /* ShiHeng.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiHeng.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +80,7 @@
 			children = (
 				7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */,
 				B10000000000000000000001 /* SeedFoodCatalog.swift */,
+				B10000000000000000000007 /* MealTemplatePersistence.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -113,6 +122,9 @@
 				B10000000000000000000004 /* EnergyProgressRing.swift */,
 				B10000000000000000000005 /* NutritionProgressRow.swift */,
 				B10000000000000000000006 /* MealHistoryView.swift */,
+				B10000000000000000000008 /* MealStartView.swift */,
+				B10000000000000000000009 /* MealTemplateEditorView.swift */,
+				B1000000000000000000000A /* MealTemplateManagerView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -250,6 +262,10 @@
 				A10000000000000000000004 /* EnergyProgressRing.swift in Sources */,
 				A10000000000000000000005 /* NutritionProgressRow.swift in Sources */,
 				A10000000000000000000006 /* MealHistoryView.swift in Sources */,
+				A10000000000000000000007 /* MealTemplatePersistence.swift in Sources */,
+				A10000000000000000000008 /* MealStartView.swift in Sources */,
+				A10000000000000000000009 /* MealTemplateEditorView.swift in Sources */,
+				A1000000000000000000000A /* MealTemplateManagerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

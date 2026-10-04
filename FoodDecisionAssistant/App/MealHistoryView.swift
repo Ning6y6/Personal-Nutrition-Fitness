@@ -99,6 +99,8 @@ struct MealDetailView: View {
     @State private var isShowingEdit = false
     @State private var isConfirmingDelete = false
     @State private var deletionError: Error?
+    @State private var templateSeed: MealLog?
+    @State private var templatePreparationError: Error?
 
     var body: some View {
         NavigationStack {
@@ -137,6 +139,9 @@ struct MealDetailView: View {
                 }
 
                 Section {
+                    Button("保存为常用模板", systemImage: "bookmark") {
+                        prepareTemplateSeed()
+                    }
                     Button("删除餐食", systemImage: "trash", role: .destructive) {
                         isConfirmingDelete = true
                     }
@@ -158,6 +163,9 @@ struct MealDetailView: View {
             }
             .sheet(isPresented: $isShowingEdit) {
                 MealEntryView(meal: meal)
+            }
+            .sheet(item: $templateSeed) { sourceMeal in
+                MealTemplateEditorView(sourceMeal: sourceMeal)
             }
             .confirmationDialog(
                 "确定删除“\(meal.title)”吗？",
@@ -182,6 +190,17 @@ struct MealDetailView: View {
             } message: {
                 Text(deletionError?.localizedDescription ?? "请稍后再试。")
             }
+            .alert(
+                "无法建立模板",
+                isPresented: Binding(
+                    get: { templatePreparationError != nil },
+                    set: { if !$0 { templatePreparationError = nil } }
+                )
+            ) {
+                Button("好", role: .cancel) {}
+            } message: {
+                Text(templatePreparationError?.localizedDescription ?? "请稍后再试。")
+            }
         }
     }
 
@@ -200,6 +219,14 @@ struct MealDetailView: View {
         } catch {
             modelContext.rollback()
             deletionError = error
+        }
+    }
+
+    private func prepareTemplateSeed() {
+        do {
+            templateSeed = try meal.domainModel()
+        } catch {
+            templatePreparationError = error
         }
     }
 }

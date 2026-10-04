@@ -112,7 +112,143 @@ struct PersistenceModelTests {
 
     @Test("The version-one schema includes all current persistent entities")
     func versionOneSchemaIncludesAllEntities() {
-        #expect(VersionedSchemaV1.models.count == 10)
+        #expect(VersionedSchemaV1.models.count == 12)
+    }
+
+    @Test("A personal meal template persists its ordered components and round trips")
+    func mealTemplatePersistsAndRoundTrips() throws {
+        let context = try makeContext()
+        let firstFood = makeFood(name: "西红柿", energyKcal: 20, proteinGrams: 1)
+        let secondFood = makeFood(name: "鸡蛋", energyKcal: 150, proteinGrams: 12)
+        let template = try MealTemplate(
+            id: UUID(),
+            name: "西红柿炒鸡蛋",
+            createdAt: Date(timeIntervalSince1970: 100),
+            updatedAt: Date(timeIntervalSince1970: 200),
+            components: [
+                try MealTemplateComponent(
+                    foodItemID: firstFood.id,
+                    foodName: firstFood.name,
+                    defaultWeightGrams: 220
+                ),
+                try MealTemplateComponent(
+                    foodItemID: secondFood.id,
+                    foodName: secondFood.name,
+                    defaultWeightGrams: 100
+                ),
+            ]
+        )
+
+        context.insert(PersistentMealTemplate(domain: template))
+        try context.save()
+
+        let saved = try #require(
+            context.fetch(FetchDescriptor<PersistentMealTemplate>()).first
+        )
+        let restored = try saved.domainModel()
+
+        #expect(restored == template)
+        #expect(restored.components.map(\.foodName) == ["西红柿", "鸡蛋"])
+        #expect(restored.components.map(\.defaultWeightGrams) == [220, 100])
+    }
+
+    @Test("Updating a template replaces obsolete components")
+    func templateUpdateReplacesComponents() throws {
+        let context = try makeContext()
+        let originalFood = makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
+        let replacementFood = makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
+        let original = try MealTemplate(
+            name: "原模板",
+            components: [
+                try MealTemplateComponent(
+                    foodItemID: originalFood.id,
+                    foodName: originalFood.name,
+                    defaultWeightGrams: 100
+                ),
+            ]
+        )
+        let persistentTemplate = PersistentMealTemplate(domain: original)
+        context.insert(persistentTemplate)
+        try context.save()
+        let obsoleteID = try #require(persistentTemplate.components.first).id
+        let updated = try MealTemplate(
+            id: original.id,
+            name: "新模板",
+            createdAt: original.createdAt,
+            updatedAt: Date(timeIntervalSince1970: 300),
+            components: [
+                try MealTemplateComponent(
+                    foodItemID: replacementFood.id,
+                    foodName: replacementFood.name,
+                    defaultWeightGrams: 160
+                ),
+            ]
+        )
+
+        persistentTemplate.update(from: updated, in: context)
+        try context.save()
+
+        let restored = try persistentTemplate.domainModel()
+        let savedComponents = try context.fetch(
+            FetchDescriptor<PersistentMealTemplateComponent>()
+        )
+        #expect(restored == updated)
+        #expect(savedComponents.count == 1)
+        #expect(!savedComponents.contains { $0.id == obsoleteID })
+    }
+
+    @Test("Deleting a template cascades its components without deleting meal history")
+    func templateDeletionDoesNotAffectHistory() throws {
+        let context = try makeContext()
+        let food = makeFood(name: "豆腐", energyKcal: 80, proteinGrams: 8)
+        let meal = try MealLog(
+            title: "豆腐餐",
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: food, consumedWeightGrams: 200)]
+        )
+        let template = try MealTemplate(meal: meal)
+        let persistentTemplate = PersistentMealTemplate(domain: template)
+        context.insert(PersistentMealLog(domain: meal))
+        context.insert(persistentTemplate)
+        try context.save()
+
+        context.delete(persistentTemplate)
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<PersistentMealTemplate>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<PersistentMealTemplateComponent>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<PersistentMealLog>()).count == 1)
+        #expect(try context.fetch(FetchDescriptor<PersistentMealComponent>()).count == 1)
+    }
+
+    @Test("Template usage metadata changes only when explicitly marked used")
+    func templateUsageRequiresExplicitMark() throws {
+        let context = try makeContext()
+        let food = makeFood(name: "米饭", energyKcal: 130, proteinGrams: 3)
+        let template = try MealTemplate(
+            name: "米饭",
+            components: [
+                try MealTemplateComponent(
+                    foodItemID: food.id,
+                    foodName: food.name,
+                    defaultWeightGrams: 180
+                ),
+            ]
+        )
+        let persistentTemplate = PersistentMealTemplate(domain: template)
+        context.insert(persistentTemplate)
+        try context.save()
+
+        #expect(persistentTemplate.useCount == 0)
+        #expect(persistentTemplate.lastUsedAt == nil)
+
+        let usedAt = Date(timeIntervalSince1970: 400)
+        persistentTemplate.markUsed(at: usedAt)
+        try context.save()
+
+        #expect(persistentTemplate.useCount == 1)
+        #expect(persistentTemplate.lastUsedAt == usedAt)
     }
 
     @Test("The personal seed food import is deterministic and idempotent")

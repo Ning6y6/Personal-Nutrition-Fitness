@@ -9,8 +9,10 @@
 - 以称重/包装数据（证据 A）或标准份量估算（证据 B）保存到 SwiftData。
 - 在今日页通过热量圆环查看进度，并查看六项营养目标差额和最近餐食。
 - 查看全部历史餐食与营养快照，并编辑或删除记录；今日汇总会随修改立即重算。
+- 从最近吃过或个人常用菜模板生成独立餐食草稿，只修改本次重量后保存。
+- 从历史餐食另存常用模板，并新建、重命名、编辑默认克重或删除模板。
 
-拍照 AI、食品标签 OCR、HealthKit 和 CloudKit 尚未接入。历史编辑切片的落实与验收见 [`docs/MEAL_HISTORY_EDITING_PLAN.md`](docs/MEAL_HISTORY_EDITING_PLAN.md)。
+拍照 AI、食品标签 OCR、HealthKit 和 CloudKit 尚未接入。复用与模板切片的落实和待完成真机验收见 [`docs/MEAL_REUSE_TEMPLATE_PLAN.md`](docs/MEAL_REUSE_TEMPLATE_PLAN.md)。
 
 开发 skills、UI 采用范围和延后项见 [`docs/DEVELOPMENT_RESOURCES.md`](docs/DEVELOPMENT_RESOURCES.md)。
 

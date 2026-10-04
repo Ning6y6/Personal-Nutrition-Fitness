@@ -12,6 +12,8 @@
 - 12 项基于 CoFID 2021 的个人种子食物，使用固定 ID 和幂等导入。
 - 今日页营养汇总、最近三餐和热量圆形进度图。
 - 历史餐食列表和详情；支持编辑、带二次确认的删除，以及修改后的今日汇总即时重算。
+- “记录一餐”快速开始页：空白记录、最多 6 条去重后的最近吃过，以及个人常用菜模板。
+- 常用菜模板的本机 SwiftData 保存、从历史另存、新建、重命名、默认克重编辑和确认删除。
 - `MealPhotoEstimate`、`PortionCalibration`、`MealVisionProvider` 及成功/超时/无效/低置信度离线 Fixture。
 - 可测试的热量显示规则：目标内为绿色，超出不超过 10% 为琥珀色，超过 10% 为红色。
 - SwiftUI、SwiftData、Swift Testing 和 Swift Concurrency 开发 skills 使用规范。
@@ -31,11 +33,13 @@
 - 餐食分项保存当时的名称、重量和营养快照，食物库更新不会静默改写历史数据。
 - 拍照模型只返回组成、模板映射和份量范围；最终营养由本地 `FoodItem` 计算。
 - 图片数据契约只保存哈希或本地引用，不保存系统相册原图。
+- 常用模板只保存食物引用和默认克重；每次使用时按当前本地食物库重新计算营养，历史仍保存独立快照。
+- 复用历史或模板时生成新的餐食草稿并默认使用证据 B；取消不会增加模板使用次数。
 
 ### 验证
 
-- `FoodDecisionCore`：22 项 Swift Testing 测试通过。
-- `FoodDecisionAssistantTests`：9 项 iOS SwiftData 测试通过。
+- `FoodDecisionCore`：28 项 Swift Testing 测试通过。
+- `FoodDecisionAssistantTests`：13 项 iOS SwiftData 测试通过。
 - iOS 26 最低部署目标构建通过。
 - iPhone 模拟器完成安装、启动和首页布局检查。
 
@@ -44,4 +48,4 @@
 - 真实 AI API、图片上传、正式拍照确认界面。
 - 食品标签 OCR 和商品约束判断界面。
 - HealthKit、CloudKit、训练记录和 Apple Watch 交互。
-- 常用菜模板、自定义食物和 CSV 导出。
+- 自定义食物和 CSV 导出。

@@ -10,8 +10,8 @@
 - iPhone 16 Pro Max 真机运行：已确认；Personal Team 描述文件需每 7 天重新签名
 - 代码仓库：工程骨架、核心规则包和 SwiftData v1 已建立
 - `FoodDecisionAssistantTests`：已建立并接入共享 Scheme
-- iPhone 18 Pro Max 模拟器测试：SwiftData 9/9 通过
-- `FoodDecisionCore`：Swift Testing 22/22 通过
+- iPhone 18 Pro Max 模拟器测试：SwiftData 13/13 通过
+- `FoodDecisionCore`：Swift Testing 28/28 通过
 - 正式产品名称：`食衡` / `ShiHeng`
 - 正式 Bundle ID：`com.ning6y6.ShiHeng`
 
@@ -22,7 +22,7 @@
 - [x] 定义第一批领域模型
 - [x] 写入版本化评分配置与补剂规则
 - [x] 建立首批规则单元测试
-- [x] 建立 SwiftData `VersionedSchema` 和十个应用层持久化实体
+- [x] 建立 SwiftData `VersionedSchema` 和十二个应用层持久化实体
 - [x] 建立每日目标设置页，可保存并重新读取六项营养目标
 - [x] 增加现代 Launch Screen 声明，修复真机兼容模式造成的上下留黑和导航栏错位
 - [x] 建立 iOS 单元测试 target，并通过内存 SwiftData 保存、读取和领域转换测试
@@ -71,6 +71,20 @@
 - [x] 取消编辑只丢弃表单草稿，不修改已保存餐食
 - [x] 新增 3 项 SwiftData 测试；iOS 测试现为 9/9，核心包仍为 22/22，App 构建通过
 
+## 最近吃过与个人常用菜模板
+
+- [x] 从最近 30 条有效历史实时计算最多 6 条“最近吃过”，不建立重复持久化表
+- [x] 按规范化餐食名称与食物 ID 组成去重，相同名称但不同组成保持独立
+- [x] 建立可编码、可测试的模板、模板分项和统一餐食草稿领域模型
+- [x] SwiftData 保存模板名称、食物引用、默认克重、顺序和使用信息，不保存最终营养值
+- [x] “记录一餐”先提供空白记录、最近吃过与个人常用菜三个入口
+- [x] 历史或模板复用生成独立新草稿，并默认采用标准份量估算与证据 B
+- [x] 从餐食详情保存模板；支持新建、重命名、编辑默认克重和带确认删除
+- [x] 失效食物引用会阻止保存；删除模板级联清理模板分项但不影响历史餐食
+- [x] 只有餐食成功保存后才在同一事务内更新模板使用次数和最近使用时间
+- [x] Core 新增 6 项测试、SwiftData 新增 4 项测试；现为 28/28 与 13/13，App 构建通过
+- [ ] 真机完成一次模板复用、改重量并保存的 30 秒计时验收
+
 ## 开发工具与 UI 规范
 
 - [x] 安装 `swiftui-pro`、`swiftdata-pro`、`swift-testing-pro` 和 `swift-concurrency-pro`
@@ -89,9 +103,9 @@
 
 详细职责、依赖和验收标准见 [`APP_NAVIGATION_PLAN.md`](APP_NAVIGATION_PLAN.md)。该功能目前仅完成规划，尚未修改 App 导航代码。
 
-当前记录界面只支持本地种子食物和克重。自定义食物、菜谱批次、剩菜复用、照片识别和标签扫描仍未接入。
+当前记录界面支持本地种子食物、克重、最近餐食复用和个人模板。自定义食物、菜谱批次、外卖无秤份量、照片识别和标签扫描仍未接入。
 
-下一开发切片为“最近吃过”和个人常用菜模板；完整优先级见 [`ROADMAP.md`](ROADMAP.md)。
+下一开发切片为“自定义食物和个人菜谱批次”；完整优先级见 [`ROADMAP.md`](ROADMAP.md)。
 
 本切片没有接入真实 AI API，没有上传或保存系统相册原图，也没有实现正式拍照/确认界面、HealthKit 或 CloudKit。营养值仍须在后续切片中由本地 `FoodItem` 映射与计算，不能直接采用模型输出。
 

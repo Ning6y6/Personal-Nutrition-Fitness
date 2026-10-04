@@ -19,6 +19,8 @@ enum VersionedSchemaV1: VersionedSchema {
             PersistentMealPhotoEstimate.self,
             PersistentMealPhotoComponent.self,
             PersistentPortionCalibration.self,
+            PersistentMealTemplate.self,
+            PersistentMealTemplateComponent.self,
         ]
     }
 }

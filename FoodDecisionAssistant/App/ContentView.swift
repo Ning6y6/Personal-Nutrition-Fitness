@@ -33,7 +33,8 @@ struct ContentView: View {
                     TodayStatusCard(
                         goal: currentGoal,
                         nutrients: summary.nutrients,
-                        mealCount: summary.meals.count
+                        mealCount: summary.meals.count,
+                        hasGoalReadError: hasGoalReadError
                     )
                     if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
                         Label(
@@ -42,11 +43,6 @@ struct ContentView: View {
                         )
                         .font(.subheadline)
                         .foregroundStyle(.orange)
-                    }
-                    if hasGoalReadError {
-                        Label("无法读取或校验已保存目标，请到目标页检查；原数据保留。", systemImage: "exclamationmark.triangle")
-                            .font(.subheadline)
-                            .foregroundStyle(.orange)
                     }
                     Button {
                         isShowingMealStart = true

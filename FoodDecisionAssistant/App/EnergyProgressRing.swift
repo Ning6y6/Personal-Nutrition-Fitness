@@ -2,7 +2,6 @@ import FoodDecisionCore
 import SwiftUI
 
 struct EnergyProgressRing: View {
-    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let consumedKcal: Double
@@ -16,84 +15,45 @@ struct EnergyProgressRing: View {
     }
 
     var body: some View {
+        let evaluated = summary
+        let display = NutritionProgressPresentation(summary: evaluated.nutritionProgress, unit: "kcal")
         ZStack {
             Circle()
                 .stroke(.quaternary, lineWidth: 14)
 
             Circle()
-                .trim(from: 0, to: summary.ringProgress)
+                .trim(from: 0, to: display.progress ?? 0)
                 .stroke(
-                    statusColor,
+                    display.tone.color,
                     style: StrokeStyle(lineWidth: 14, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
 
             VStack {
-                Image(systemName: statusSymbol)
-                    .foregroundStyle(statusColor)
+                Image(systemName: display.symbol)
+                    .foregroundStyle(display.tone.color)
                     .accessibilityHidden(true)
 
-                Text(formatted(summary.consumedKcal))
+                Text(display.currentText)
                     .font(.title.bold())
                     .contentTransition(.numericText())
 
-                Text("目标 \(formatted(summary.targetKcal)) kcal")
+                Text("预算 \(display.targetText) kcal")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Text(statusLabel)
+                Text(display.message)
                     .font(.caption)
-                    .foregroundStyle(statusColor)
+                    .foregroundStyle(display.tone.color)
             }
             .multilineTextAlignment(.center)
         }
         .aspectRatio(1, contentMode: .fit)
-        .animation(reduceMotion ? nil : .smooth, value: summary.ringProgress)
-        .animation(reduceMotion ? nil : .smooth, value: summary.status)
+        .animation(reduceMotion ? nil : .smooth, value: display.progress)
+        .animation(reduceMotion ? nil : .smooth, value: evaluated.status)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("今日热量")
-        .accessibilityValue(accessibilityValue)
-    }
-
-    private var statusColor: Color {
-        switch summary.status {
-        case .withinTarget:
-            .green
-        case .overTarget:
-            .orange
-        case .significantlyOverTarget:
-            .red
-        }
-    }
-
-    private var statusSymbol: String {
-        switch summary.status {
-        case .withinTarget:
-            differentiateWithoutColor ? "checkmark.circle" : "flame.fill"
-        case .overTarget:
-            "exclamationmark.circle.fill"
-        case .significantlyOverTarget:
-            "exclamationmark.triangle.fill"
-        }
-    }
-
-    private var statusLabel: String {
-        switch summary.status {
-        case .withinTarget:
-            summary.ratio >= 1
-                ? "已达到目标"
-                : "还差 \(formatted(summary.remainingKcal)) kcal"
-        case .overTarget, .significantlyOverTarget:
-            "超出 \(formatted(summary.overageKcal)) kcal"
-        }
-    }
-
-    private var accessibilityValue: String {
-        "已摄入 \(formatted(summary.consumedKcal)) 千卡，目标 \(formatted(summary.targetKcal)) 千卡，\(statusLabel)"
-    }
-
-    private func formatted(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0)))
+        .accessibilityValue("已摄入 \(display.currentText) 千卡，预算 \(display.targetText) 千卡，\(display.message)")
     }
 }
 

@@ -35,13 +35,14 @@ struct EnergyProgressTests {
         #expect(beyondBoundary.status == .significantlyOverTarget)
     }
 
-    @Test("Negative inputs are clamped to safe display values")
-    func negativeValuesAreClamped() {
+    @Test("Negative inputs are unavailable, never clamped into a green result")
+    func negativeValuesAreRejected() {
         let summary = policy.evaluate(consumedKcal: -100, targetKcal: -1)
 
-        #expect(summary.consumedKcal == 0)
-        #expect(summary.targetKcal == 0)
-        #expect(summary.ratio == 0)
-        #expect(summary.status == .withinTarget)
+        #expect(summary.consumedKcal == nil)
+        #expect(summary.targetKcal == nil)
+        #expect(summary.ratio == nil)
+        #expect(summary.ringProgress == nil)
+        #expect(summary.status == .invalidInput)
     }
 }

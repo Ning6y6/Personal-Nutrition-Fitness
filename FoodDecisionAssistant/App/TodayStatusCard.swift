@@ -5,6 +5,7 @@ struct TodayStatusCard: View {
     let goal: GoalProfile?
     let nutrients: NutrientValues?
     let mealCount: Int
+    var hasGoalReadError = false
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -17,7 +18,13 @@ struct TodayStatusCard: View {
                     .contentTransition(.numericText())
             }
 
-            if let nutrients, let goal {
+            if hasGoalReadError {
+                Label("已保存目标暂不可用", systemImage: "exclamationmark.triangle")
+                    .font(.headline)
+                Text("无法读取或校验目标，请到目标页检查。原数据保留，未按无目标或零目标计算。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else if let nutrients, let goal {
                 EnergyProgressRing(
                     consumedKcal: nutrients.energyKcal,
                     targetKcal: goal.energyKcal
@@ -29,44 +36,38 @@ struct TodayStatusCard: View {
                     title: "蛋白质",
                     current: nutrients.proteinGrams,
                     target: goal.proteinGrams,
-                    unit: "g"
+                    unit: "g",
+                    metric: .protein
                 )
                 NutritionProgressRow(
                     title: "碳水",
                     current: nutrients.carbohydrateGrams,
                     target: goal.carbohydrateGrams,
-                    unit: "g"
+                    unit: "g",
+                    metric: .carbohydrate
                 )
                 NutritionProgressRow(
                     title: "脂肪",
                     current: nutrients.fatGrams,
                     target: goal.fatGrams,
-                    unit: "g"
+                    unit: "g",
+                    metric: .fat
                 )
 
-                if let saturatedFatTarget = goal.saturatedFatLimitGrams {
-                    NutritionProgressRow(
-                        title: "饱和脂肪",
-                        current: nutrients.saturatedFatGrams,
-                        target: saturatedFatTarget,
-                        unit: "g",
-                        isUpperLimit: true
-                    )
-                }
-
-                if let fibreTarget = goal.fibreGrams {
-                    if let fibre = nutrients.fibreGrams {
-                        NutritionProgressRow(
-                            title: "纤维",
-                            current: fibre,
-                            target: fibreTarget,
-                            unit: "g"
-                        )
-                    } else {
-                        LabeledContent("纤维", value: "当日数据不完整")
-                            .font(.subheadline)
-                    }
-                }
+                NutritionProgressRow(
+                    title: "饱和脂肪",
+                    current: nutrients.saturatedFatGrams,
+                    target: goal.saturatedFatLimitGrams,
+                    unit: "g",
+                    metric: .saturatedFat
+                )
+                NutritionProgressRow(
+                    title: "纤维",
+                    current: nutrients.fibreGrams,
+                    target: goal.fibreGrams,
+                    unit: "g",
+                    metric: .fibre
+                )
             } else if nutrients == nil {
                 Label("营养合计无法安全计算", systemImage: "exclamationmark.triangle")
                     .font(.headline)

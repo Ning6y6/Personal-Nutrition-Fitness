@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A60000000000000000000001 /* NutritionProgressPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60000000000000000000001 /* NutritionProgressPresentation.swift */; };
+		A60000000000000000000002 /* NutritionProgressPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60000000000000000000002 /* NutritionProgressPresentationTests.swift */; };
 		A50000000000000000000001 /* GoalSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000001 /* GoalSettingsView.swift */; };
 		A50000000000000000000002 /* GoalSaveCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000002 /* GoalSaveCommand.swift */; };
 		A50000000000000000000003 /* GoalSaveCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000003 /* GoalSaveCommandTests.swift */; };
@@ -56,6 +58,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B60000000000000000000001 /* NutritionProgressPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionProgressPresentation.swift; sourceTree = "<group>"; };
+		B60000000000000000000002 /* NutritionProgressPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionProgressPresentationTests.swift; sourceTree = "<group>"; };
 		B50000000000000000000001 /* GoalSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalSettingsView.swift; sourceTree = "<group>"; };
 		B50000000000000000000002 /* GoalSaveCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalSaveCommand.swift; sourceTree = "<group>"; };
 		B50000000000000000000003 /* GoalSaveCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalSaveCommandTests.swift; sourceTree = "<group>"; };
@@ -142,6 +146,7 @@
 				B40000000000000000000002 /* MealReadValidationTests.swift */,
 				B40000000000000000000003 /* DomainBoundaryPersistenceTests.swift */,
 				B50000000000000000000003 /* GoalSaveCommandTests.swift */,
+				B60000000000000000000002 /* NutritionProgressPresentationTests.swift */,
 			);
 			path = FoodDecisionAssistantTests;
 			sourceTree = "<group>";
@@ -185,6 +190,7 @@
 				B30000000000000000000007 /* BackupImportReader.swift */,
 				B40000000000000000000001 /* MealReadValidation.swift */,
 				B50000000000000000000001 /* GoalSettingsView.swift */,
+				B60000000000000000000001 /* NutritionProgressPresentation.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -312,6 +318,7 @@
 				A40000000000000000000002 /* MealReadValidationTests.swift in Sources */,
 				A40000000000000000000003 /* DomainBoundaryPersistenceTests.swift in Sources */,
 				A50000000000000000000003 /* GoalSaveCommandTests.swift in Sources */,
+				A60000000000000000000002 /* NutritionProgressPresentationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,6 +331,7 @@
 				A40000000000000000000001 /* MealReadValidation.swift in Sources */,
 				A50000000000000000000001 /* GoalSettingsView.swift in Sources */,
 				A50000000000000000000002 /* GoalSaveCommand.swift in Sources */,
+				A60000000000000000000001 /* NutritionProgressPresentation.swift in Sources */,
 				7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */,
 				A10000000000000000000001 /* SeedFoodCatalog.swift in Sources */,
 				A10000000000000000000002 /* MealEntryView.swift in Sources */,

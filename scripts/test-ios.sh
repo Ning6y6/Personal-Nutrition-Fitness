@@ -2,4 +2,4 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
-exec bash "$project_root/scripts/run-ios-xcode.sh" build "$@"
+exec bash "$project_root/scripts/run-ios-xcode.sh" test "$@"

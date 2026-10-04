@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var isShowingGoalSettings = false
     @State private var isShowingMealStart = false
     @State private var isShowingMealHistory = false
+    @State private var isShowingBackup = false
     @State private var selectedMeal: PersistentMealLog?
     @State private var seedImportError: Error?
 
@@ -73,6 +74,11 @@ struct ContentView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("今日")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("本地备份", systemImage: "externaldrive") {
+                        isShowingBackup = true
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("目标") {
                         isShowingGoalSettings = true
@@ -81,6 +87,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $isShowingGoalSettings) {
                 GoalSettingsView()
+            }
+            .sheet(isPresented: $isShowingBackup) {
+                BackupManagementView()
             }
             .sheet(isPresented: $isShowingMealStart) {
                 MealStartView()

@@ -20,6 +20,12 @@
 		A10000000000000000000008 /* MealStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* MealStartView.swift */; };
 		A10000000000000000000009 /* MealTemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* MealTemplateEditorView.swift */; };
 		A1000000000000000000000A /* MealTemplateManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000A /* MealTemplateManagerView.swift */; };
+		A20000000000000000000001 /* LocalStoreBackup.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* LocalStoreBackup.swift */; };
+		A20000000000000000000002 /* BackupFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* BackupFileDocument.swift */; };
+		A20000000000000000000003 /* BackupManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* BackupManagementView.swift */; };
+		A20000000000000000000004 /* BackupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000004 /* BackupServiceTests.swift */; };
+		A20000000000000000000005 /* LocalStoreBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000005 /* LocalStoreBackupService.swift */; };
+		A20000000000000000000006 /* LocalStoreBackupRestoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* LocalStoreBackupRestoration.swift */; };
 		A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* FoodDecisionAssistantApp.swift */; };
 		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* ContentView.swift */; };
 		A00000000000000000000003 /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000002 /* FoodDecisionCore */; };
@@ -49,6 +55,12 @@
 		B10000000000000000000008 /* MealStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStartView.swift; sourceTree = "<group>"; };
 		B10000000000000000000009 /* MealTemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTemplateEditorView.swift; sourceTree = "<group>"; };
 		B1000000000000000000000A /* MealTemplateManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTemplateManagerView.swift; sourceTree = "<group>"; };
+		B20000000000000000000001 /* LocalStoreBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreBackup.swift; sourceTree = "<group>"; };
+		B20000000000000000000002 /* BackupFileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupFileDocument.swift; sourceTree = "<group>"; };
+		B20000000000000000000003 /* BackupManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManagementView.swift; sourceTree = "<group>"; };
+		B20000000000000000000004 /* BackupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupServiceTests.swift; sourceTree = "<group>"; };
+		B20000000000000000000005 /* LocalStoreBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreBackupService.swift; sourceTree = "<group>"; };
+		B20000000000000000000006 /* LocalStoreBackupRestoration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreBackupRestoration.swift; sourceTree = "<group>"; };
 		B00000000000000000000001 /* FoodDecisionAssistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantApp.swift; sourceTree = "<group>"; };
 		B00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B00000000000000000000003 /* ShiHeng.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiHeng.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +93,9 @@
 				7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */,
 				B10000000000000000000001 /* SeedFoodCatalog.swift */,
 				B10000000000000000000007 /* MealTemplatePersistence.swift */,
+				B20000000000000000000001 /* LocalStoreBackup.swift */,
+				B20000000000000000000005 /* LocalStoreBackupService.swift */,
+				B20000000000000000000006 /* LocalStoreBackupRestoration.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -89,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */,
+				B20000000000000000000004 /* BackupServiceTests.swift */,
 			);
 			path = FoodDecisionAssistantTests;
 			sourceTree = "<group>";
@@ -125,6 +141,8 @@
 				B10000000000000000000008 /* MealStartView.swift */,
 				B10000000000000000000009 /* MealTemplateEditorView.swift */,
 				B1000000000000000000000A /* MealTemplateManagerView.swift */,
+				B20000000000000000000002 /* BackupFileDocument.swift */,
+				B20000000000000000000003 /* BackupManagementView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -246,6 +264,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
+				A20000000000000000000004 /* BackupServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +285,11 @@
 				A10000000000000000000008 /* MealStartView.swift in Sources */,
 				A10000000000000000000009 /* MealTemplateEditorView.swift in Sources */,
 				A1000000000000000000000A /* MealTemplateManagerView.swift in Sources */,
+				A20000000000000000000001 /* LocalStoreBackup.swift in Sources */,
+				A20000000000000000000005 /* LocalStoreBackupService.swift in Sources */,
+				A20000000000000000000006 /* LocalStoreBackupRestoration.swift in Sources */,
+				A20000000000000000000002 /* BackupFileDocument.swift in Sources */,
+				A20000000000000000000003 /* BackupManagementView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

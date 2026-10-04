@@ -103,9 +103,10 @@ struct MealDetailView: View {
     @State private var templatePreparationError: Error?
 
     var body: some View {
+        let validatedMeal = try? meal.domainModel()
         NavigationStack {
             Form {
-                if (try? meal.domainModel()) == nil {
+                if validatedMeal == nil {
                     Section {
                         Label("这条记录尚未通过正式数据校验，不参与汇总或复用。原始信息保留，请检查分项后编辑保存。", systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.orange)
@@ -137,10 +138,17 @@ struct MealDetailView: View {
                     nutrientRow("碳水化合物", value: meal.carbohydrateGrams, unit: "g")
                     nutrientRow("脂肪", value: meal.fatGrams, unit: "g")
                     nutrientRow("饱和脂肪", value: meal.saturatedFatGrams, unit: "g")
-                    if let fibre = meal.fibreGrams {
-                        nutrientRow("纤维", value: fibre, unit: "g")
+                    if let validatedMeal {
+                        FibreSummaryRow(summary: try? FibreIntakeSummary(snapshots: validatedMeal.components.map(\.nutrients)))
                     } else {
-                        LabeledContent("纤维", value: "—")
+                        if let fibre = meal.fibreGrams {
+                            nutrientRow("纤维（原始快照）", value: fibre, unit: "g")
+                        } else {
+                            LabeledContent("纤维（原始快照）", value: "未知")
+                        }
+                        Text("原记录未通过正式校验，未重新计算纤维小计。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 

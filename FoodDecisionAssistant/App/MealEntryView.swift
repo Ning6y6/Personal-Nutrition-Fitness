@@ -222,16 +222,12 @@ struct MealEntryView: View {
             nutrientRow("脂肪", value: previewNutrients.fatGrams, unit: "g")
             nutrientRow("饱和脂肪", value: previewNutrients.saturatedFatGrams, unit: "g")
 
-            if let fibre = previewNutrients.fibreGrams {
-                nutrientRow("纤维", value: fibre, unit: "g")
-            } else {
-                LabeledContent("纤维", value: "—")
-            }
+            FibreSummaryRow(summary: try? FibreIntakeSummary(snapshots: resolvedComponents.map(\.nutrients)))
         } header: {
             Text("本餐营养预览")
         } footer: {
             if hasIncompleteRows {
-                Text("选择食物并输入大于 0 克的重量后才能保存。")
+                Text("当前仅预览已填有效分项；每项选择食物并输入大于0克的重量后才能保存。未填分项尚未计入上述数据。")
             } else if previewNutrients.fibreGrams == nil {
                 Text("至少一个分项缺少可靠纤维数据，因此本餐纤维不显示精确合计。")
             }

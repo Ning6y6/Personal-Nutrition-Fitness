@@ -5,6 +5,7 @@ struct TodayStatusCard: View {
     let goal: GoalProfile?
     let nutrients: NutrientValues?
     let mealCount: Int
+    let fibreSummary: FibreIntakeSummary?
     var hasGoalReadError = false
 
     var body: some View {
@@ -61,13 +62,6 @@ struct TodayStatusCard: View {
                     unit: "g",
                     metric: .saturatedFat
                 )
-                NutritionProgressRow(
-                    title: "纤维",
-                    current: nutrients.fibreGrams,
-                    target: goal.fibreGrams,
-                    unit: "g",
-                    metric: .fibre
-                )
             } else if nutrients == nil {
                 Label("营养合计无法安全计算", systemImage: "exclamationmark.triangle")
                     .font(.headline)
@@ -81,6 +75,10 @@ struct TodayStatusCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+            FibreSummaryRow(
+                summary: fibreSummary, target: goal?.fibreGrams,
+                showsTarget: goal != nil && !hasGoalReadError
+            )
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
@@ -98,7 +96,8 @@ struct TodayStatusCard: View {
         TodayStatusCard(
             goal: goal,
             nutrients: nutrients,
-            mealCount: 2
+            mealCount: 2,
+            fibreSummary: try? FibreIntakeSummary(snapshots: [nutrients])
         )
         .padding()
         .background(Color(.systemGroupedBackground))

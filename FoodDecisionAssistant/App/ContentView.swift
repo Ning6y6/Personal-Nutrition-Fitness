@@ -34,6 +34,7 @@ struct ContentView: View {
                         goal: currentGoal,
                         nutrients: summary.nutrients,
                         mealCount: summary.meals.count,
+                        fibreSummary: summary.fibreSummary,
                         hasGoalReadError: hasGoalReadError
                     )
                     if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {

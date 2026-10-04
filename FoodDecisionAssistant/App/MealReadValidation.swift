@@ -9,6 +9,7 @@ struct MealReadValidation {
     let invalidRecordIDs: [UUID]
     let draftRecordIDs: [UUID]
     let nutrients: NutrientValues?
+    let fibreSummary: FibreIntakeSummary?
 
     init(_ records: [PersistentMealLog]) {
         var meals: [MealLog] = []
@@ -30,6 +31,9 @@ struct MealReadValidation {
         draftRecordIDs = drafts
         // A finite input may still overflow when summed. Do not turn that failure into zero.
         nutrients = try? NutrientValues.sum(meals.map(\.nutrients))
+        // A meal-level nil would lose its known component subtotal. Use saved snapshots,
+        // not current source foods, and do not silently replace overflow with zero.
+        fibreSummary = try? FibreIntakeSummary(snapshots: meals.flatMap(\.components).map(\.nutrients))
     }
 }
 

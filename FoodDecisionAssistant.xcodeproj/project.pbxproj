@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A40000000000000000000001 /* MealReadValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40000000000000000000001 /* MealReadValidation.swift */; };
+		A40000000000000000000002 /* MealReadValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40000000000000000000002 /* MealReadValidationTests.swift */; };
+		A40000000000000000000003 /* DomainBoundaryPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40000000000000000000003 /* DomainBoundaryPersistenceTests.swift */; };
 		A30000000000000000000008 /* BackupImportReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000008 /* BackupImportReaderTests.swift */; };
 		A30000000000000000000001 /* LocalStoreBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000001 /* LocalStoreBootstrap.swift */; };
 		A30000000000000000000002 /* StoreSchemaCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000002 /* StoreSchemaCompatibility.swift */; };
@@ -50,6 +53,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B40000000000000000000001 /* MealReadValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealReadValidation.swift; sourceTree = "<group>"; };
+		B40000000000000000000002 /* MealReadValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealReadValidationTests.swift; sourceTree = "<group>"; };
+		B40000000000000000000003 /* DomainBoundaryPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainBoundaryPersistenceTests.swift; sourceTree = "<group>"; };
 		B30000000000000000000008 /* BackupImportReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupImportReaderTests.swift; sourceTree = "<group>"; };
 		B30000000000000000000001 /* LocalStoreBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreBootstrap.swift; sourceTree = "<group>"; };
 		B30000000000000000000002 /* StoreSchemaCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSchemaCompatibility.swift; sourceTree = "<group>"; };
@@ -126,6 +132,8 @@
 				B20000000000000000000004 /* BackupServiceTests.swift */,
 				B30000000000000000000004 /* StoreBootstrapTests.swift */,
 				B30000000000000000000008 /* BackupImportReaderTests.swift */,
+				B40000000000000000000002 /* MealReadValidationTests.swift */,
+				B40000000000000000000003 /* DomainBoundaryPersistenceTests.swift */,
 			);
 			path = FoodDecisionAssistantTests;
 			sourceTree = "<group>";
@@ -167,6 +175,7 @@
 				B30000000000000000000005 /* StoreRecoveryView.swift */,
 				B30000000000000000000006 /* StoreBootstrapEnvironment.swift */,
 				B30000000000000000000007 /* BackupImportReader.swift */,
+				B40000000000000000000001 /* MealReadValidation.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -291,6 +300,8 @@
 				A20000000000000000000004 /* BackupServiceTests.swift in Sources */,
 				A30000000000000000000004 /* StoreBootstrapTests.swift in Sources */,
 				A30000000000000000000008 /* BackupImportReaderTests.swift in Sources */,
+				A40000000000000000000002 /* MealReadValidationTests.swift in Sources */,
+				A40000000000000000000003 /* DomainBoundaryPersistenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,6 +311,7 @@
 			files = (
 				A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */,
 				A00000000000000000000002 /* ContentView.swift in Sources */,
+				A40000000000000000000001 /* MealReadValidation.swift in Sources */,
 				7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */,
 				A10000000000000000000001 /* SeedFoodCatalog.swift in Sources */,
 				A10000000000000000000002 /* MealEntryView.swift in Sources */,

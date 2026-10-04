@@ -167,6 +167,7 @@ struct MealTemplateEditorView: View {
             && rows.allSatisfy { row in
                 guard let foodItemID = row.foodItemID else { return false }
                 return foodItems.contains { $0.id == foodItemID }
+                    && (row.weightGrams?.isFinite == true)
                     && (row.weightGrams ?? 0) > 0
             }
     }
@@ -196,6 +197,7 @@ struct MealTemplateEditorView: View {
                 else {
                     throw MealTemplateError.emptyComponents
                 }
+                _ = try food.domainModel
                 return try MealTemplateComponent(
                     id: row.id,
                     foodItemID: food.id,
@@ -215,7 +217,7 @@ struct MealTemplateEditorView: View {
             )
 
             if let templateToEdit {
-                templateToEdit.update(from: template, in: modelContext)
+                try templateToEdit.update(from: template, in: modelContext)
             } else {
                 modelContext.insert(PersistentMealTemplate(domain: template))
             }

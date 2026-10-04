@@ -33,17 +33,23 @@ public enum EstimateConfirmationStatus: String, Codable, Sendable, Equatable {
 
 public enum PortionEstimateRangeError: Error, Codable, Sendable, Equatable {
     case negativeWeight
+    case nonFiniteWeight
     case invalidOrder
     case invalidSharingRatio
     case invalidConfidence
+    case emptyComponents
+    case duplicateComponentID(UUID)
 }
 
 public struct PortionEstimateRange: Codable, Sendable, Equatable {
-    public var lowGrams: Double
-    public var midpointGrams: Double
-    public var highGrams: Double
+    public let lowGrams: Double
+    public let midpointGrams: Double
+    public let highGrams: Double
 
     public init(lowGrams: Double, midpointGrams: Double, highGrams: Double) throws {
+        guard lowGrams.isFinite, midpointGrams.isFinite, highGrams.isFinite else {
+            throw PortionEstimateRangeError.nonFiniteWeight
+        }
         guard lowGrams >= 0, midpointGrams >= 0, highGrams >= 0 else {
             throw PortionEstimateRangeError.negativeWeight
         }
@@ -56,7 +62,7 @@ public struct PortionEstimateRange: Codable, Sendable, Equatable {
     }
 
     public func scaled(by sharingRatio: Double) throws -> PortionEstimateRange {
-        guard (0...1).contains(sharingRatio), sharingRatio > 0 else {
+        guard sharingRatio.isFinite, (0...1).contains(sharingRatio), sharingRatio > 0 else {
             throw PortionEstimateRangeError.invalidSharingRatio
         }
         return try PortionEstimateRange(
@@ -77,18 +83,20 @@ public struct PortionEstimateRange: Codable, Sendable, Equatable {
 }
 
 public struct MealPhotoComponent: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var foodItemID: UUID?
-    public var templateID: String?
-    public var freeTextName: String
-    public var cookingMethod: CookingMethod
-    public var portionRange: PortionEstimateRange
-    public var confidence: Double
-    public var isHiddenOilOrSauce: Bool
-    public var userCorrectedWeightGrams: Double?
+    public let id: UUID
+    public let foodItemID: UUID?
+    public let templateID: String?
+    public let freeTextName: String
+    public let cookingMethod: CookingMethod
+    public let portionRange: PortionEstimateRange
+    public let confidence: Double
+    public let isHiddenOilOrSauce: Bool
+    /// Whole-dish weight before applying the estimate's consumedShareRatio.
+    public let userCorrectedWeightGrams: Double?
 
     public init(id: UUID = UUID(), foodItemID: UUID? = nil, templateID: String? = nil, freeTextName: String, cookingMethod: CookingMethod, portionRange: PortionEstimateRange, confidence: Double, isHiddenOilOrSauce: Bool = false, userCorrectedWeightGrams: Double? = nil) throws {
-        guard (0...1).contains(confidence) else { throw PortionEstimateRangeError.invalidConfidence }
+        guard confidence.isFinite, (0...1).contains(confidence) else { throw PortionEstimateRangeError.invalidConfidence }
+        guard userCorrectedWeightGrams.map(\.isFinite) ?? true else { throw PortionEstimateRangeError.nonFiniteWeight }
         guard userCorrectedWeightGrams.map({ $0 >= 0 }) ?? true else { throw PortionEstimateRangeError.negativeWeight }
         self.id = id
         self.foodItemID = foodItemID
@@ -127,14 +135,16 @@ public struct MealPhotoComponent: Codable, Identifiable, Sendable, Equatable {
 }
 
 public struct PortionCalibration: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var createdAt: Date
-    public var photoEstimateID: UUID
-    public var componentID: UUID?
-    public var estimatedWeightGrams: Double
-    public var actualWeightGrams: Double
+    public let id: UUID
+    public let createdAt: Date
+    public let photoEstimateID: UUID
+    public let componentID: UUID?
+    public let estimatedWeightGrams: Double
+    public let actualWeightGrams: Double
 
     public init(id: UUID = UUID(), createdAt: Date = .now, photoEstimateID: UUID, componentID: UUID? = nil, estimatedWeightGrams: Double, actualWeightGrams: Double) throws {
+        try DomainValidation.date(createdAt, field: "createdAt")
+        guard estimatedWeightGrams.isFinite, actualWeightGrams.isFinite else { throw PortionEstimateRangeError.nonFiniteWeight }
         guard estimatedWeightGrams >= 0, actualWeightGrams >= 0 else { throw PortionEstimateRangeError.negativeWeight }
         self.id = id
         self.createdAt = createdAt
@@ -151,20 +161,26 @@ public struct PortionCalibration: Codable, Identifiable, Sendable, Equatable {
 }
 
 public struct MealPhotoEstimate: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var createdAt: Date
-    public var mealTitle: String
-    public var imageReference: String
-    public var providerName: String
-    public var modelVersion: String
-    public var outputSchemaVersion: String
-    public var confirmationStatus: EstimateConfirmationStatus
-    public var consumedShareRatio: Double
-    public var components: [MealPhotoComponent]
-    public var calibrations: [PortionCalibration]
+    public let id: UUID
+    public let createdAt: Date
+    public let mealTitle: String
+    public let imageReference: String
+    public let providerName: String
+    public let modelVersion: String
+    public let outputSchemaVersion: String
+    public let confirmationStatus: EstimateConfirmationStatus
+    public let consumedShareRatio: Double
+    public let components: [MealPhotoComponent]
+    public let calibrations: [PortionCalibration]
 
     public init(id: UUID = UUID(), createdAt: Date = .now, mealTitle: String, imageReference: String, providerName: String, modelVersion: String, outputSchemaVersion: String, confirmationStatus: EstimateConfirmationStatus, consumedShareRatio: Double, components: [MealPhotoComponent], calibrations: [PortionCalibration] = []) throws {
-        guard (0...1).contains(consumedShareRatio), consumedShareRatio > 0 else { throw PortionEstimateRangeError.invalidSharingRatio }
+        try DomainValidation.date(createdAt, field: "createdAt")
+        guard consumedShareRatio.isFinite, (0...1).contains(consumedShareRatio), consumedShareRatio > 0 else { throw PortionEstimateRangeError.invalidSharingRatio }
+        guard confirmationStatus != .confirmed || !components.isEmpty else { throw PortionEstimateRangeError.emptyComponents }
+        var ids = Set<UUID>()
+        for component in components {
+            guard ids.insert(component.id).inserted else { throw PortionEstimateRangeError.duplicateComponentID(component.id) }
+        }
         self.id = id
         self.createdAt = createdAt
         self.mealTitle = mealTitle
@@ -178,14 +194,23 @@ public struct MealPhotoEstimate: Codable, Identifiable, Sendable, Equatable {
         self.calibrations = calibrations
     }
 
+    /// A consumed-portion projection, not a replacement whole-dish estimate.
+    /// The original components retain whole-dish corrections; do not apply the share twice.
     public func consumedComponents() throws -> [MealPhotoComponent] {
         try components.map { component in
-            var consumedComponent = component
-            consumedComponent.portionRange = try component.consumedPortionRange(sharingRatio: consumedShareRatio)
-            if let correctedWeight = component.userCorrectedWeightGrams {
-                consumedComponent.userCorrectedWeightGrams = correctedWeight * consumedShareRatio
-            }
-            return consumedComponent
+            try MealPhotoComponent(
+                id: component.id,
+                foodItemID: component.foodItemID,
+                templateID: component.templateID,
+                freeTextName: component.freeTextName,
+                cookingMethod: component.cookingMethod,
+                portionRange: component.consumedPortionRange(sharingRatio: consumedShareRatio),
+                confidence: component.confidence,
+                isHiddenOilOrSauce: component.isHiddenOilOrSauce,
+                userCorrectedWeightGrams: component.userCorrectedWeightGrams.map {
+                    try DomainValidation.multiply($0, consumedShareRatio, field: "userCorrectedWeightGrams")
+                }
+            )
         }
     }
 
@@ -212,19 +237,20 @@ public struct MealVisionRequest: Codable, Identifiable, Sendable, Equatable {
 }
 
 public struct MealVisionDraft: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var requestID: UUID
-    public var createdAt: Date
-    public var mealTitle: String
-    public var providerName: String
-    public var modelVersion: String
-    public var outputSchemaVersion: String
-    public var confirmationStatus: EstimateConfirmationStatus
-    public var consumedShareRatio: Double
-    public var components: [MealPhotoComponent]
+    public let id: UUID
+    public let requestID: UUID
+    public let createdAt: Date
+    public let mealTitle: String
+    public let providerName: String
+    public let modelVersion: String
+    public let outputSchemaVersion: String
+    public let confirmationStatus: EstimateConfirmationStatus
+    public let consumedShareRatio: Double
+    public let components: [MealPhotoComponent]
 
     public init(id: UUID = UUID(), requestID: UUID, createdAt: Date = .now, mealTitle: String, providerName: String, modelVersion: String, outputSchemaVersion: String, confirmationStatus: EstimateConfirmationStatus = .draft, consumedShareRatio: Double, components: [MealPhotoComponent]) throws {
-        guard (0...1).contains(consumedShareRatio), consumedShareRatio > 0 else { throw PortionEstimateRangeError.invalidSharingRatio }
+        try DomainValidation.date(createdAt, field: "createdAt")
+        guard consumedShareRatio.isFinite, (0...1).contains(consumedShareRatio), consumedShareRatio > 0 else { throw PortionEstimateRangeError.invalidSharingRatio }
         self.id = id
         self.requestID = requestID
         self.createdAt = createdAt

@@ -105,6 +105,12 @@ struct MealDetailView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if (try? meal.domainModel()) == nil {
+                    Section {
+                        Label("这条记录尚未通过正式数据校验，不参与汇总或复用。原始信息保留，请检查分项后编辑保存。", systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                    }
+                }
                 Section("餐食信息") {
                     LabeledContent("名称", value: meal.title)
                     LabeledContent("时间") {
@@ -237,7 +243,8 @@ private extension PersistentMealLog {
         case .a: "A · 高"
         case .b: "B · 中"
         case .c: "C · 已确认照片"
-        case .d, .none: "D · 草稿"
+        case .d: "D · 草稿"
+        case .none: "未知（\(estimateEvidenceGradeRawValue)）"
         }
     }
 
@@ -245,7 +252,8 @@ private extension PersistentMealLog {
         switch MealCoverageStatus(rawValue: coverageStatusRawValue) {
         case .complete: "完整"
         case .partial: "部分"
-        case .incomplete, .none: "临时"
+        case .incomplete: "临时"
+        case .none: "未知（\(coverageStatusRawValue)）"
         }
     }
 

@@ -230,10 +230,12 @@ struct BackupServiceTests {
             let template = try #require(context.fetch(FetchDescriptor<PersistentMealTemplate>()).first)
             let ids = template.components.map(\.id).sorted { $0.uuidString < $1.uuidString }
             for iteration in 1...3 {
-                var changed = try template.domainModel()
-                changed.name = "edited \(iteration)"
-                changed.components[0].defaultWeightGrams = Double(100 + iteration)
-                template.update(from: changed, in: context)
+                let original = try template.domainModel()
+                let components = try original.components.enumerated().map { index, component in
+                    try MealTemplateComponent(id: component.id, foodItemID: component.foodItemID, foodName: component.foodName, defaultWeightGrams: index == 0 ? Double(100 + iteration) : component.defaultWeightGrams, unit: component.unit)
+                }
+                let changed = try MealTemplate(id: original.id, name: "edited \(iteration)", createdAt: original.createdAt, updatedAt: .now, lastUsedAt: original.lastUsedAt, useCount: original.useCount, components: components)
+                try template.update(from: changed, in: context)
                 try context.save()
             }
             return ids
@@ -256,8 +258,8 @@ struct BackupServiceTests {
         let context = source.mainContext
         context.autosaveEnabled = false
         let template = try #require(context.fetch(FetchDescriptor<PersistentMealTemplate>()).first)
-        template.markUsed()
-        context.insert(PersistentMealLog(domain: MealLog(title: "cancelled", consumedWeightGrams: 0, nutrients: zeroNutrients, coverageStatus: .incomplete, estimateEvidenceGrade: .d)))
+        try template.markUsed()
+        context.insert(try historicalDraftMeal(title: "cancelled"))
         #expect(try LocalStoreBackupCodec.decode(LocalStoreBackupService.export(from: source)).records == before)
         context.rollback()
         #expect(try LocalStoreBackupCodec.decode(LocalStoreBackupService.export(from: source)).records == before)
@@ -277,8 +279,8 @@ struct BackupServiceTests {
         let context = ModelContext(readOnly)
         context.autosaveEnabled = false
         let template = try #require(context.fetch(FetchDescriptor<PersistentMealTemplate>()).first)
-        template.markUsed()
-        context.insert(PersistentMealLog(domain: MealLog(title: "failed", consumedWeightGrams: 0, nutrients: zeroNutrients, coverageStatus: .incomplete, estimateEvidenceGrade: .d)))
+        try template.markUsed()
+        context.insert(try historicalDraftMeal(title: "failed"))
         do {
             try context.save()
             Issue.record("The read-only store unexpectedly permitted a write")
@@ -309,7 +311,17 @@ struct BackupServiceTests {
     }
 
     private var zeroNutrients: NutrientValues {
-        NutrientValues(energyKcal: 0, fatGrams: 0, saturatedFatGrams: 0, carbohydrateGrams: 0, sugarGrams: 0, proteinGrams: 0, saltGrams: 0)
+        .zero
+    }
+
+    private func historicalDraftMeal(title: String) throws -> PersistentMealLog {
+        let component = try MealComponent(foodItemID: UUID(), foodName: "fixture", consumedWeightGrams: 1, unit: "g", nutrients: .zero)
+        let row = PersistentMealLog(domain: try MealLog(title: title, entryMethod: .weighed, coverageStatus: .incomplete, components: [component]))
+        for child in row.components { child.meal = nil }
+        row.components = []
+        row.consumedWeightGrams = 0
+        row.estimateEvidenceGradeRawValue = EstimateEvidenceGrade.d.rawValue
+        return row
     }
 
     private func temporaryDirectory() throws -> URL {
@@ -332,11 +344,11 @@ struct BackupServiceTests {
     private func populatedContainer(at url: URL? = nil) throws -> ModelContainer {
         let container = try container(at: url)
         let context = container.mainContext
-        let nutrients = NutrientValues(energyKcal: 123, fatGrams: 4, saturatedFatGrams: 1, carbohydrateGrams: 9, sugarGrams: 2, proteinGrams: 8, saltGrams: 0.3, fibreGrams: nil)
-        let food = FoodItem(name: "fixture food", category: .mixedMeal, nutrientsPer100Units: nutrients, source: "fixture")
+        let nutrients = try NutrientValues(energyKcal: 123, fatGrams: 4, saturatedFatGrams: 1, carbohydrateGrams: 9, sugarGrams: 2, proteinGrams: 8, saltGrams: 0.3, fibreGrams: nil)
+        let food = try FoodItem(name: "fixture food", category: .mixedMeal, nutrientsPer100Units: nutrients, source: "fixture")
         context.insert(PersistentFoodItem(domain: food))
-        context.insert(PersistentGoalProfile(domain: GoalProfile(energyKcal: 2000, proteinGrams: 140, carbohydrateGrams: 210, fatGrams: 60)))
-        context.insert(PersistentContainerProfile(domain: ContainerProfile(name: "bowl", tareWeightGrams: 42)))
+        context.insert(PersistentGoalProfile(domain: try GoalProfile(energyKcal: 2000, proteinGrams: 140, carbohydrateGrams: 210, fatGrams: 60)))
+        context.insert(PersistentContainerProfile(domain: try ContainerProfile(name: "bowl", tareWeightGrams: 42)))
         let first = try MealComponent(foodItemID: food.id, foodName: "first", consumedWeightGrams: 100, unit: "g", nutrients: nutrients)
         let second = try MealComponent(foodItemID: food.id, foodName: "second", consumedWeightGrams: 50, unit: "g", nutrients: nutrients)
         let meal = try MealLog(title: "fixture meal", entryMethod: .weighed, coverageStatus: .complete, components: [first, second])

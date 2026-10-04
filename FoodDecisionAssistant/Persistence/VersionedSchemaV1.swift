@@ -2,6 +2,73 @@ import FoodDecisionCore
 import Foundation
 import SwiftData
 
+/// Formal domain conversion is strict; raw backup export/restoration deliberately bypasses it.
+/// Report the entity, UUID and field, never the persisted value or an automatic replacement.
+enum PersistentDomainConversionError: Error, Equatable, LocalizedError {
+    case unknownEnum(entity: LocalStoreBackupEntityKind, id: UUID, field: String)
+    case invalidRecord(entity: LocalStoreBackupEntityKind, id: UUID, field: String)
+    case mismatchedIdentity(entity: LocalStoreBackupEntityKind, id: UUID)
+
+    var errorDescription: String? {
+        switch self {
+        case let .unknownEnum(entity, id, field):
+            "\(entity.displayName)记录\(id.uuidString)的\(field)无法识别；原记录保留，未采用默认值。"
+        case let .invalidRecord(entity, id, field):
+            "\(entity.displayName)记录\(id.uuidString)的\(field)未通过校验；原记录保留，不进入正式营养统计。"
+        case let .mismatchedIdentity(entity, id):
+            "\(entity.displayName)记录\(id.uuidString)与要保存的记录标识不一致，未修改。"
+        }
+    }
+}
+
+enum PersistentDomainConversion {
+    static func rawEnum<Value: RawRepresentable>(
+        _ type: Value.Type, raw: String, entity: LocalStoreBackupEntityKind, id: UUID, field: String
+    ) throws -> Value where Value.RawValue == String {
+        guard let value = Value(rawValue: raw) else {
+            throw PersistentDomainConversionError.unknownEnum(entity: entity, id: id, field: field)
+        }
+        return value
+    }
+
+    static func validated<Value>(
+        entity: LocalStoreBackupEntityKind, id: UUID, build: () throws -> Value
+    ) throws -> Value {
+        do { return try build() }
+        catch let error as PersistentDomainConversionError { throw error }
+        catch let error as DomainValidationError {
+            let field: String
+            switch error {
+            case let .invalidValue(value), let .nonFiniteValue(value), let .emptyText(value), let .calculationOverflow(value): field = value
+            }
+            throw PersistentDomainConversionError.invalidRecord(entity: entity, id: id, field: field)
+        } catch let error as MealTemplateError {
+            let field: String
+            switch error {
+            case .emptyName: field = "name"
+            case .emptyComponents, .duplicateComponentID: field = "components"
+            case .invalidWeight, .nonFiniteWeight: field = "defaultWeightGrams"
+            case .unsupportedUnit: field = "unit"
+            case .invalidUseCount, .useCountOverflow: field = "useCount"
+            }
+            throw PersistentDomainConversionError.invalidRecord(entity: entity, id: id, field: field)
+        } catch {
+            let field: String
+            switch error as? MealLoggingError {
+            case .unconfirmedEstimate: field = "estimateEvidenceGrade"
+            case .invalidSyncVersion: field = "healthKitSyncVersion"
+            case .inconsistentTotals: field = "nutrientSnapshot"
+            case .emptyComponents, .duplicateComponentID: field = "components"
+            case .emptyTitle: field = "title"
+            case .invalidWeight, .nonFiniteWeight: field = "consumedWeightGrams"
+            case .unsupportedUnit: field = "unit"
+            default: field = "domainValidation"
+            }
+            throw PersistentDomainConversionError.invalidRecord(entity: entity, id: id, field: field)
+        }
+    }
+}
+
 /// Frozen 2026-10-04 after verifying the deployed twelve-entity physical store.
 /// Do not edit stored properties/relationships/constraints in place. A future storage change
 /// requires a new version, an explicit migration stage and protected-store regression tests.
@@ -51,7 +118,9 @@ final class PersistentGoalProfile {
     }
 
     var domainModel: GoalProfile {
-        GoalProfile(
+        get throws {
+            try PersistentDomainConversion.validated(entity: .goalProfile, id: id) {
+                try GoalProfile(
             id: id,
             effectiveFrom: effectiveFrom,
             energyKcal: energyKcal,
@@ -60,7 +129,9 @@ final class PersistentGoalProfile {
             fatGrams: fatGrams,
             saturatedFatLimitGrams: saturatedFatLimitGrams,
             fibreGrams: fibreGrams
-        )
+                )
+            }
+        }
     }
 
     func update(from domain: GoalProfile) {
@@ -107,18 +178,23 @@ final class PersistentFoodItem {
     }
 
     var domainModel: FoodItem {
-        FoodItem(
+        get throws {
+            try PersistentDomainConversion.validated(entity: .foodItem, id: id) {
+                try FoodItem(
             id: id,
             name: name,
-            category: FoodCategory(rawValue: categoryRawValue) ?? .mixedMeal,
+            category: PersistentDomainConversion.rawEnum(FoodCategory.self, raw: categoryRawValue, entity: .foodItem, id: id, field: "categoryRawValue"),
             nutrientsPer100Units: nutrients,
             unit: unit,
             source: source
-        )
+                )
+            }
+        }
     }
 
     private var nutrients: NutrientValues {
-        NutrientValues(
+        get throws {
+            try NutrientValues(
             energyKcal: energyKcalPer100Units,
             fatGrams: fatGramsPer100Units,
             saturatedFatGrams: saturatedFatGramsPer100Units,
@@ -127,7 +203,8 @@ final class PersistentFoodItem {
             proteinGrams: proteinGramsPer100Units,
             saltGrams: saltGramsPer100Units,
             fibreGrams: fibreGramsPer100Units
-        )
+            )
+        }
     }
 }
 
@@ -144,7 +221,11 @@ final class PersistentContainerProfile {
     }
 
     var domainModel: ContainerProfile {
-        ContainerProfile(id: id, name: name, tareWeightGrams: tareWeightGrams)
+        get throws {
+            try PersistentDomainConversion.validated(entity: .containerProfile, id: id) {
+                try ContainerProfile(id: id, name: name, tareWeightGrams: tareWeightGrams)
+            }
+        }
     }
 }
 
@@ -196,24 +277,28 @@ final class PersistentMealLog {
     }
 
     func domainModel() throws -> MealLog {
-        MealLog(
+        try PersistentDomainConversion.validated(entity: .mealLog, id: id) {
+            try MealLog(
             id: id,
             eatenAt: eatenAt,
             title: title,
             consumedWeightGrams: consumedWeightGrams,
             nutrients: nutrientSnapshot,
-            entryMethod: MealEntryMethod(rawValue: entryMethodRawValue) ?? .weighed,
-            coverageStatus: MealCoverageStatus(rawValue: coverageStatusRawValue) ?? .incomplete,
-            estimateEvidenceGrade: EstimateEvidenceGrade(rawValue: estimateEvidenceGradeRawValue) ?? .d,
+            entryMethod: PersistentDomainConversion.rawEnum(MealEntryMethod.self, raw: entryMethodRawValue, entity: .mealLog, id: id, field: "entryMethodRawValue"),
+            coverageStatus: PersistentDomainConversion.rawEnum(MealCoverageStatus.self, raw: coverageStatusRawValue, entity: .mealLog, id: id, field: "coverageStatusRawValue"),
+            estimateEvidenceGrade: PersistentDomainConversion.rawEnum(EstimateEvidenceGrade.self, raw: estimateEvidenceGradeRawValue, entity: .mealLog, id: id, field: "estimateEvidenceGradeRawValue"),
             healthKitSyncVersion: healthKitSyncVersion,
             components: try components
                 .sorted { $0.sortIndex < $1.sortIndex }
                 .map { try $0.domainModel() }
-        )
+            )
+        }
     }
 
     var nutrientSnapshot: NutrientValues {
-        NutrientValues(
+        get throws {
+            try PersistentDomainConversion.validated(entity: .mealLog, id: id) {
+                try NutrientValues(
             energyKcal: energyKcal,
             fatGrams: fatGrams,
             saturatedFatGrams: saturatedFatGrams,
@@ -222,11 +307,13 @@ final class PersistentMealLog {
             proteinGrams: proteinGrams,
             saltGrams: saltGrams,
             fibreGrams: fibreGrams
-        )
+                )
+            }
+        }
     }
 
-    func update(from domain: MealLog, in modelContext: ModelContext) {
-        precondition(id == domain.id, "A persisted meal can only be updated from the same meal ID.")
+    func update(from domain: MealLog, in modelContext: ModelContext) throws {
+        guard id == domain.id else { throw PersistentDomainConversionError.mismatchedIdentity(entity: .mealLog, id: id) }
 
         eatenAt = domain.eatenAt
         title = domain.title
@@ -295,7 +382,8 @@ final class PersistentMealComponent {
     }
 
     func domainModel() throws -> MealComponent {
-        try MealComponent(
+        try PersistentDomainConversion.validated(entity: .mealComponent, id: id) {
+            try MealComponent(
             id: id,
             foodItemID: foodItemID,
             foodName: foodName,
@@ -311,7 +399,8 @@ final class PersistentMealComponent {
                 saltGrams: saltGrams,
                 fibreGrams: fibreGrams
             )
-        )
+            )
+        }
     }
 }
 
@@ -332,13 +421,17 @@ final class PersistentReviewQueueItem {
     }
 
     var domainModel: ReviewQueueItem {
-        ReviewQueueItem(
+        get throws {
+            try PersistentDomainConversion.validated(entity: .reviewQueueItem, id: id) {
+                ReviewQueueItem(
             id: id,
             createdAt: createdAt,
             sourceImageIdentifier: sourceImageIdentifier,
             missingFields: missingFields,
-            status: ReviewStatus(rawValue: statusRawValue) ?? .pending
-        )
+            status: try PersistentDomainConversion.rawEnum(ReviewStatus.self, raw: statusRawValue, entity: .reviewQueueItem, id: id, field: "statusRawValue")
+                )
+            }
+        }
     }
 }
 
@@ -363,15 +456,19 @@ final class PersistentHealthKitSyncRecord {
     }
 
     var domainModel: HealthKitSyncRecord {
-        HealthKitSyncRecord(
+        get throws {
+            try PersistentDomainConversion.validated(entity: .healthKitSyncRecord, id: id) {
+                HealthKitSyncRecord(
             id: id,
             mealID: mealID,
-            objectType: HealthKitObjectType(rawValue: objectTypeRawValue) ?? .correlation,
+            objectType: try PersistentDomainConversion.rawEnum(HealthKitObjectType.self, raw: objectTypeRawValue, entity: .healthKitSyncRecord, id: id, field: "objectTypeRawValue"),
             syncIdentifier: syncIdentifier,
             syncVersion: syncVersion,
             healthKitUUID: healthKitUUID,
             isDeleted: isDeleted
-        )
+                )
+            }
+        }
     }
 }
 
@@ -417,7 +514,8 @@ final class PersistentMealPhotoEstimate {
     }
 
     func domainModel() throws -> MealPhotoEstimate {
-        try MealPhotoEstimate(
+        try PersistentDomainConversion.validated(entity: .mealPhotoEstimate, id: id) {
+            try MealPhotoEstimate(
             id: id,
             createdAt: createdAt,
             mealTitle: mealTitle,
@@ -425,7 +523,7 @@ final class PersistentMealPhotoEstimate {
             providerName: providerName,
             modelVersion: modelVersion,
             outputSchemaVersion: outputSchemaVersion,
-            confirmationStatus: EstimateConfirmationStatus(rawValue: confirmationStatusRawValue) ?? .failed,
+            confirmationStatus: PersistentDomainConversion.rawEnum(EstimateConfirmationStatus.self, raw: confirmationStatusRawValue, entity: .mealPhotoEstimate, id: id, field: "confirmationStatusRawValue"),
             consumedShareRatio: consumedShareRatio,
             components: try components
                 .sorted { $0.sortIndex < $1.sortIndex }
@@ -433,7 +531,8 @@ final class PersistentMealPhotoEstimate {
             calibrations: try calibrations
                 .sorted { $0.sortIndex < $1.sortIndex }
                 .map { try $0.domainModel() }
-        )
+            )
+        }
     }
 }
 
@@ -469,12 +568,13 @@ final class PersistentMealPhotoComponent {
     }
 
     func domainModel() throws -> MealPhotoComponent {
-        try MealPhotoComponent(
+        try PersistentDomainConversion.validated(entity: .mealPhotoComponent, id: id) {
+            try MealPhotoComponent(
             id: id,
             foodItemID: foodItemID,
             templateID: templateID,
             freeTextName: freeTextName,
-            cookingMethod: CookingMethod(rawValue: cookingMethodRawValue) ?? .unknown,
+            cookingMethod: PersistentDomainConversion.rawEnum(CookingMethod.self, raw: cookingMethodRawValue, entity: .mealPhotoComponent, id: id, field: "cookingMethodRawValue"),
             portionRange: try PortionEstimateRange(
                 lowGrams: lowGrams,
                 midpointGrams: midpointGrams,
@@ -483,7 +583,8 @@ final class PersistentMealPhotoComponent {
             confidence: confidence,
             isHiddenOilOrSauce: isHiddenOilOrSauce,
             userCorrectedWeightGrams: userCorrectedWeightGrams
-        )
+            )
+        }
     }
 }
 
@@ -509,13 +610,15 @@ final class PersistentPortionCalibration {
     }
 
     func domainModel() throws -> PortionCalibration {
-        try PortionCalibration(
+        try PersistentDomainConversion.validated(entity: .portionCalibration, id: id) {
+            try PortionCalibration(
             id: id,
             createdAt: createdAt,
             photoEstimateID: photoEstimateID,
             componentID: componentID,
             estimatedWeightGrams: estimatedWeightGrams,
             actualWeightGrams: actualWeightGrams
-        )
+            )
+        }
     }
 }

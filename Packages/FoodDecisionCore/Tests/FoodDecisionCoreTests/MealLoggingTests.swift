@@ -36,8 +36,14 @@ struct MealLoggingTests {
 
     @Test("Unknown fibre in one component keeps the meal fibre unknown")
     func mealPreservesUnknownFibre() throws {
-        var unknownFibreFood = egg
-        unknownFibreFood.nutrientsPer100Units.fibreGrams = nil
+        let knownEgg = try egg
+        let unknownFibreFood = try FoodItem(
+            id: knownEgg.id,
+            name: knownEgg.name,
+            category: knownEgg.category,
+            nutrientsPer100Units: NutrientValues(energyKcal: 150, fatGrams: 10, saturatedFatGrams: 3, carbohydrateGrams: 1, sugarGrams: 0.5, proteinGrams: 12, saltGrams: 0.35),
+            source: knownEgg.source
+        )
 
         let meal = try MealLog(
             title: "测试餐",
@@ -92,7 +98,7 @@ struct MealLoggingTests {
     }
 
     private var tomato: FoodItem {
-        FoodItem(
+        get throws { try FoodItem(
             name: "西红柿",
             category: .mixedMeal,
             nutrientsPer100Units: NutrientValues(
@@ -106,11 +112,11 @@ struct MealLoggingTests {
                 fibreGrams: 1.5
             ),
             source: "test"
-        )
+        ) }
     }
 
     private var egg: FoodItem {
-        FoodItem(
+        get throws { try FoodItem(
             name: "鸡蛋",
             category: .proteinMain,
             nutrientsPer100Units: NutrientValues(
@@ -124,6 +130,6 @@ struct MealLoggingTests {
                 fibreGrams: 0
             ),
             source: "test"
-        )
+        ) }
     }
 }

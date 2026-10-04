@@ -19,26 +19,40 @@ struct ContentView: View {
     @State private var seedImportError: Error?
 
     private var currentGoal: GoalProfile? {
-        goalProfiles.first?.domainModel
+        try? goalProfiles.first?.domainModel
     }
 
     private var todayMeals: [PersistentMealLog] {
         mealLogs.filter { Calendar.current.isDateInToday($0.eatenAt) }
     }
 
-    private var todayNutrients: NutrientValues {
-        NutrientValues.sum(todayMeals.map(\.nutrientSnapshot))
+    private var todaySummary: MealReadValidation {
+        MealReadValidation(todayMeals)
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    let summary = todaySummary
                     TodayStatusCard(
                         goal: currentGoal,
-                        nutrients: todayNutrients,
-                        mealCount: todayMeals.count
+                        nutrients: summary.nutrients,
+                        mealCount: summary.meals.count
                     )
+                    if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
+                        Label(
+                            "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                    }
+                    if !goalProfiles.isEmpty && currentGoal == nil {
+                        Label("已保存目标含无效数据，请到目标页检查；原数据保留。", systemImage: "exclamationmark.triangle")
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                    }
                     Button {
                         isShowingMealStart = true
                     } label: {
@@ -262,7 +276,7 @@ private struct GoalSettingsView: View {
     }
 
     private func loadGoal() {
-        guard let goal = goalProfiles.first?.domainModel else {
+        guard let goal = try? goalProfiles.first?.domainModel else {
             return
         }
 
@@ -275,27 +289,28 @@ private struct GoalSettingsView: View {
     }
 
     private func saveGoal() {
-        let domain = GoalProfile(
-            id: goalProfiles.first?.id ?? UUID(),
-            effectiveFrom: goalProfiles.first?.effectiveFrom ?? .now,
-            energyKcal: energyKcal,
-            proteinGrams: proteinGrams,
-            carbohydrateGrams: carbohydrateGrams,
-            fatGrams: fatGrams,
-            saturatedFatLimitGrams: saturatedFatLimitGrams,
-            fibreGrams: fibreGrams
-        )
-
-        if let persistentGoal = goalProfiles.first {
-            persistentGoal.update(from: domain)
-        } else {
-            modelContext.insert(PersistentGoalProfile(domain: domain))
-        }
-
         do {
+            let domain = try GoalProfile(
+                id: goalProfiles.first?.id ?? UUID(),
+                effectiveFrom: goalProfiles.first?.effectiveFrom ?? .now,
+                energyKcal: energyKcal,
+                proteinGrams: proteinGrams,
+                carbohydrateGrams: carbohydrateGrams,
+                fatGrams: fatGrams,
+                saturatedFatLimitGrams: saturatedFatLimitGrams,
+                fibreGrams: fibreGrams
+            )
+
+            if let persistentGoal = goalProfiles.first {
+                persistentGoal.update(from: domain)
+            } else {
+                modelContext.insert(PersistentGoalProfile(domain: domain))
+            }
+
             try modelContext.save()
             dismiss()
         } catch {
+            modelContext.rollback()
             saveError = error
         }
     }

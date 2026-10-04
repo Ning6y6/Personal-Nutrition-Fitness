@@ -63,8 +63,12 @@ struct MealEntryView: View {
             Form {
                 mealDetailsSection
                 componentsSection
-                if !resolvedComponents.isEmpty {
-                    nutritionPreviewSection
+                if let nutrients = previewNutrients, !resolvedComponents.isEmpty {
+                    nutritionPreviewSection(nutrients)
+                } else if !resolvedComponents.isEmpty {
+                    Section {
+                        Label("营养合计超出可计算范围，请检查重量；不能保存。", systemImage: "exclamationmark.triangle")
+                    }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -210,7 +214,7 @@ struct MealEntryView: View {
         }
     }
 
-    private var nutritionPreviewSection: some View {
+    private func nutritionPreviewSection(_ previewNutrients: NutrientValues) -> some View {
         Section {
             nutrientRow("热量", value: previewNutrients.energyKcal, unit: "kcal")
             nutrientRow("蛋白质", value: previewNutrients.proteinGrams, unit: "g")
@@ -239,7 +243,7 @@ struct MealEntryView: View {
             guard
                 let foodItem = foodItem(for: row.foodItemID),
                 let weight = row.weightGrams,
-                weight > 0
+                weight.isFinite, weight > 0
             else {
                 return nil
             }
@@ -252,8 +256,8 @@ struct MealEntryView: View {
         }
     }
 
-    private var previewNutrients: NutrientValues {
-        NutrientValues.sum(resolvedComponents.map(\.nutrients))
+    private var previewNutrients: NutrientValues? {
+        try? NutrientValues.sum(resolvedComponents.map(\.nutrients))
     }
 
     private var hasIncompleteRows: Bool {
@@ -261,7 +265,8 @@ struct MealEntryView: View {
     }
 
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !hasIncompleteRows
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !hasIncompleteRows && previewNutrients != nil
     }
 
     private var evidenceLabel: String {
@@ -330,17 +335,19 @@ struct MealEntryView: View {
 
     private func saveMeal() {
         do {
+            // Revalidate every draft row at the write boundary; never save a compacted subset.
+            let components = try MealDraftValidation.components(from: rows, foods: foodItems)
             let meal = try MealLog(
                 id: mealToEdit?.id ?? UUID(),
                 eatenAt: eatenAt,
                 title: title,
                 entryMethod: entryMethod,
                 coverageStatus: coverageStatus,
-                components: resolvedComponents,
+                components: components,
                 healthKitSyncVersion: mealToEdit?.healthKitSyncVersion ?? 1
             )
             if let mealToEdit {
-                mealToEdit.update(from: meal, in: modelContext)
+                try mealToEdit.update(from: meal, in: modelContext)
             } else {
                 modelContext.insert(PersistentMealLog(domain: meal))
             }

@@ -3,7 +3,11 @@ import Foundation
 import SwiftData
 
 enum SeedFoodCatalog {
-    static let foods: [FoodItem] = [
+    enum LoadError: Error { case invalidIdentifier }
+
+    /// Validate every bundled record before mutating the store; missing fibre remains nil.
+    static func loadFoods() throws -> [FoodItem] {
+        try [
         food(
             id: "20000000-0000-4000-8000-000000011862",
             name: "熟长粒白米饭（无盐）",
@@ -172,23 +176,25 @@ enum SeedFoodCatalog {
             salt: 13.75,
             fibre: 0
         ),
-    ]
+        ]
+    }
 
-    private static let deprecatedSeedFoodIDs: Set<UUID> = [
-        UUID(uuidString: "20000000-0000-4000-8000-000000018521")!,
+    private static let deprecatedSeedFoodIDs: Set<String> = [
+        "20000000-0000-4000-8000-000000018521",
     ]
 
     @discardableResult
     static func importIfNeeded(into modelContext: ModelContext) throws -> Int {
+        let foods = try loadFoods()
         let existingFoods = try modelContext.fetch(FetchDescriptor<PersistentFoodItem>())
-        let deprecatedFoods = existingFoods.filter { deprecatedSeedFoodIDs.contains($0.id) }
+        let deprecatedFoods = existingFoods.filter { deprecatedSeedFoodIDs.contains($0.id.uuidString) }
         for foodItem in deprecatedFoods {
             modelContext.delete(foodItem)
         }
 
         let existingIDs = Set(
             existingFoods
-                .filter { !deprecatedSeedFoodIDs.contains($0.id) }
+                .filter { !deprecatedSeedFoodIDs.contains($0.id.uuidString) }
                 .map(\.id)
         )
         let missingFoods = foods.filter { !existingIDs.contains($0.id) }
@@ -217,9 +223,10 @@ enum SeedFoodCatalog {
         protein: Double,
         salt: Double,
         fibre: Double?
-    ) -> FoodItem {
-        FoodItem(
-            id: UUID(uuidString: id)!,
+    ) throws -> FoodItem {
+        guard let foodID = UUID(uuidString: id) else { throw LoadError.invalidIdentifier }
+        return try FoodItem(
+            id: foodID,
             name: name,
             category: category,
             nutrientsPer100Units: NutrientValues(

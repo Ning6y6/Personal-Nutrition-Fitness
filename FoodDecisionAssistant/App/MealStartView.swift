@@ -16,10 +16,12 @@ struct MealStartView: View {
     @State private var isShowingTemplateManager = false
     @State private var preparationError: Error?
 
+    private var recentValidation: MealReadValidation {
+        MealReadValidation(Array(mealLogs.prefix(30)))
+    }
+
     private var recentMeals: [MealLog] {
-        RecentMealSelector.select(
-            from: mealLogs.prefix(30).compactMap { try? $0.domainModel() }
-        )
+        RecentMealSelector.select(from: recentValidation.meals)
     }
 
     var body: some View {
@@ -36,6 +38,11 @@ struct MealStartView: View {
                 }
 
                 Section("最近吃过") {
+                    if !recentValidation.invalidRecordIDs.isEmpty || !recentValidation.draftRecordIDs.isEmpty {
+                        Label("\(recentValidation.invalidRecordIDs.count)条旧记录需修复、\(recentValidation.draftRecordIDs.count)条草稿无法复用；可在今日页进入全部历史查看和编辑。", systemImage: "exclamationmark.triangle")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     if recentMeals.isEmpty {
                         Text("保存餐食后，这里会显示最多 6 个最近用过的组合。")
                             .foregroundStyle(.secondary)

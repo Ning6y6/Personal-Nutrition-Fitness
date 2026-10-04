@@ -30,7 +30,7 @@ enum LocalStoreBackupRestoration {
             let value = LocalStoreBackupRecordReader(record: record)
             switch record.entity {
             case .goalProfile:
-                let row = PersistentGoalProfile(domain: GoalProfile(energyKcal: 1, proteinGrams: 0, carbohydrateGrams: 0, fatGrams: 0))
+                let row = PersistentGoalProfile(domain: try GoalProfile(energyKcal: 1, proteinGrams: 0, carbohydrateGrams: 0, fatGrams: 0))
                 row.id = record.id
                 row.effectiveFrom = try value.date("effectiveFrom")
                 row.energyKcal = try value.number("energyKcal")
@@ -41,7 +41,7 @@ enum LocalStoreBackupRestoration {
                 row.fibreGrams = try value.optionalNumber("fibreGrams")
                 context.insert(row)
             case .foodItem:
-                let row = PersistentFoodItem(domain: FoodItem(name: "restore", category: .mixedMeal, nutrientsPer100Units: emptyNutrients, source: "restore"))
+                let row = PersistentFoodItem(domain: try FoodItem(name: "restore", category: .mixedMeal, nutrientsPer100Units: emptyNutrients, source: "restore"))
                 row.id = record.id
                 row.name = try value.string("name")
                 row.categoryRawValue = try value.string("categoryRawValue")
@@ -57,13 +57,19 @@ enum LocalStoreBackupRestoration {
                 row.source = try value.string("source")
                 context.insert(row)
             case .containerProfile:
-                let row = PersistentContainerProfile(domain: ContainerProfile(name: "restore", tareWeightGrams: 0))
+                let row = PersistentContainerProfile(domain: try ContainerProfile(name: "restore", tareWeightGrams: 0))
                 row.id = record.id
                 row.name = try value.string("name")
                 row.tareWeightGrams = try value.number("tareWeightGrams")
                 context.insert(row)
             case .mealLog:
-                let row = PersistentMealLog(domain: MealLog(title: "restore", consumedWeightGrams: 0, nutrients: emptyNutrients, coverageStatus: .incomplete, estimateEvidenceGrade: .d))
+                let placeholder = try MealComponent(foodItemID: UUID(), foodName: "restore", consumedWeightGrams: 1, unit: "g", nutrients: .zero)
+                let shell = try MealLog(title: "restore", entryMethod: .weighed, coverageStatus: .complete, components: [placeholder])
+                let row = PersistentMealLog(domain: shell)
+                // Detach the initialized legal placeholder before insertion. It must not become an
+                // extra archived child, and history is restored only by raw assignments below.
+                for child in row.components { child.meal = nil }
+                row.components = []
                 row.id = record.id
                 row.eatenAt = try value.date("eatenAt")
                 row.title = try value.string("title")
@@ -156,7 +162,7 @@ enum LocalStoreBackupRestoration {
                 context.insert(row)
                 photoComponents[record.id] = row
             case .portionCalibration:
-                let shell = try PortionCalibration(photoEstimateID: UUID(), estimatedWeightGrams: 0, actualWeightGrams: 0)
+                let shell = try PortionCalibration(photoEstimateID: UUID(), estimatedWeightGrams: 1, actualWeightGrams: 1)
                 let row = PersistentPortionCalibration(domain: shell)
                 row.id = record.id
                 row.createdAt = try value.date("createdAt")
@@ -222,7 +228,7 @@ enum LocalStoreBackupRestoration {
     }
 
     private static var emptyNutrients: NutrientValues {
-        NutrientValues(energyKcal: 0, fatGrams: 0, saturatedFatGrams: 0, carbohydrateGrams: 0, sugarGrams: 0, proteinGrams: 0, saltGrams: 0)
+        .zero
     }
 }
 

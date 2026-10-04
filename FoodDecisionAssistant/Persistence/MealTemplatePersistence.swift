@@ -30,7 +30,8 @@ final class PersistentMealTemplate {
     }
 
     func domainModel() throws -> MealTemplate {
-        try MealTemplate(
+        try PersistentDomainConversion.validated(entity: .mealTemplate, id: id) {
+            try MealTemplate(
             id: id,
             name: name,
             createdAt: createdAt,
@@ -40,11 +41,12 @@ final class PersistentMealTemplate {
             components: try components
                 .sorted { $0.sortIndex < $1.sortIndex }
                 .map { try $0.domainModel() }
-        )
+            )
+        }
     }
 
-    func update(from domain: MealTemplate, in modelContext: ModelContext) {
-        precondition(id == domain.id, "A persisted template can only be updated from the same template ID.")
+    func update(from domain: MealTemplate, in modelContext: ModelContext) throws {
+        guard id == domain.id else { throw PersistentDomainConversionError.mismatchedIdentity(entity: .mealTemplate, id: id) }
 
         name = domain.name
         createdAt = domain.createdAt
@@ -69,9 +71,11 @@ final class PersistentMealTemplate {
         }
     }
 
-    func markUsed(at date: Date = .now) {
-        lastUsedAt = date
-        useCount += 1
+    func markUsed(at date: Date = .now) throws {
+        var domain = try domainModel()
+        try domain.recordUse(at: date)
+        lastUsedAt = domain.lastUsedAt
+        useCount = domain.useCount
     }
 }
 
@@ -95,12 +99,14 @@ final class PersistentMealTemplateComponent {
     }
 
     func domainModel() throws -> MealTemplateComponent {
-        try MealTemplateComponent(
+        try PersistentDomainConversion.validated(entity: .mealTemplateComponent, id: id) {
+            try MealTemplateComponent(
             id: id,
             foodItemID: foodItemID,
             foodName: foodName,
             defaultWeightGrams: defaultWeightGrams,
             unit: unit
-        )
+            )
+        }
     }
 }

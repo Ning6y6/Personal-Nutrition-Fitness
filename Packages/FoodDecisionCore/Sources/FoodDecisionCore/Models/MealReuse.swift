@@ -4,7 +4,11 @@ public enum MealTemplateError: Error, Codable, Sendable, Equatable, LocalizedErr
     case emptyName
     case emptyComponents
     case invalidWeight
+    case nonFiniteWeight
     case unsupportedUnit(String)
+    case invalidUseCount
+    case useCountOverflow
+    case duplicateComponentID(UUID)
 
     public var errorDescription: String? {
         switch self {
@@ -14,18 +18,26 @@ public enum MealTemplateError: Error, Codable, Sendable, Equatable, LocalizedErr
             "请至少添加一个食物分项。"
         case .invalidWeight:
             "每个模板分项的默认重量必须大于 0 克。"
+        case .nonFiniteWeight:
+            "模板分项重量必须是有限数值。"
         case let .unsupportedUnit(unit):
             "当前版本尚不支持单位“\(unit)”。"
+        case .invalidUseCount:
+            "模板使用次数不能为负数。"
+        case .useCountOverflow:
+            "模板使用次数超出可表示范围。"
+        case .duplicateComponentID:
+            "模板分项标识重复，请重新添加分项。"
         }
     }
 }
 
 public struct MealTemplateComponent: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var foodItemID: UUID
-    public var foodName: String
-    public var defaultWeightGrams: Double
-    public var unit: String
+    public let id: UUID
+    public let foodItemID: UUID
+    public let foodName: String
+    public let defaultWeightGrams: Double
+    public let unit: String
 
     public init(
         id: UUID = UUID(),
@@ -34,12 +46,14 @@ public struct MealTemplateComponent: Codable, Identifiable, Sendable, Equatable 
         defaultWeightGrams: Double,
         unit: String = "g"
     ) throws {
+        guard defaultWeightGrams.isFinite else { throw MealTemplateError.nonFiniteWeight }
         guard defaultWeightGrams > 0 else {
             throw MealTemplateError.invalidWeight
         }
         guard unit == "g" else {
             throw MealTemplateError.unsupportedUnit(unit)
         }
+        try DomainValidation.text(foodName, field: "foodName")
 
         self.id = id
         self.foodItemID = foodItemID
@@ -61,13 +75,13 @@ public struct MealTemplateComponent: Codable, Identifiable, Sendable, Equatable 
 }
 
 public struct MealTemplate: Codable, Identifiable, Sendable, Equatable {
-    public var id: UUID
-    public var name: String
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var lastUsedAt: Date?
-    public var useCount: Int
-    public var components: [MealTemplateComponent]
+    public let id: UUID
+    public let name: String
+    public let createdAt: Date
+    public let updatedAt: Date
+    public private(set) var lastUsedAt: Date?
+    public private(set) var useCount: Int
+    public let components: [MealTemplateComponent]
 
     public init(
         id: UUID = UUID(),
@@ -85,13 +99,21 @@ public struct MealTemplate: Codable, Identifiable, Sendable, Equatable {
         guard !components.isEmpty else {
             throw MealTemplateError.emptyComponents
         }
+        guard useCount >= 0 else { throw MealTemplateError.invalidUseCount }
+        try DomainValidation.date(createdAt, field: "createdAt")
+        try DomainValidation.date(updatedAt, field: "updatedAt")
+        if let lastUsedAt { try DomainValidation.date(lastUsedAt, field: "lastUsedAt") }
+        var ids = Set<UUID>()
+        for component in components {
+            guard ids.insert(component.id).inserted else { throw MealTemplateError.duplicateComponentID(component.id) }
+        }
 
         self.id = id
         self.name = trimmedName
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.lastUsedAt = lastUsedAt
-        self.useCount = max(0, useCount)
+        self.useCount = useCount
         self.components = components
     }
 
@@ -111,9 +133,12 @@ public struct MealTemplate: Codable, Identifiable, Sendable, Equatable {
         )
     }
 
-    public mutating func recordUse(at date: Date = .now) {
+    public mutating func recordUse(at date: Date = .now) throws {
+        try DomainValidation.date(date, field: "lastUsedAt")
+        let (newCount, overflow) = useCount.addingReportingOverflow(1)
+        guard !overflow else { throw MealTemplateError.useCountOverflow }
         lastUsedAt = date
-        useCount += 1
+        useCount = newCount
     }
 
     public init(from decoder: any Decoder) throws {

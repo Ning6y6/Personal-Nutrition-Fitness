@@ -10,7 +10,7 @@ struct PersistenceModelTests {
     @Test("A saved goal can be fetched and converted back to its domain model")
     func goalProfilePersistsAndRoundTrips() throws {
         let context = try makeContext()
-        let goal = GoalProfile(
+        let goal = try GoalProfile(
             id: UUID(),
             effectiveFrom: Date(timeIntervalSince1970: 1_700_000_000),
             energyKcal: 2_100,
@@ -27,7 +27,8 @@ struct PersistenceModelTests {
         let savedGoals = try context.fetch(FetchDescriptor<PersistentGoalProfile>())
 
         #expect(savedGoals.count == 1)
-        #expect(savedGoals.first?.domainModel == goal)
+        let savedGoal = try #require(savedGoals.first).domainModel
+        #expect(savedGoal == goal)
     }
 
     @Test("A photo estimate persists its components and domain conversion")
@@ -73,13 +74,13 @@ struct PersistenceModelTests {
     @Test("Meal coverage and evidence grade persist independently")
     func mealLogCoverageAndEvidencePersistAndRoundTrip() throws {
         let context = try makeContext()
-        let tomato = FoodItem(
+        let tomato = try FoodItem(
             name: "西红柿",
             category: .mixedMeal,
             nutrientsPer100Units: makeNutrients(),
             source: "test"
         )
-        let egg = FoodItem(
+        let egg = try FoodItem(
             name: "鸡蛋",
             category: .proteinMain,
             nutrientsPer100Units: makeNutrients(),
@@ -118,8 +119,8 @@ struct PersistenceModelTests {
     @Test("A personal meal template persists its ordered components and round trips")
     func mealTemplatePersistsAndRoundTrips() throws {
         let context = try makeContext()
-        let firstFood = makeFood(name: "西红柿", energyKcal: 20, proteinGrams: 1)
-        let secondFood = makeFood(name: "鸡蛋", energyKcal: 150, proteinGrams: 12)
+        let firstFood = try makeFood(name: "西红柿", energyKcal: 20, proteinGrams: 1)
+        let secondFood = try makeFood(name: "鸡蛋", energyKcal: 150, proteinGrams: 12)
         let template = try MealTemplate(
             id: UUID(),
             name: "西红柿炒鸡蛋",
@@ -155,8 +156,8 @@ struct PersistenceModelTests {
     @Test("Updating a template replaces obsolete components")
     func templateUpdateReplacesComponents() throws {
         let context = try makeContext()
-        let originalFood = makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
-        let replacementFood = makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
+        let originalFood = try makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
+        let replacementFood = try makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
         let original = try MealTemplate(
             name: "原模板",
             components: [
@@ -175,7 +176,7 @@ struct PersistenceModelTests {
             id: original.id,
             name: "新模板",
             createdAt: original.createdAt,
-            updatedAt: Date(timeIntervalSince1970: 300),
+            updatedAt: original.createdAt.addingTimeInterval(1),
             components: [
                 try MealTemplateComponent(
                     foodItemID: replacementFood.id,
@@ -185,7 +186,7 @@ struct PersistenceModelTests {
             ]
         )
 
-        persistentTemplate.update(from: updated, in: context)
+        try persistentTemplate.update(from: updated, in: context)
         try context.save()
 
         let restored = try persistentTemplate.domainModel()
@@ -200,7 +201,7 @@ struct PersistenceModelTests {
     @Test("Deleting a template cascades its components without deleting meal history")
     func templateDeletionDoesNotAffectHistory() throws {
         let context = try makeContext()
-        let food = makeFood(name: "豆腐", energyKcal: 80, proteinGrams: 8)
+        let food = try makeFood(name: "豆腐", energyKcal: 80, proteinGrams: 8)
         let meal = try MealLog(
             title: "豆腐餐",
             entryMethod: .weighed,
@@ -225,7 +226,7 @@ struct PersistenceModelTests {
     @Test("Template usage metadata changes only when explicitly marked used")
     func templateUsageRequiresExplicitMark() throws {
         let context = try makeContext()
-        let food = makeFood(name: "米饭", energyKcal: 130, proteinGrams: 3)
+        let food = try makeFood(name: "米饭", energyKcal: 130, proteinGrams: 3)
         let template = try MealTemplate(
             name: "米饭",
             components: [
@@ -244,7 +245,7 @@ struct PersistenceModelTests {
         #expect(persistentTemplate.lastUsedAt == nil)
 
         let usedAt = Date(timeIntervalSince1970: 400)
-        persistentTemplate.markUsed(at: usedAt)
+        try persistentTemplate.markUsed(at: usedAt)
         try context.save()
 
         #expect(persistentTemplate.useCount == 1)
@@ -259,7 +260,7 @@ struct PersistenceModelTests {
         )
         context.insert(
             PersistentFoodItem(
-                domain: FoodItem(
+                domain: try FoodItem(
                     id: deprecatedFoodID,
                     name: "Deprecated seed",
                     category: .proteinMain,
@@ -288,8 +289,8 @@ struct PersistenceModelTests {
     @Test("Editing a meal replaces its snapshot and removes obsolete components")
     func mealEditReplacesSnapshotAndComponents() throws {
         let context = try makeContext()
-        let originalFood = makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
-        let replacementFood = makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
+        let originalFood = try makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
+        let replacementFood = try makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
         let original = try MealLog(
             title: "原餐食",
             entryMethod: .weighed,
@@ -310,7 +311,7 @@ struct PersistenceModelTests {
             components: [try MealComponent(foodItem: replacementFood, consumedWeightGrams: 150)]
         )
 
-        persistentMeal.update(from: updated, in: context)
+        try persistentMeal.update(from: updated, in: context)
         try context.save()
 
         let restored = try #require(
@@ -327,7 +328,7 @@ struct PersistenceModelTests {
     @Test("Deleting a meal cascades to all component snapshots")
     func mealDeletionCascadesToComponents() throws {
         let context = try makeContext()
-        let food = makeFood(name: "测试食物", energyKcal: 120, proteinGrams: 8)
+        let food = try makeFood(name: "测试食物", energyKcal: 120, proteinGrams: 8)
         let meal = try MealLog(
             title: "待删除餐食",
             entryMethod: .weighed,
@@ -351,7 +352,7 @@ struct PersistenceModelTests {
     @Test("Today's nutrition recomputes from edited and deleted persisted meals")
     func todayNutritionRecomputesAfterMutations() throws {
         let context = try makeContext()
-        let food = makeFood(name: "测试食物", energyKcal: 100, proteinGrams: 10)
+        let food = try makeFood(name: "测试食物", energyKcal: 100, proteinGrams: 10)
         let first = try MealLog(
             eatenAt: .now,
             title: "第一餐",
@@ -382,7 +383,7 @@ struct PersistenceModelTests {
             coverageStatus: .complete,
             components: [try MealComponent(foodItem: food, consumedWeightGrams: 50)]
         )
-        firstPersistent.update(from: editedFirst, in: context)
+        try firstPersistent.update(from: editedFirst, in: context)
         try context.save()
 
         #expect(try todayNutrients(in: context).energyKcal == 250)
@@ -396,7 +397,7 @@ struct PersistenceModelTests {
             coverageStatus: .complete,
             components: [try MealComponent(foodItem: food, consumedWeightGrams: 50)]
         )
-        firstPersistent.update(from: movedFirst, in: context)
+        try firstPersistent.update(from: movedFirst, in: context)
         try context.save()
 
         #expect(try todayNutrients(in: context).energyKcal == 200)
@@ -461,8 +462,8 @@ struct PersistenceModelTests {
         )
     }
 
-    private func makeNutrients() -> NutrientValues {
-        NutrientValues(
+    private func makeNutrients() throws -> NutrientValues {
+        try NutrientValues(
             energyKcal: 600,
             fatGrams: 20,
             saturatedFatGrams: 5,
@@ -478,8 +479,8 @@ struct PersistenceModelTests {
         name: String,
         energyKcal: Double,
         proteinGrams: Double
-    ) -> FoodItem {
-        FoodItem(
+    ) throws -> FoodItem {
+        try FoodItem(
             name: name,
             category: .mixedMeal,
             nutrientsPer100Units: NutrientValues(
@@ -499,6 +500,6 @@ struct PersistenceModelTests {
     private func todayNutrients(in context: ModelContext) throws -> NutrientValues {
         let meals = try context.fetch(FetchDescriptor<PersistentMealLog>())
             .filter { Calendar.current.isDateInToday($0.eatenAt) }
-        return NutrientValues.sum(meals.map(\.nutrientSnapshot))
+        return try NutrientValues.sum(meals.map { try $0.domainModel().nutrients })
     }
 }

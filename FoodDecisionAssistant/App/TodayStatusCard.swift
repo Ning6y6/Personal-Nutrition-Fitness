@@ -3,7 +3,7 @@ import SwiftUI
 
 struct TodayStatusCard: View {
     let goal: GoalProfile?
-    let nutrients: NutrientValues
+    let nutrients: NutrientValues?
     let mealCount: Int
 
     var body: some View {
@@ -17,7 +17,7 @@ struct TodayStatusCard: View {
                     .contentTransition(.numericText())
             }
 
-            if let goal {
+            if let nutrients, let goal {
                 EnergyProgressRing(
                     consumedKcal: nutrients.energyKcal,
                     targetKcal: goal.energyKcal
@@ -67,6 +67,12 @@ struct TodayStatusCard: View {
                             .font(.subheadline)
                     }
                 }
+            } else if nutrients == nil {
+                Label("营养合计无法安全计算", systemImage: "exclamationmark.triangle")
+                    .font(.headline)
+                Text("未显示零摄入。请在历史记录中检查并修复异常数据。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
                 Label("尚未设置每日目标", systemImage: "target")
                     .font(.headline)
@@ -81,27 +87,19 @@ struct TodayStatusCard: View {
 }
 
 #Preview {
-    TodayStatusCard(
-        goal: GoalProfile(
-            energyKcal: 2_000,
-            proteinGrams: 140,
-            carbohydrateGrams: 210,
-            fatGrams: 60,
-            saturatedFatLimitGrams: 15,
-            fibreGrams: 30
-        ),
-        nutrients: NutrientValues(
-            energyKcal: 1_420,
-            fatGrams: 42,
-            saturatedFatGrams: 8,
-            carbohydrateGrams: 150,
-            sugarGrams: 20,
-            proteinGrams: 96,
-            saltGrams: 3,
-            fibreGrams: 18
-        ),
-        mealCount: 2
-    )
-    .padding()
-    .background(Color(.systemGroupedBackground))
+    if let goal = try? GoalProfile(
+        energyKcal: 2_000, proteinGrams: 140, carbohydrateGrams: 210, fatGrams: 60,
+        saturatedFatLimitGrams: 15, fibreGrams: 30
+    ), let nutrients = try? NutrientValues(
+        energyKcal: 1_420, fatGrams: 42, saturatedFatGrams: 8, carbohydrateGrams: 150,
+        sugarGrams: 20, proteinGrams: 96, saltGrams: 3, fibreGrams: 18
+    ) {
+        TodayStatusCard(
+            goal: goal,
+            nutrients: nutrients,
+            mealCount: 2
+        )
+        .padding()
+        .background(Color(.systemGroupedBackground))
+    }
 }

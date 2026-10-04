@@ -103,7 +103,7 @@ struct StoreBootstrapTests {
         #expect(String(decoding: pointer, as: UTF8.self).contains(fixture.directory.path) == false)
 
         let current = try #require(bootstrap.container)
-        current.mainContext.insert(meal(title: "new meal after restoration"))
+        current.mainContext.insert(try meal(title: "new meal after restoration"))
         try current.mainContext.save()
         let restart = fixture.bootstrap()
         let reopened = try #require(restart.container)
@@ -142,7 +142,7 @@ struct StoreBootstrapTests {
         let bootstrap = fixture.bootstrap()
         let original = try #require(bootstrap.container)
         original.mainContext.autosaveEnabled = false
-        original.mainContext.insert(meal(title: "unsaved synthetic meal"))
+        original.mainContext.insert(try meal(title: "unsaved synthetic meal"))
         let pointer = try Data(contentsOf: fixture.selectionURL)
         let generation = bootstrap.generation
         let candidate = try LocalStoreBackupService.stageRestore(data: makeArchive(), directory: fixture.restoreDirectory)
@@ -385,19 +385,16 @@ struct StoreBootstrapTests {
         func remove() { try? FileManager.default.removeItem(at: directory) }
     }
 
-    private func meal(title: String) -> PersistentMealLog {
-        PersistentMealLog(domain: MealLog(
-            title: title, consumedWeightGrams: 100,
-            nutrients: NutrientValues(energyKcal: 100, fatGrams: 1, saturatedFatGrams: 0, carbohydrateGrams: 10, sugarGrams: 0, proteinGrams: 10, saltGrams: 0, fibreGrams: nil),
-            coverageStatus: .complete, estimateEvidenceGrade: .a
-        ))
+    private func meal(title: String) throws -> PersistentMealLog {
+        let component = try MealComponent(foodItemID: UUID(), foodName: "fixture", consumedWeightGrams: 100, unit: "g", nutrients: NutrientValues(energyKcal: 100, fatGrams: 1, saturatedFatGrams: 0, carbohydrateGrams: 10, sugarGrams: 0, proteinGrams: 10, saltGrams: 0, fibreGrams: nil))
+        return PersistentMealLog(domain: try MealLog(title: title, entryMethod: .weighed, coverageStatus: .complete, components: [component]))
     }
 
     private func makeArchive() throws -> Data {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: configuration)
-        container.mainContext.insert(meal(title: "synthetic restored meal"))
+        container.mainContext.insert(try meal(title: "synthetic restored meal"))
         try container.mainContext.save()
         return try LocalStoreBackupService.export(from: container)
     }

@@ -7,7 +7,7 @@ import Testing
 struct MealReuseTests {
     @Test("Recent meals are newest first, deduplicated, and limited to six")
     func recentMealsAreSortedDeduplicatedAndLimited() throws {
-        let food = makeFood(name: "牛肉")
+        let food = try makeFood(name: "牛肉")
         var meals = try (0..<7).map { offset in
             try makeMeal(
                 title: "餐食 \(offset)",
@@ -32,8 +32,8 @@ struct MealReuseTests {
 
     @Test("Meals with the same title but different food compositions stay distinct")
     func compositionParticipatesInDeduplication() throws {
-        let beef = makeFood(name: "牛肉")
-        let rice = makeFood(name: "米饭")
+        let beef = try makeFood(name: "牛肉")
+        let rice = try makeFood(name: "米饭")
         let meals = [
             try makeMeal(title: "晚餐", date: Date(timeIntervalSince1970: 2), foods: [beef]),
             try makeMeal(title: "晚餐", date: Date(timeIntervalSince1970: 1), foods: [beef, rice]),
@@ -59,7 +59,7 @@ struct MealReuseTests {
 
     @Test("Using a template tracks its source and copies default weights into fresh draft rows")
     func templateCreatesTraceableDraft() throws {
-        let food = makeFood(name: "豆腐")
+        let food = try makeFood(name: "豆腐")
         let templateComponent = try MealTemplateComponent(
             foodItemID: food.id,
             foodName: food.name,
@@ -77,7 +77,7 @@ struct MealReuseTests {
 
     @Test("Template input validation rejects empty names, empty components, and invalid weights")
     func templateValidationRejectsInvalidInput() throws {
-        let food = makeFood(name: "米饭")
+        let food = try makeFood(name: "米饭")
 
         #expect(throws: MealTemplateError.invalidWeight) {
             try MealTemplateComponent(
@@ -105,7 +105,7 @@ struct MealReuseTests {
 
     @Test("Templates support Codable round trips and usage recording")
     func templateCodableRoundTrip() throws {
-        let food = makeFood(name: "西红柿")
+        let food = try makeFood(name: "西红柿")
         var template = try MealTemplate(
             name: "西红柿餐",
             components: [
@@ -116,7 +116,7 @@ struct MealReuseTests {
                 ),
             ]
         )
-        template.recordUse(at: Date(timeIntervalSince1970: 200))
+        try template.recordUse(at: Date(timeIntervalSince1970: 200))
 
         let data = try JSONEncoder().encode(template)
         let restored = try JSONDecoder().decode(MealTemplate.self, from: data)
@@ -126,8 +126,8 @@ struct MealReuseTests {
         #expect(restored.lastUsedAt == Date(timeIntervalSince1970: 200))
     }
 
-    private func makeFood(name: String) -> FoodItem {
-        FoodItem(
+    private func makeFood(name: String) throws -> FoodItem {
+        try FoodItem(
             name: name,
             category: .mixedMeal,
             nutrientsPer100Units: NutrientValues(

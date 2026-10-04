@@ -9,3 +9,11 @@
 - Validate app changes with `./scripts/build-ios.sh`.
 - Never commit API keys, signing certificates, provisioning profiles, or personal health exports.
 
+# Delivery and approved scope
+
+- The approved execution order is in `docs/OPTIMIZATION_EXECUTION_PLAN.md`: S0, then S1 data protection, then S2 correctness. Do not bypass a stage gate or begin S3–S5 without user approval.
+- Support individual local use, including one or two friends with their own local data. This does not authorize shared accounts, cloud sync, a backend, or removing local uniqueness constraints.
+- Use purpose-specific branches: `feat/<task>` for new behavior, `fix/<task>` for defects, `refactor/<task>` for behavior-preserving restructuring, `docs/<task>` for documentation, and `test/<task>` for test-only work. Do not label feature or bug changes as refactors.
+- Keep each OPT task in an independently verifiable commit; do not mix a completed feature baseline with subsequent optimization work.
+- Push validated task branches and integrate using non-destructive fast-forward merges where possible; never force-push or rewrite existing history without explicit approval.
+- Physical-device data and protected database samples must stay outside Git and must never appear in logs or test fixtures. Do not uninstall the physical app or clear its store to resolve compatibility problems.

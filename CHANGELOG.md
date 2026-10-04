@@ -11,6 +11,7 @@
 - “记录一餐”首版：餐食名称、时间、称重或标准份量、覆盖状态、多食物分项和实时营养预览。
 - 12 项基于 CoFID 2021 的个人种子食物，使用固定 ID 和幂等导入。
 - 今日页营养汇总、最近三餐和热量圆形进度图。
+- 历史餐食列表和详情；支持编辑、带二次确认的删除，以及修改后的今日汇总即时重算。
 - `MealPhotoEstimate`、`PortionCalibration`、`MealVisionProvider` 及成功/超时/无效/低置信度离线 Fixture。
 - 可测试的热量显示规则：目标内为绿色，超出不超过 10% 为琥珀色，超过 10% 为红色。
 - SwiftUI、SwiftData、Swift Testing 和 Swift Concurrency 开发 skills 使用规范。
@@ -34,7 +35,7 @@
 ### 验证
 
 - `FoodDecisionCore`：22 项 Swift Testing 测试通过。
-- `FoodDecisionAssistantTests`：6 项 iOS SwiftData 测试通过。
+- `FoodDecisionAssistantTests`：9 项 iOS SwiftData 测试通过。
 - iOS 26 最低部署目标构建通过。
 - iPhone 模拟器完成安装、启动和首页布局检查。
 
@@ -43,4 +44,4 @@
 - 真实 AI API、图片上传、正式拍照确认界面。
 - 食品标签 OCR 和商品约束判断界面。
 - HealthKit、CloudKit、训练记录和 Apple Watch 交互。
-- 餐食编辑/删除、常用菜模板、自定义食物和 CSV 导出。
+- 常用菜模板、自定义食物和 CSV 导出。

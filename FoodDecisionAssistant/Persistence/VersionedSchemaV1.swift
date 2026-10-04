@@ -196,7 +196,7 @@ final class PersistentMealLog {
             eatenAt: eatenAt,
             title: title,
             consumedWeightGrams: consumedWeightGrams,
-            nutrients: nutrients,
+            nutrients: nutrientSnapshot,
             entryMethod: MealEntryMethod(rawValue: entryMethodRawValue) ?? .weighed,
             coverageStatus: MealCoverageStatus(rawValue: coverageStatusRawValue) ?? .incomplete,
             estimateEvidenceGrade: EstimateEvidenceGrade(rawValue: estimateEvidenceGradeRawValue) ?? .d,
@@ -207,7 +207,7 @@ final class PersistentMealLog {
         )
     }
 
-    private var nutrients: NutrientValues {
+    var nutrientSnapshot: NutrientValues {
         NutrientValues(
             energyKcal: energyKcal,
             fatGrams: fatGrams,
@@ -218,6 +218,39 @@ final class PersistentMealLog {
             saltGrams: saltGrams,
             fibreGrams: fibreGrams
         )
+    }
+
+    func update(from domain: MealLog, in modelContext: ModelContext) {
+        precondition(id == domain.id, "A persisted meal can only be updated from the same meal ID.")
+
+        eatenAt = domain.eatenAt
+        title = domain.title
+        consumedWeightGrams = domain.consumedWeightGrams
+        energyKcal = domain.nutrients.energyKcal
+        fatGrams = domain.nutrients.fatGrams
+        saturatedFatGrams = domain.nutrients.saturatedFatGrams
+        carbohydrateGrams = domain.nutrients.carbohydrateGrams
+        sugarGrams = domain.nutrients.sugarGrams
+        proteinGrams = domain.nutrients.proteinGrams
+        saltGrams = domain.nutrients.saltGrams
+        fibreGrams = domain.nutrients.fibreGrams
+        entryMethodRawValue = domain.entryMethod.rawValue
+        coverageStatusRawValue = domain.coverageStatus.rawValue
+        estimateEvidenceGradeRawValue = domain.estimateEvidenceGrade.rawValue
+        healthKitSyncVersion = domain.healthKitSyncVersion
+
+        let previousComponents = components
+        components = []
+        for component in previousComponents {
+            modelContext.delete(component)
+        }
+
+        components = domain.components.enumerated().map {
+            let component = PersistentMealComponent(domain: $0.element, sortIndex: $0.offset)
+            component.meal = self
+            modelContext.insert(component)
+            return component
+        }
     }
 }
 

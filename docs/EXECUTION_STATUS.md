@@ -10,7 +10,7 @@
 - iPhone 16 Pro Max 真机运行：已确认；Personal Team 描述文件需每 7 天重新签名
 - 代码仓库：工程骨架、核心规则包和 SwiftData v1 已建立
 - `FoodDecisionAssistantTests`：已建立并接入共享 Scheme
-- iPhone 18 Pro Max 模拟器测试：SwiftData 6/6 通过
+- iPhone 18 Pro Max 模拟器测试：SwiftData 9/9 通过
 - `FoodDecisionCore`：Swift Testing 22/22 通过
 - 正式产品名称：`食衡` / `ShiHeng`
 - 正式 Bundle ID：`com.ning6y6.ShiHeng`
@@ -60,6 +60,17 @@
 - [x] 今日热量改为圆形进度图；目标内、轻微超出和显著超出使用可测试的确定性状态
 - [x] 热量和营养数字增加系统数值过渡，并用文字和图标补充颜色含义
 
+## 历史餐食详情、编辑与删除
+
+- [x] 首页今日记录可进入餐食详情，并提供全部历史餐食入口
+- [x] 详情展示时间、记录方式、证据等级、覆盖状态、食物分项与营养快照
+- [x] 复用“记录一餐”表单编辑名称、时间、记录方式、覆盖状态、分项和重量
+- [x] 编辑保持原餐食 ID，并以新的营养快照替换旧分项；旧分项被显式清理
+- [x] 删除前二次确认，删除餐食时级联删除全部分项
+- [x] 编辑重量、移动记录日期或删除后，今日餐数与营养合计由 SwiftData 查询立即重算
+- [x] 取消编辑只丢弃表单草稿，不修改已保存餐食
+- [x] 新增 3 项 SwiftData 测试；iOS 测试现为 9/9，核心包仍为 22/22，App 构建通过
+
 ## 开发工具与 UI 规范
 
 - [x] 安装 `swiftui-pro`、`swiftdata-pro`、`swift-testing-pro` 和 `swift-concurrency-pro`
@@ -68,9 +79,19 @@
 - [ ] 标签扫描切片开始时评估并安装 `vision-framework`
 - [ ] HealthKit 切片开始时评估并安装 `healthkit`
 
+## 已登记的主导航计划
+
+- [ ] 使用系统 `TabView` 建立“今日、扫描、日历、设置”四个主页面
+- [ ] 每个 Tab 使用独立 `NavigationStack`，并完成 VoiceOver 与安全区验收
+- [ ] 将每日目标迁入设置页
+- [ ] 增加按月查看每日总热量的日历页，并复用历史餐食详情流程
+- [ ] 在 P2 开始前让扫描页保持明确的未开放状态，不提供失效交互
+
+详细职责、依赖和验收标准见 [`APP_NAVIGATION_PLAN.md`](APP_NAVIGATION_PLAN.md)。该功能目前仅完成规划，尚未修改 App 导航代码。
+
 当前记录界面只支持本地种子食物和克重。自定义食物、菜谱批次、剩菜复用、照片识别和标签扫描仍未接入。
 
-下一开发切片为历史餐食详情、编辑和删除，并验证修改后今日汇总能够正确重算；完整优先级见 [`ROADMAP.md`](ROADMAP.md)。
+下一开发切片为“最近吃过”和个人常用菜模板；完整优先级见 [`ROADMAP.md`](ROADMAP.md)。
 
 本切片没有接入真实 AI API，没有上传或保存系统相册原图，也没有实现正式拍照/确认界面、HealthKit 或 CloudKit。营养值仍须在后续切片中由本地 `FoodItem` 映射与计算，不能直接采用模型输出。
 

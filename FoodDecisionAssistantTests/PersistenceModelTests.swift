@@ -149,6 +149,130 @@ struct PersistenceModelTests {
         #expect(foods.allSatisfy { $0.source.contains("CoFID 2021") })
     }
 
+    @Test("Editing a meal replaces its snapshot and removes obsolete components")
+    func mealEditReplacesSnapshotAndComponents() throws {
+        let context = try makeContext()
+        let originalFood = makeFood(name: "原食物", energyKcal: 100, proteinGrams: 5)
+        let replacementFood = makeFood(name: "替换食物", energyKcal: 200, proteinGrams: 20)
+        let original = try MealLog(
+            title: "原餐食",
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: originalFood, consumedWeightGrams: 100)]
+        )
+        let persistentMeal = PersistentMealLog(domain: original)
+        context.insert(persistentMeal)
+        try context.save()
+
+        let obsoleteComponentID = try #require(persistentMeal.components.first).id
+        let updated = try MealLog(
+            id: original.id,
+            eatenAt: original.eatenAt,
+            title: "修改后的餐食",
+            entryMethod: .standardPortionEstimate,
+            coverageStatus: .partial,
+            components: [try MealComponent(foodItem: replacementFood, consumedWeightGrams: 150)]
+        )
+
+        persistentMeal.update(from: updated, in: context)
+        try context.save()
+
+        let restored = try #require(
+            context.fetch(FetchDescriptor<PersistentMealLog>()).first
+        ).domainModel()
+        let savedComponents = try context.fetch(FetchDescriptor<PersistentMealComponent>())
+
+        #expect(restored == updated)
+        #expect(savedComponents.count == 1)
+        #expect(!savedComponents.contains { $0.id == obsoleteComponentID })
+        #expect(savedComponents.first?.foodName == "替换食物")
+    }
+
+    @Test("Deleting a meal cascades to all component snapshots")
+    func mealDeletionCascadesToComponents() throws {
+        let context = try makeContext()
+        let food = makeFood(name: "测试食物", energyKcal: 120, proteinGrams: 8)
+        let meal = try MealLog(
+            title: "待删除餐食",
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [
+                try MealComponent(foodItem: food, consumedWeightGrams: 100),
+                try MealComponent(foodItem: food, consumedWeightGrams: 50),
+            ]
+        )
+        let persistentMeal = PersistentMealLog(domain: meal)
+        context.insert(persistentMeal)
+        try context.save()
+
+        context.delete(persistentMeal)
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<PersistentMealLog>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<PersistentMealComponent>()).isEmpty)
+    }
+
+    @Test("Today's nutrition recomputes from edited and deleted persisted meals")
+    func todayNutritionRecomputesAfterMutations() throws {
+        let context = try makeContext()
+        let food = makeFood(name: "测试食物", energyKcal: 100, proteinGrams: 10)
+        let first = try MealLog(
+            eatenAt: .now,
+            title: "第一餐",
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: food, consumedWeightGrams: 100)]
+        )
+        let second = try MealLog(
+            eatenAt: .now,
+            title: "第二餐",
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: food, consumedWeightGrams: 200)]
+        )
+        let firstPersistent = PersistentMealLog(domain: first)
+        let secondPersistent = PersistentMealLog(domain: second)
+        context.insert(firstPersistent)
+        context.insert(secondPersistent)
+        try context.save()
+
+        #expect(try todayNutrients(in: context).energyKcal == 300)
+
+        let editedFirst = try MealLog(
+            id: first.id,
+            eatenAt: first.eatenAt,
+            title: first.title,
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: food, consumedWeightGrams: 50)]
+        )
+        firstPersistent.update(from: editedFirst, in: context)
+        try context.save()
+
+        #expect(try todayNutrients(in: context).energyKcal == 250)
+
+        let yesterday = try #require(Calendar.current.date(byAdding: .day, value: -1, to: .now))
+        let movedFirst = try MealLog(
+            id: first.id,
+            eatenAt: yesterday,
+            title: first.title,
+            entryMethod: .weighed,
+            coverageStatus: .complete,
+            components: [try MealComponent(foodItem: food, consumedWeightGrams: 50)]
+        )
+        firstPersistent.update(from: movedFirst, in: context)
+        try context.save()
+
+        #expect(try todayNutrients(in: context).energyKcal == 200)
+
+        context.delete(secondPersistent)
+        try context.save()
+
+        let finalNutrients = try todayNutrients(in: context)
+        #expect(finalNutrients.energyKcal == 0)
+        #expect(finalNutrients.proteinGrams == 0)
+    }
+
     private func makeContext() throws -> ModelContext {
         let schema = Schema(versionedSchema: VersionedSchemaV1.self)
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -212,5 +336,33 @@ struct PersistenceModelTests {
             saltGrams: 1.2,
             fibreGrams: 9
         )
+    }
+
+    private func makeFood(
+        name: String,
+        energyKcal: Double,
+        proteinGrams: Double
+    ) -> FoodItem {
+        FoodItem(
+            name: name,
+            category: .mixedMeal,
+            nutrientsPer100Units: NutrientValues(
+                energyKcal: energyKcal,
+                fatGrams: 1,
+                saturatedFatGrams: 0.2,
+                carbohydrateGrams: 10,
+                sugarGrams: 2,
+                proteinGrams: proteinGrams,
+                saltGrams: 0.1,
+                fibreGrams: 1
+            ),
+            source: "test"
+        )
+    }
+
+    private func todayNutrients(in context: ModelContext) throws -> NutrientValues {
+        let meals = try context.fetch(FetchDescriptor<PersistentMealLog>())
+            .filter { Calendar.current.isDateInToday($0.eatenAt) }
+        return NutrientValues.sum(meals.map(\.nutrientSnapshot))
     }
 }

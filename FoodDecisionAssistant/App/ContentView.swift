@@ -13,6 +13,8 @@ struct ContentView: View {
 
     @State private var isShowingGoalSettings = false
     @State private var isShowingMealEntry = false
+    @State private var isShowingMealHistory = false
+    @State private var selectedMeal: PersistentMealLog?
     @State private var seedImportError: Error?
 
     private var currentGoal: GoalProfile? {
@@ -47,7 +49,12 @@ struct ContentView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    RecentMealsCard(meals: Array(todayMeals.prefix(3)))
+                    RecentMealsCard(
+                        meals: Array(todayMeals.prefix(3)),
+                        hasHistory: !mealLogs.isEmpty,
+                        selectMeal: { selectedMeal = $0 },
+                        showHistory: { isShowingMealHistory = true }
+                    )
                     HomeActionCard(
                         title: "扫描食品标签",
                         subtitle: "先检查硬约束，再计算营养分",
@@ -78,6 +85,12 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingMealEntry) {
                 MealEntryView()
             }
+            .sheet(isPresented: $isShowingMealHistory) {
+                MealHistoryView()
+            }
+            .sheet(item: $selectedMeal) { meal in
+                MealDetailView(meal: meal)
+            }
             .task {
                 do {
                     try SeedFoodCatalog.importIfNeeded(into: modelContext)
@@ -102,6 +115,9 @@ struct ContentView: View {
 
 private struct RecentMealsCard: View {
     let meals: [PersistentMealLog]
+    let hasHistory: Bool
+    let selectMeal: (PersistentMealLog) -> Void
+    let showHistory: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -117,75 +133,26 @@ private struct RecentMealsCard: View {
                     if index > 0 {
                         Divider()
                     }
-                    RecentMealRow(meal: meal)
+                    Button {
+                        selectMeal(meal)
+                    } label: {
+                        MealSummaryRow(meal: meal)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("查看、编辑或删除这条餐食记录")
+                }
+            }
+
+            if hasHistory {
+                Divider()
+                Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
+                    showHistory()
                 }
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
-    }
-}
-
-private struct RecentMealRow: View {
-    let meal: PersistentMealLog
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "fork.knife.circle.fill")
-                .font(.title2)
-                .foregroundStyle(.green)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(meal.title)
-                    .font(.subheadline.weight(.semibold))
-                Text(meal.eatenAt, format: .dateTime.hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("\(meal.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal")
-                    .font(.subheadline)
-                Text("\(evidenceLabel) · \(coverageLabel)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var evidenceLabel: String {
-        switch EstimateEvidenceGrade(rawValue: meal.estimateEvidenceGradeRawValue) {
-        case .a: "A"
-        case .b: "B"
-        case .c: "C"
-        case .d, .none: "D"
-        }
-    }
-
-    private var coverageLabel: String {
-        switch MealCoverageStatus(rawValue: meal.coverageStatusRawValue) {
-        case .complete: "完整"
-        case .partial: "部分"
-        case .incomplete, .none: "临时"
-        }
-    }
-}
-
-private extension PersistentMealLog {
-    var nutrientSnapshot: NutrientValues {
-        NutrientValues(
-            energyKcal: energyKcal,
-            fatGrams: fatGrams,
-            saturatedFatGrams: saturatedFatGrams,
-            carbohydrateGrams: carbohydrateGrams,
-            sugarGrams: sugarGrams,
-            proteinGrams: proteinGrams,
-            saltGrams: saltGrams,
-            fibreGrams: fibreGrams
-        )
     }
 }
 

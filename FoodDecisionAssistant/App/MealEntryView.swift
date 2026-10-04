@@ -6,19 +6,44 @@ struct MealEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
+    private let mealToEdit: PersistentMealLog?
+
     @Query(sort: \PersistentFoodItem.name)
     private var foodItems: [PersistentFoodItem]
 
-    @State private var title = Self.defaultMealTitle()
-    @State private var eatenAt = Date.now
-    @State private var entryMethod = MealEntryMethod.weighed
-    @State private var coverageStatus = MealCoverageStatus.complete
-    @State private var rows: [MealEntryRow] = []
+    @State private var title: String
+    @State private var eatenAt: Date
+    @State private var entryMethod: MealEntryMethod
+    @State private var coverageStatus: MealCoverageStatus
+    @State private var rows: [MealEntryRow]
     @State private var saveError: Error?
     @State private var seedImportError: Error?
     @State private var isShowingAdvancedOptions = false
 
     @FocusState private var focusedField: FocusedField?
+
+    init(meal: PersistentMealLog? = nil) {
+        mealToEdit = meal
+        _title = State(initialValue: meal?.title ?? Self.defaultMealTitle())
+        _eatenAt = State(initialValue: meal?.eatenAt ?? .now)
+        _entryMethod = State(
+            initialValue: meal.flatMap { MealEntryMethod(rawValue: $0.entryMethodRawValue) } ?? .weighed
+        )
+        _coverageStatus = State(
+            initialValue: meal.flatMap { MealCoverageStatus(rawValue: $0.coverageStatusRawValue) }
+                ?? .complete
+        )
+        _rows = State(
+            initialValue: meal?.components
+                .sorted { $0.sortIndex < $1.sortIndex }
+                .map {
+                    MealEntryRow(
+                        foodItemID: $0.foodItemID,
+                        weightGrams: $0.consumedWeightGrams
+                    )
+                } ?? []
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,7 +55,7 @@ struct MealEntryView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .navigationTitle("记录一餐")
+            .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -125,6 +150,13 @@ struct MealEntryView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("食物", selection: $row.foodItemID) {
                         Text("请选择").tag(UUID?.none)
+                        if
+                            let selectedID = row.foodItemID,
+                            !foodItems.contains(where: { $0.id == selectedID })
+                        {
+                            Text("原食物已不可用，请重新选择")
+                                .tag(Optional(selectedID))
+                        }
                         ForEach(foodItems) { foodItem in
                             Text(foodItem.name).tag(Optional(foodItem.id))
                         }
@@ -286,16 +318,23 @@ struct MealEntryView: View {
     private func saveMeal() {
         do {
             let meal = try MealLog(
+                id: mealToEdit?.id ?? UUID(),
                 eatenAt: eatenAt,
                 title: title,
                 entryMethod: entryMethod,
                 coverageStatus: coverageStatus,
-                components: resolvedComponents
+                components: resolvedComponents,
+                healthKitSyncVersion: mealToEdit?.healthKitSyncVersion ?? 1
             )
-            modelContext.insert(PersistentMealLog(domain: meal))
+            if let mealToEdit {
+                mealToEdit.update(from: meal, in: modelContext)
+            } else {
+                modelContext.insert(PersistentMealLog(domain: meal))
+            }
             try modelContext.save()
             dismiss()
         } catch {
+            modelContext.rollback()
             saveError = error
         }
     }

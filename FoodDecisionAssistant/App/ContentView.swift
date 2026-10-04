@@ -3,34 +3,62 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @Query(sort: \PersistentGoalProfile.effectiveFrom, order: .reverse)
     private var goalProfiles: [PersistentGoalProfile]
 
+    @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
+    private var mealLogs: [PersistentMealLog]
+
     @State private var isShowingGoalSettings = false
+    @State private var isShowingMealEntry = false
+    @State private var seedImportError: Error?
 
     private var currentGoal: GoalProfile? {
         goalProfiles.first?.domainModel
+    }
+
+    private var todayMeals: [PersistentMealLog] {
+        mealLogs.filter { Calendar.current.isDateInToday($0.eatenAt) }
+    }
+
+    private var todayNutrients: NutrientValues {
+        NutrientValues.sum(todayMeals.map(\.nutrientSnapshot))
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    TodayStatusCard(goal: currentGoal)
-                    HomeActionCard(
-                        title: "记录一餐",
-                        subtitle: "称重录入家常菜，或使用外卖估算模板",
-                        systemImage: "fork.knife"
+                    TodayStatusCard(
+                        goal: currentGoal,
+                        nutrients: todayNutrients,
+                        mealCount: todayMeals.count
                     )
+                    Button {
+                        isShowingMealEntry = true
+                    } label: {
+                        HomeActionCard(
+                            title: "记录一餐",
+                            subtitle: "称重录入家常菜，或使用标准份量估算",
+                            systemImage: "fork.knife",
+                            isAvailable: true
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    RecentMealsCard(meals: Array(todayMeals.prefix(3)))
                     HomeActionCard(
                         title: "扫描食品标签",
                         subtitle: "先检查硬约束，再计算营养分",
-                        systemImage: "viewfinder"
+                        systemImage: "viewfinder",
+                        isAvailable: false
                     )
                     HomeActionCard(
                         title: "待核对",
                         subtitle: "补齐未识别字段后再给正式结论",
-                        systemImage: "checklist"
+                        systemImage: "checklist",
+                        isAvailable: false
                     )
                 }
                 .padding()
@@ -47,39 +75,117 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingGoalSettings) {
                 GoalSettingsView()
             }
+            .sheet(isPresented: $isShowingMealEntry) {
+                MealEntryView()
+            }
+            .task {
+                do {
+                    try SeedFoodCatalog.importIfNeeded(into: modelContext)
+                } catch {
+                    seedImportError = error
+                }
+            }
+            .alert(
+                "无法准备食物库",
+                isPresented: Binding(
+                    get: { seedImportError != nil },
+                    set: { if !$0 { seedImportError = nil } }
+                )
+            ) {
+                Button("好", role: .cancel) {}
+            } message: {
+                Text(seedImportError?.localizedDescription ?? "")
+            }
         }
     }
 }
 
-private struct TodayStatusCard: View {
-    let goal: GoalProfile?
+private struct RecentMealsCard: View {
+    let meals: [PersistentMealLog]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("第一阶段工程已启动")
+            Text("今日记录")
                 .font(.headline)
-            Text("当前目标：完成可校正的饮食记录闭环")
-                .foregroundStyle(.secondary)
-            ProgressView(value: 0.15)
-                .tint(.green)
-            HStack {
-                Label(energyLabel, systemImage: "flame")
-                Spacer()
-                Text("规则 v1")
+
+            if meals.isEmpty {
+                Text("今天还没有记录餐食。")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(meals.enumerated()), id: \.element.id) { index, meal in
+                    if index > 0 {
+                        Divider()
+                    }
+                    RecentMealRow(meal: meal)
+                }
             }
-            .font(.caption)
         }
         .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
     }
+}
 
-    private var energyLabel: String {
-        guard let goal else {
-            return "尚未设置每日目标"
+private struct RecentMealRow: View {
+    let meal: PersistentMealLog
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "fork.knife.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.green)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(meal.title)
+                    .font(.subheadline.weight(.semibold))
+                Text(meal.eatenAt, format: .dateTime.hour().minute())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("\(meal.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal")
+                    .font(.subheadline)
+                Text("\(evidenceLabel) · \(coverageLabel)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
+    }
 
-        return "目标 \(goal.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal"
+    private var evidenceLabel: String {
+        switch EstimateEvidenceGrade(rawValue: meal.estimateEvidenceGradeRawValue) {
+        case .a: "A"
+        case .b: "B"
+        case .c: "C"
+        case .d, .none: "D"
+        }
+    }
+
+    private var coverageLabel: String {
+        switch MealCoverageStatus(rawValue: meal.coverageStatusRawValue) {
+        case .complete: "完整"
+        case .partial: "部分"
+        case .incomplete, .none: "临时"
+        }
+    }
+}
+
+private extension PersistentMealLog {
+    var nutrientSnapshot: NutrientValues {
+        NutrientValues(
+            energyKcal: energyKcal,
+            fatGrams: fatGrams,
+            saturatedFatGrams: saturatedFatGrams,
+            carbohydrateGrams: carbohydrateGrams,
+            sugarGrams: sugarGrams,
+            proteinGrams: proteinGrams,
+            saltGrams: saltGrams,
+            fibreGrams: fibreGrams
+        )
     }
 }
 
@@ -87,6 +193,7 @@ private struct HomeActionCard: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
     let systemImage: String
+    let isAvailable: Bool
 
     var body: some View {
         HStack(spacing: 14) {
@@ -105,8 +212,14 @@ private struct HomeActionCard: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(.tertiary)
+            if isAvailable {
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+            } else {
+                Text("开发中")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 18))

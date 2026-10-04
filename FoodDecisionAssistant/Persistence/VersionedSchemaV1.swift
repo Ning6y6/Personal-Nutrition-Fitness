@@ -13,6 +13,7 @@ enum VersionedSchemaV1: VersionedSchema {
             PersistentFoodItem.self,
             PersistentContainerProfile.self,
             PersistentMealLog.self,
+            PersistentMealComponent.self,
             PersistentReviewQueueItem.self,
             PersistentHealthKitSyncRecord.self,
             PersistentMealPhotoEstimate.self,
@@ -156,9 +157,12 @@ final class PersistentMealLog {
     var proteinGrams: Double
     var saltGrams: Double
     var fibreGrams: Double?
+    var entryMethodRawValue: String
     var coverageStatusRawValue: String
     var estimateEvidenceGradeRawValue: String
     var healthKitSyncVersion: Int
+    @Relationship(deleteRule: .cascade, inverse: \PersistentMealComponent.meal)
+    var components: [PersistentMealComponent]
 
     init(domain: MealLog) {
         id = domain.id
@@ -173,21 +177,33 @@ final class PersistentMealLog {
         proteinGrams = domain.nutrients.proteinGrams
         saltGrams = domain.nutrients.saltGrams
         fibreGrams = domain.nutrients.fibreGrams
+        entryMethodRawValue = domain.entryMethod.rawValue
         coverageStatusRawValue = domain.coverageStatus.rawValue
         estimateEvidenceGradeRawValue = domain.estimateEvidenceGrade.rawValue
         healthKitSyncVersion = domain.healthKitSyncVersion
+        components = domain.components.enumerated().map {
+            PersistentMealComponent(domain: $0.element, sortIndex: $0.offset)
+        }
+
+        for component in components {
+            component.meal = self
+        }
     }
 
-    var domainModel: MealLog {
+    func domainModel() throws -> MealLog {
         MealLog(
             id: id,
             eatenAt: eatenAt,
             title: title,
             consumedWeightGrams: consumedWeightGrams,
             nutrients: nutrients,
+            entryMethod: MealEntryMethod(rawValue: entryMethodRawValue) ?? .weighed,
             coverageStatus: MealCoverageStatus(rawValue: coverageStatusRawValue) ?? .incomplete,
             estimateEvidenceGrade: EstimateEvidenceGrade(rawValue: estimateEvidenceGradeRawValue) ?? .d,
-            healthKitSyncVersion: healthKitSyncVersion
+            healthKitSyncVersion: healthKitSyncVersion,
+            components: try components
+                .sorted { $0.sortIndex < $1.sortIndex }
+                .map { try $0.domainModel() }
         )
     }
 
@@ -201,6 +217,62 @@ final class PersistentMealLog {
             proteinGrams: proteinGrams,
             saltGrams: saltGrams,
             fibreGrams: fibreGrams
+        )
+    }
+}
+
+@Model
+final class PersistentMealComponent {
+    @Attribute(.unique) var id: UUID
+    var foodItemID: UUID
+    var foodName: String
+    var consumedWeightGrams: Double
+    var unit: String
+    var energyKcal: Double
+    var fatGrams: Double
+    var saturatedFatGrams: Double
+    var carbohydrateGrams: Double
+    var sugarGrams: Double
+    var proteinGrams: Double
+    var saltGrams: Double
+    var fibreGrams: Double?
+    var sortIndex: Int
+    var meal: PersistentMealLog?
+
+    init(domain: MealComponent, sortIndex: Int = 0) {
+        id = domain.id
+        foodItemID = domain.foodItemID
+        foodName = domain.foodName
+        consumedWeightGrams = domain.consumedWeightGrams
+        unit = domain.unit
+        energyKcal = domain.nutrients.energyKcal
+        fatGrams = domain.nutrients.fatGrams
+        saturatedFatGrams = domain.nutrients.saturatedFatGrams
+        carbohydrateGrams = domain.nutrients.carbohydrateGrams
+        sugarGrams = domain.nutrients.sugarGrams
+        proteinGrams = domain.nutrients.proteinGrams
+        saltGrams = domain.nutrients.saltGrams
+        fibreGrams = domain.nutrients.fibreGrams
+        self.sortIndex = sortIndex
+    }
+
+    func domainModel() throws -> MealComponent {
+        try MealComponent(
+            id: id,
+            foodItemID: foodItemID,
+            foodName: foodName,
+            consumedWeightGrams: consumedWeightGrams,
+            unit: unit,
+            nutrients: NutrientValues(
+                energyKcal: energyKcal,
+                fatGrams: fatGrams,
+                saturatedFatGrams: saturatedFatGrams,
+                carbohydrateGrams: carbohydrateGrams,
+                sugarGrams: sugarGrams,
+                proteinGrams: proteinGrams,
+                saltGrams: saltGrams,
+                fibreGrams: fibreGrams
+            )
         )
     }
 }

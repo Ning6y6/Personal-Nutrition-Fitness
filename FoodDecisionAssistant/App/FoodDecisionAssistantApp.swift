@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 @main
-struct FoodDecisionAssistantApp: App {
+struct ShiHengApp: App {
     private let modelContainer: ModelContainer
 
     init() {

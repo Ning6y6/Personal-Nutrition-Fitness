@@ -10,6 +10,11 @@
 		7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */; };
 		7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */; };
 		7C70F42D30702A5B0089CDBC /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000005 /* FoodDecisionCore */; };
+		A10000000000000000000001 /* SeedFoodCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* SeedFoodCatalog.swift */; };
+		A10000000000000000000002 /* MealEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* MealEntryView.swift */; };
+		A10000000000000000000003 /* TodayStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* TodayStatusCard.swift */; };
+		A10000000000000000000004 /* EnergyProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* EnergyProgressRing.swift */; };
+		A10000000000000000000005 /* NutritionProgressRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* NutritionProgressRow.swift */; };
 		A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* FoodDecisionAssistantApp.swift */; };
 		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* ContentView.swift */; };
 		A00000000000000000000003 /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000002 /* FoodDecisionCore */; };
@@ -29,26 +34,31 @@
 		7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionedSchemaV1.swift; sourceTree = "<group>"; };
 		7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceModelTests.swift; sourceTree = "<group>"; };
 		7C70F42330702A5B0089CDBC /* FoodDecisionAssistantTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FoodDecisionAssistantTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000001 /* SeedFoodCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedFoodCatalog.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* MealEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntryView.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* TodayStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayStatusCard.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* EnergyProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyProgressRing.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* NutritionProgressRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionProgressRow.swift; sourceTree = "<group>"; };
 		B00000000000000000000001 /* FoodDecisionAssistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantApp.swift; sourceTree = "<group>"; };
 		B00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		B00000000000000000000003 /* FoodDecisionAssistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FoodDecisionAssistant.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00000000000000000000003 /* ShiHeng.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiHeng.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B00000000000000000000004 /* FoodDecisionAssistant.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FoodDecisionAssistant.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		C00000000000000000000001 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A00000000000000000000003 /* FoodDecisionCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		7C70F42730702A5B0089CDBC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				7C70F42D30702A5B0089CDBC /* FoodDecisionCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C00000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000003 /* FoodDecisionCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */,
+				B10000000000000000000001 /* SeedFoodCatalog.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -95,6 +106,10 @@
 			children = (
 				B00000000000000000000001 /* FoodDecisionAssistantApp.swift */,
 				B00000000000000000000002 /* ContentView.swift */,
+				B10000000000000000000002 /* MealEntryView.swift */,
+				B10000000000000000000003 /* TodayStatusCard.swift */,
+				B10000000000000000000004 /* EnergyProgressRing.swift */,
+				B10000000000000000000005 /* NutritionProgressRow.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -102,7 +117,7 @@
 		D00000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000003 /* FoodDecisionAssistant.app */,
+				B00000000000000000000003 /* ShiHeng.app */,
 				7C70F42330702A5B0089CDBC /* FoodDecisionAssistantTests.xctest */,
 			);
 			name = Products;
@@ -111,26 +126,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E00000000000000000000001 /* FoodDecisionAssistant */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = E00000000000000000000002 /* Build configuration list for PBXNativeTarget "FoodDecisionAssistant" */;
-			buildPhases = (
-				C00000000000000000000002 /* Sources */,
-				C00000000000000000000001 /* Frameworks */,
-				C00000000000000000000003 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = FoodDecisionAssistant;
-			packageProductDependencies = (
-				F00000000000000000000002 /* FoodDecisionCore */,
-			);
-			productName = FoodDecisionAssistant;
-			productReference = B00000000000000000000003 /* FoodDecisionAssistant.app */;
-			productType = "com.apple.product-type.application";
-		};
 		7C70F42930702A5B0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7C70F42A30702A5B0089CDBC /* Build configuration list for PBXNativeTarget "FoodDecisionAssistantTests" */;
@@ -151,6 +146,26 @@
 			productName = FoodDecisionAssistantTests;
 			productReference = 7C70F42330702A5B0089CDBC /* FoodDecisionAssistantTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E00000000000000000000001 /* FoodDecisionAssistant */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E00000000000000000000002 /* Build configuration list for PBXNativeTarget "FoodDecisionAssistant" */;
+			buildPhases = (
+				C00000000000000000000002 /* Sources */,
+				C00000000000000000000001 /* Frameworks */,
+				C00000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FoodDecisionAssistant;
+			packageProductDependencies = (
+				F00000000000000000000002 /* FoodDecisionCore */,
+			);
+			productName = ShiHeng;
+			productReference = B00000000000000000000003 /* ShiHeng.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -194,14 +209,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		C00000000000000000000003 /* Resources */ = {
+		7C70F42830702A5B0089CDBC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7C70F42830702A5B0089CDBC /* Resources */ = {
+		C00000000000000000000003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -211,6 +226,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7C70F42630702A5B0089CDBC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C00000000000000000000002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -218,14 +241,11 @@
 				A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */,
 				A00000000000000000000002 /* ContentView.swift in Sources */,
 				7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		7C70F42630702A5B0089CDBC /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
+				A10000000000000000000001 /* SeedFoodCatalog.swift in Sources */,
+				A10000000000000000000002 /* MealEntryView.swift in Sources */,
+				A10000000000000000000003 /* TodayStatusCard.swift in Sources */,
+				A10000000000000000000004 /* EnergyProgressRing.swift in Sources */,
+				A10000000000000000000005 /* NutritionProgressRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,9 +290,10 @@
 				CODE_SIGN_ENTITLEMENTS = FoodDecisionAssistant/FoodDecisionAssistant.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4QJUB83P5N;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Food Decision Assistant";
+				INFOPLIST_KEY_CFBundleDisplayName = "食衡";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取步数、活动能量和训练，用于调整每日饮食目标。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "写入餐食的热量、三大营养素、饱和脂肪和纤维。";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -280,8 +301,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.FoodDecisionAssistant;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHeng;
+				PRODUCT_MODULE_NAME = FoodDecisionAssistant;
+				PRODUCT_NAME = ShiHeng;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -296,9 +318,10 @@
 				CODE_SIGN_ENTITLEMENTS = FoodDecisionAssistant/FoodDecisionAssistant.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4QJUB83P5N;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Food Decision Assistant";
+				INFOPLIST_KEY_CFBundleDisplayName = "食衡";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取步数、活动能量和训练，用于调整每日饮食目标。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "写入餐食的热量、三大营养素、饱和脂肪和纤维。";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -306,8 +329,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.FoodDecisionAssistant;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHeng;
+				PRODUCT_MODULE_NAME = FoodDecisionAssistant;
+				PRODUCT_NAME = ShiHeng;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -325,12 +349,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.FoodDecisionAssistantTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHengTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FoodDecisionAssistant.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FoodDecisionAssistant";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShiHeng.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShiHeng";
 			};
 			name = Debug;
 		};
@@ -343,32 +367,32 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.FoodDecisionAssistantTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHengTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FoodDecisionAssistant.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FoodDecisionAssistant";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShiHeng.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShiHeng";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E00000000000000000000002 /* Build configuration list for PBXNativeTarget "FoodDecisionAssistant" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				100000000000000000000003 /* Debug */,
-				100000000000000000000004 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		7C70F42A30702A5B0089CDBC /* Build configuration list for PBXNativeTarget "FoodDecisionAssistantTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7C70F42B30702A5B0089CDBC /* Debug */,
 				7C70F42C30702A5B0089CDBC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E00000000000000000000002 /* Build configuration list for PBXNativeTarget "FoodDecisionAssistant" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				100000000000000000000003 /* Debug */,
+				100000000000000000000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

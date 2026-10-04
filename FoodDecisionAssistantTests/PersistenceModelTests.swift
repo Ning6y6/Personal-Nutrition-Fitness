@@ -73,27 +73,80 @@ struct PersistenceModelTests {
     @Test("Meal coverage and evidence grade persist independently")
     func mealLogCoverageAndEvidencePersistAndRoundTrip() throws {
         let context = try makeContext()
-        let meal = MealLog(
+        let tomato = FoodItem(
+            name: "西红柿",
+            category: .mixedMeal,
+            nutrientsPer100Units: makeNutrients(),
+            source: "test"
+        )
+        let egg = FoodItem(
+            name: "鸡蛋",
+            category: .proteinMain,
+            nutrientsPer100Units: makeNutrients(),
+            source: "test"
+        )
+        let meal = try MealLog(
             title: "Photo-estimated dinner",
-            consumedWeightGrams: 420,
-            nutrients: makeNutrients(),
+            entryMethod: .standardPortionEstimate,
             coverageStatus: .complete,
-            estimateEvidenceGrade: .c
+            components: [
+                try MealComponent(foodItem: tomato, consumedWeightGrams: 220),
+                try MealComponent(foodItem: egg, consumedWeightGrams: 100),
+            ]
         )
 
         context.insert(PersistentMealLog(domain: meal))
         try context.save()
 
         let savedMeals = try context.fetch(FetchDescriptor<PersistentMealLog>())
+        let restored = try #require(savedMeals.first).domainModel()
 
-        #expect(savedMeals.first?.domainModel.coverageStatus == .complete)
-        #expect(savedMeals.first?.domainModel.estimateEvidenceGrade == .c)
-        #expect(savedMeals.first?.domainModel.isCompleteForDailyCoverage == true)
+        #expect(restored.coverageStatus == .complete)
+        #expect(restored.estimateEvidenceGrade == .b)
+        #expect(restored.entryMethod == .standardPortionEstimate)
+        #expect(restored.isCompleteForDailyCoverage == true)
+        #expect(restored.components.map(\.foodName) == ["西红柿", "鸡蛋"])
+        #expect(restored.components.map(\.consumedWeightGrams) == [220, 100])
+        #expect(restored.components[0].nutrients == meal.components[0].nutrients)
     }
 
     @Test("The version-one schema includes all current persistent entities")
     func versionOneSchemaIncludesAllEntities() {
-        #expect(VersionedSchemaV1.models.count == 9)
+        #expect(VersionedSchemaV1.models.count == 10)
+    }
+
+    @Test("The personal seed food import is deterministic and idempotent")
+    func seedFoodImportIsIdempotent() throws {
+        let context = try makeContext()
+        let deprecatedFoodID = try #require(
+            UUID(uuidString: "20000000-0000-4000-8000-000000018521")
+        )
+        context.insert(
+            PersistentFoodItem(
+                domain: FoodItem(
+                    id: deprecatedFoodID,
+                    name: "Deprecated seed",
+                    category: .proteinMain,
+                    nutrientsPer100Units: makeNutrients(),
+                    source: "legacy"
+                )
+            )
+        )
+        try context.save()
+
+        let firstImportCount = try SeedFoodCatalog.importIfNeeded(into: context)
+        let secondImportCount = try SeedFoodCatalog.importIfNeeded(into: context)
+        let foods = try context.fetch(
+            FetchDescriptor<PersistentFoodItem>(sortBy: [SortDescriptor(\.name)])
+        )
+
+        #expect(firstImportCount == 12)
+        #expect(secondImportCount == 0)
+        #expect(foods.count == 12)
+        #expect(!foods.contains { $0.id == deprecatedFoodID })
+        #expect(foods.contains { $0.name == "西红柿（生）" })
+        #expect(foods.contains { $0.name == "鸡胸肉（去皮烤熟）" })
+        #expect(foods.allSatisfy { $0.source.contains("CoFID 2021") })
     }
 
     private func makeContext() throws -> ModelContext {

@@ -5,9 +5,6 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \PersistentGoalProfile.effectiveFrom, order: .reverse)
-    private var goalProfiles: [PersistentGoalProfile]
-
     @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
     private var mealLogs: [PersistentMealLog]
 
@@ -17,10 +14,8 @@ struct ContentView: View {
     @State private var isShowingBackup = false
     @State private var selectedMeal: PersistentMealLog?
     @State private var seedImportError: Error?
-
-    private var currentGoal: GoalProfile? {
-        try? goalProfiles.first?.domainModel
-    }
+    @State private var currentGoal: GoalProfile?
+    @State private var hasGoalReadError = false
 
     private var todayMeals: [PersistentMealLog] {
         mealLogs.filter { Calendar.current.isDateInToday($0.eatenAt) }
@@ -48,8 +43,8 @@ struct ContentView: View {
                         .font(.subheadline)
                         .foregroundStyle(.orange)
                     }
-                    if !goalProfiles.isEmpty && currentGoal == nil {
-                        Label("已保存目标含无效数据，请到目标页检查；原数据保留。", systemImage: "exclamationmark.triangle")
+                    if hasGoalReadError {
+                        Label("无法读取或校验已保存目标，请到目标页检查；原数据保留。", systemImage: "exclamationmark.triangle")
                             .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
@@ -100,7 +95,7 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $isShowingGoalSettings) {
-                GoalSettingsView()
+                GoalSettingsView(onSaved: refreshGoal)
             }
             .sheet(isPresented: $isShowingBackup) {
                 BackupManagementView()
@@ -115,6 +110,7 @@ struct ContentView: View {
                 MealDetailView(meal: meal)
             }
             .task {
+                refreshGoal()
                 do {
                     try SeedFoodCatalog.importIfNeeded(into: modelContext)
                 } catch {
@@ -132,6 +128,19 @@ struct ContentView: View {
             } message: {
                 Text(seedImportError?.localizedDescription ?? "")
             }
+        }
+    }
+
+    private func refreshGoal() {
+        do {
+            let reader = ModelContext(modelContext.container)
+            reader.autosaveEnabled = false
+            let descriptor = FetchDescriptor<PersistentGoalProfile>(sortBy: [SortDescriptor(\.effectiveFrom, order: .reverse)])
+            currentGoal = try reader.fetch(descriptor).first?.domainModel
+            hasGoalReadError = false
+        } catch {
+            currentGoal = nil
+            hasGoalReadError = true
         }
     }
 }
@@ -213,148 +222,6 @@ private struct HomeActionCard: View {
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
-    }
-}
-
-private struct GoalSettingsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-
-    @Query(sort: \PersistentGoalProfile.effectiveFrom, order: .reverse)
-    private var goalProfiles: [PersistentGoalProfile]
-
-    @State private var energyKcal = 2_000.0
-    @State private var proteinGrams = 140.0
-    @State private var carbohydrateGrams = 210.0
-    @State private var fatGrams = 60.0
-    @State private var saturatedFatLimitGrams = 15.0
-    @State private var fibreGrams = 30.0
-    @State private var saveError: Error?
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                GoalEnergySection(energyKcal: $energyKcal)
-                GoalMacrosSection(
-                    proteinGrams: $proteinGrams,
-                    carbohydrateGrams: $carbohydrateGrams,
-                    fatGrams: $fatGrams
-                )
-                GoalLimitsSection(
-                    saturatedFatLimitGrams: $saturatedFatLimitGrams,
-                    fibreGrams: $fibreGrams
-                )
-            }
-            .navigationTitle("每日目标")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        saveGoal()
-                    }
-                }
-            }
-            .task(id: goalProfiles.first?.id) {
-                loadGoal()
-            }
-            .alert(
-                "无法保存目标",
-                isPresented: Binding(
-                    get: { saveError != nil },
-                    set: { if !$0 { saveError = nil } }
-                )
-            ) {
-                Button("好", role: .cancel) {}
-            } message: {
-                Text(saveError?.localizedDescription ?? "")
-            }
-        }
-    }
-
-    private func loadGoal() {
-        guard let goal = try? goalProfiles.first?.domainModel else {
-            return
-        }
-
-        energyKcal = goal.energyKcal
-        proteinGrams = goal.proteinGrams
-        carbohydrateGrams = goal.carbohydrateGrams
-        fatGrams = goal.fatGrams
-        saturatedFatLimitGrams = goal.saturatedFatLimitGrams ?? 0
-        fibreGrams = goal.fibreGrams ?? 0
-    }
-
-    private func saveGoal() {
-        do {
-            let domain = try GoalProfile(
-                id: goalProfiles.first?.id ?? UUID(),
-                effectiveFrom: goalProfiles.first?.effectiveFrom ?? .now,
-                energyKcal: energyKcal,
-                proteinGrams: proteinGrams,
-                carbohydrateGrams: carbohydrateGrams,
-                fatGrams: fatGrams,
-                saturatedFatLimitGrams: saturatedFatLimitGrams,
-                fibreGrams: fibreGrams
-            )
-
-            if let persistentGoal = goalProfiles.first {
-                persistentGoal.update(from: domain)
-            } else {
-                modelContext.insert(PersistentGoalProfile(domain: domain))
-            }
-
-            try modelContext.save()
-            dismiss()
-        } catch {
-            modelContext.rollback()
-            saveError = error
-        }
-    }
-}
-
-private struct GoalEnergySection: View {
-    @Binding var energyKcal: Double
-
-    var body: some View {
-        Section("能量") {
-            TextField("每日热量 (kcal)", value: $energyKcal, format: .number)
-                .keyboardType(.decimalPad)
-        }
-    }
-}
-
-private struct GoalMacrosSection: View {
-    @Binding var proteinGrams: Double
-    @Binding var carbohydrateGrams: Double
-    @Binding var fatGrams: Double
-
-    var body: some View {
-        Section("宏量营养素 (g)") {
-            TextField("蛋白质", value: $proteinGrams, format: .number)
-                .keyboardType(.decimalPad)
-            TextField("碳水化合物", value: $carbohydrateGrams, format: .number)
-                .keyboardType(.decimalPad)
-            TextField("脂肪", value: $fatGrams, format: .number)
-                .keyboardType(.decimalPad)
-        }
-    }
-}
-
-private struct GoalLimitsSection: View {
-    @Binding var saturatedFatLimitGrams: Double
-    @Binding var fibreGrams: Double
-
-    var body: some View {
-        Section("限制与目标 (g)") {
-            TextField("饱和脂肪上限", value: $saturatedFatLimitGrams, format: .number)
-                .keyboardType(.decimalPad)
-            TextField("纤维目标", value: $fibreGrams, format: .number)
-                .keyboardType(.decimalPad)
-        }
     }
 }
 

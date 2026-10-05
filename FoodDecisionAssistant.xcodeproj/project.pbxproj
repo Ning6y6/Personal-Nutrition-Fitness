@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A90000000000000000000006 /* TodayMealSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000006 /* TodayMealSummaryTests.swift */; };
+		A90000000000000000000001 /* TodayDateContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000001 /* TodayDateContext.swift */; };
+		A90000000000000000000002 /* TodayDateContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000002 /* TodayDateContextTests.swift */; };
+		A90000000000000000000003 /* MealIntakeAvailability.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000003 /* MealIntakeAvailability.swift */; };
+		A90000000000000000000004 /* EmptyIntakeSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000004 /* EmptyIntakeSummaryView.swift */; };
+		A90000000000000000000005 /* MealIntakeAvailabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000005 /* MealIntakeAvailabilityTests.swift */; };
 		A80000000000000000000001 /* LocalStorePathValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000001 /* LocalStorePathValidator.swift */; };
 		A80000000000000000000002 /* LocalStorePathValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000002 /* LocalStorePathValidatorTests.swift */; };
 		A70000000000000000000001 /* FibreSummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70000000000000000000001 /* FibreSummaryRow.swift */; };
@@ -62,6 +68,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B90000000000000000000006 /* TodayMealSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/TodayMealSummaryTests.swift; sourceTree = "<group>"; };
+		B90000000000000000000001 /* TodayDateContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayDateContext.swift; sourceTree = "<group>"; };
+		B90000000000000000000002 /* TodayDateContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/TodayDateContextTests.swift; sourceTree = "<group>"; };
+		B90000000000000000000003 /* MealIntakeAvailability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealIntakeAvailability.swift; sourceTree = "<group>"; };
+		B90000000000000000000004 /* EmptyIntakeSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyIntakeSummaryView.swift; sourceTree = "<group>"; };
+		B90000000000000000000005 /* MealIntakeAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MealIntakeAvailabilityTests.swift; sourceTree = "<group>"; };
 		B80000000000000000000001 /* LocalStorePathValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorePathValidator.swift; sourceTree = "<group>"; };
 		B80000000000000000000002 /* LocalStorePathValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStorePathValidatorTests.swift; sourceTree = "<group>"; };
 		B70000000000000000000001 /* FibreSummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FibreSummaryRow.swift; sourceTree = "<group>"; };
@@ -156,6 +168,9 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				B90000000000000000000006 /* TodayMealSummaryTests.swift */,
+				B90000000000000000000002 /* TodayDateContextTests.swift */,
+				B90000000000000000000005 /* MealIntakeAvailabilityTests.swift */,
 				C80000000000000000000001 /* Persistence */,
 				7C70F421307029DC0089CDBC /* PersistenceModelTests.swift */,
 				B20000000000000000000004 /* BackupServiceTests.swift */,
@@ -192,6 +207,9 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				B90000000000000000000001 /* TodayDateContext.swift */,
+				B90000000000000000000003 /* MealIntakeAvailability.swift */,
+				B90000000000000000000004 /* EmptyIntakeSummaryView.swift */,
 				B00000000000000000000001 /* FoodDecisionAssistantApp.swift */,
 				B00000000000000000000002 /* ContentView.swift */,
 				B10000000000000000000002 /* MealEntryView.swift */,
@@ -331,6 +349,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A90000000000000000000006 /* TodayMealSummaryTests.swift in Sources */,
+				A90000000000000000000002 /* TodayDateContextTests.swift in Sources */,
+				A90000000000000000000005 /* MealIntakeAvailabilityTests.swift in Sources */,
 				7C70F42230702A5B0089CDBC /* PersistenceModelTests.swift in Sources */,
 				A20000000000000000000004 /* BackupServiceTests.swift in Sources */,
 				A30000000000000000000004 /* StoreBootstrapTests.swift in Sources */,
@@ -348,6 +369,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A90000000000000000000001 /* TodayDateContext.swift in Sources */,
+				A90000000000000000000003 /* MealIntakeAvailability.swift in Sources */,
+				A90000000000000000000004 /* EmptyIntakeSummaryView.swift in Sources */,
 				A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */,
 				A00000000000000000000002 /* ContentView.swift in Sources */,
 				A40000000000000000000001 /* MealReadValidation.swift in Sources */,

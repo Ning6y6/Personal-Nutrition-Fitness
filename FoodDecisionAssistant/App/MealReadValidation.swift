@@ -5,11 +5,16 @@ import Foundation
 /// Rejected and draft rows remain available in history; callers must show the counts.
 @MainActor
 struct MealReadValidation {
+    static func records(in window: MealDayWindow, from records: [PersistentMealLog]) -> [PersistentMealLog] {
+        records.filter { window.contains($0.eatenAt) }
+    }
+
     let meals: [MealLog]
     let invalidRecordIDs: [UUID]
     let draftRecordIDs: [UUID]
     let nutrients: NutrientValues?
     let fibreSummary: FibreIntakeSummary?
+    let availability: MealIntakeAvailability
 
     init(_ records: [PersistentMealLog]) {
         var meals: [MealLog] = []
@@ -30,10 +35,20 @@ struct MealReadValidation {
         invalidRecordIDs = invalid
         draftRecordIDs = drafts
         // A finite input may still overflow when summed. Do not turn that failure into zero.
-        nutrients = try? NutrientValues.sum(meals.map(\.nutrients))
+        let recordedNutrients = try? NutrientValues.sum(meals.map(\.nutrients))
+        nutrients = recordedNutrients
         // A meal-level nil would lose its known component subtotal. Use saved snapshots,
         // not current source foods, and do not silently replace overflow with zero.
         fibreSummary = try? FibreIntakeSummary(snapshots: meals.flatMap(\.components).map(\.nutrients))
+        if records.isEmpty {
+            availability = .noRecords
+        } else if meals.isEmpty {
+            availability = .noConfirmedRecords
+        } else if recordedNutrients == nil {
+            availability = .unavailable
+        } else {
+            availability = .available
+        }
     }
 }
 

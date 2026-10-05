@@ -6,14 +6,15 @@ struct TodayStatusCard: View {
     let nutrients: NutrientValues?
     let mealCount: Int
     let fibreSummary: FibreIntakeSummary?
+    let availability: MealIntakeAvailability
     var hasGoalReadError = false
 
     var body: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading) {
-                Text("今日摄入")
+                Text("今日已记录摄入")
                     .font(.headline)
-                Text("\(mealCount) 餐已记录")
+                Text("\(mealCount) 餐计入合计")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
@@ -25,7 +26,13 @@ struct TodayStatusCard: View {
                 Text("无法读取或校验目标，请到目标页检查。原数据保留，未按无目标或零目标计算。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-            } else if let nutrients, let goal {
+            }
+            if !availability.canShowNutritionProgress {
+                EmptyIntakeSummaryView(
+                    availability: availability,
+                    goal: hasGoalReadError ? nil : goal
+                )
+            } else if !hasGoalReadError, let nutrients, let goal {
                 EnergyProgressRing(
                     consumedKcal: nutrients.energyKcal,
                     targetKcal: goal.energyKcal
@@ -62,23 +69,25 @@ struct TodayStatusCard: View {
                     unit: "g",
                     metric: .saturatedFat
                 )
-            } else if nutrients == nil {
+            } else if !hasGoalReadError, nutrients == nil {
                 Label("营养合计无法安全计算", systemImage: "exclamationmark.triangle")
                     .font(.headline)
                 Text("未显示零摄入。请在历史记录中检查并修复异常数据。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-            } else {
+            } else if !hasGoalReadError {
                 Label("尚未设置每日目标", systemImage: "target")
                     .font(.headline)
                 Text("设置目标后，这里会显示热量圆环和营养缺口。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            FibreSummaryRow(
-                summary: fibreSummary, target: goal?.fibreGrams,
-                showsTarget: goal != nil && !hasGoalReadError
-            )
+            if availability == .available || availability == .unavailable {
+                FibreSummaryRow(
+                    summary: fibreSummary, target: goal?.fibreGrams,
+                    showsTarget: availability.canShowNutritionProgress && goal != nil && !hasGoalReadError
+                )
+            }
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
@@ -97,7 +106,8 @@ struct TodayStatusCard: View {
             goal: goal,
             nutrients: nutrients,
             mealCount: 2,
-            fibreSummary: try? FibreIntakeSummary(snapshots: [nutrients])
+            fibreSummary: try? FibreIntakeSummary(snapshots: [nutrients]),
+            availability: .available
         )
         .padding()
         .background(Color(.systemGroupedBackground))

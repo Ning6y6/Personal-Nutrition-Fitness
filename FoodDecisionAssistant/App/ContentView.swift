@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
     private var mealLogs: [PersistentMealLog]
@@ -16,9 +17,11 @@ struct ContentView: View {
     @State private var seedImportError: Error?
     @State private var currentGoal: GoalProfile?
     @State private var hasGoalReadError = false
+    @State private var dateContext = TodayDateContext()
 
     private var todayMeals: [PersistentMealLog] {
-        mealLogs.filter { Calendar.current.isDateInToday($0.eatenAt) }
+        guard let window = dateContext.dayWindow else { return [] }
+        return MealReadValidation.records(in: window, from: mealLogs)
     }
 
     private var todaySummary: MealReadValidation {
@@ -30,13 +33,20 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     let summary = todaySummary
-                    TodayStatusCard(
-                        goal: currentGoal,
-                        nutrients: summary.nutrients,
-                        mealCount: summary.meals.count,
-                        fibreSummary: summary.fibreSummary,
-                        hasGoalReadError: hasGoalReadError
-                    )
+                    if dateContext.dayWindow != nil {
+                        TodayStatusCard(
+                            goal: currentGoal,
+                            nutrients: summary.nutrients,
+                            mealCount: summary.meals.count,
+                            fibreSummary: summary.fibreSummary,
+                            availability: summary.availability,
+                            hasGoalReadError: hasGoalReadError
+                        )
+                    } else {
+                        Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
+                        Text("暂不显示今日摄入与缺口，历史记录仍保留。")
+                            .foregroundStyle(.secondary)
+                    }
                     if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
                         Label(
                             "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
@@ -56,12 +66,18 @@ struct ContentView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    RecentMealsCard(
-                        meals: Array(todayMeals.prefix(3)),
-                        hasHistory: !mealLogs.isEmpty,
-                        selectMeal: { selectedMeal = $0 },
-                        showHistory: { isShowingMealHistory = true }
-                    )
+                    if dateContext.dayWindow != nil {
+                        RecentMealsCard(
+                            meals: Array(todayMeals.prefix(3)),
+                            hasHistory: !mealLogs.isEmpty,
+                            selectMeal: { selectedMeal = $0 },
+                            showHistory: { isShowingMealHistory = true }
+                        )
+                    } else {
+                        Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
+                            isShowingMealHistory = true
+                        }
+                    }
                     HomeActionCard(
                         title: "扫描食品标签",
                         subtitle: "先检查硬约束，再计算营养分",
@@ -114,6 +130,24 @@ struct ContentView: View {
                     seedImportError = error
                 }
             }
+            .onChange(of: scenePhase, initial: true) {
+                if scenePhase == .active { refreshDate() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
+                refreshDate()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .NSSystemClockDidChange).receive(on: RunLoop.main)) { _ in
+                refreshDate()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .NSSystemTimeZoneDidChange).receive(on: RunLoop.main)) { _ in
+                refreshDate()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification).receive(on: RunLoop.main)) { _ in
+                refreshDate()
+            }
+            .task(id: scenePhase == .active ? dateContext.refreshRevision : nil) {
+                await monitorDateBoundary()
+            }
             .alert(
                 "无法准备食物库",
                 isPresented: Binding(
@@ -125,6 +159,22 @@ struct ContentView: View {
             } message: {
                 Text(seedImportError?.localizedDescription ?? "")
             }
+        }
+    }
+
+    private func refreshDate() {
+        dateContext.refresh()
+    }
+
+    private func monitorDateBoundary() async {
+        guard scenePhase == .active else { return }
+        dateContext.refreshIfNeeded()
+        do {
+            try await dateContext.waitForNextDay()
+        } catch is CancellationError {
+            // Backgrounding and rescheduling are normal lifecycle events, not errors.
+        } catch {
+            dateContext.markUnavailable()
         }
     }
 

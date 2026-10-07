@@ -17,3 +17,4 @@
 - Keep each OPT task in an independently verifiable commit; do not mix a completed feature baseline with subsequent optimization work.
 - Push validated task branches and integrate using non-destructive fast-forward merges where possible; never force-push or rewrite existing history without explicit approval.
 - Physical-device data and protected database samples must stay outside Git and must never appear in logs or test fixtures. Do not uninstall the physical app or clear its store to resolve compatibility problems.
+- Brand, naming, icon, palette and UI-review outcomes are recorded in `docs/BRAND_UI_DECISIONS.md`. Only items marked 已确认 there are decisions; items marked 建议（待确认）or 待决 are not approved for implementation. Never change the bundle ID `com.ning6y6.ShiHeng`.

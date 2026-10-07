@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "date": "2026-10-07",
+  "source": "docs/BRAND_UI_DECISIONS.md sections 3 and 7; docs/DECISIONS.md 020",
+  "useSystemColors": {
+    "background": "systemGroupedBackground (light #F2F2F7, dark #000000)",
+    "card": "secondarySystemGroupedBackground (light #FFFFFF, dark #1C1C1E)",
+    "over": "systemOrange (light #FF9500, dark #FF9F0A)",
+    "hardConstraint": "systemRed (light #FF3B30, dark #FF453A); hard constraints only, never nutrition"
+  },
+  "accentColor": { "light": "#1B7F5B", "dark": "#3DD598" },
+  "overTextOnLight": "#C93400",
+  "energyRing": {
+    "withinBudgetGradient": { "light": ["#1B7F5B", "#2FB47C"], "dark": ["#2BB57E", "#3DD598"] },
+    "overflowGradient": { "light": ["#E07B00", "#FF9500"], "dark": ["#E8890A", "#FF9F0A"] },
+    "maxLaps": 2,
+    "multipleShownAsText": true
+  },
+  "appIconA": {
+    "default": { "background": "#1E8F64", "bowl": "#FFFFFF", "chopsticks": "#F6C35B" },
+    "dark": { "background": "#0F1A16", "bowl": "#3DD598", "chopsticks": "#F2B84B" },
+    "tintedMono": { "background": "#1C1C1E", "bowl": "#FFFFFF", "chopsticks": "#8E8E93" }
+  }
+}

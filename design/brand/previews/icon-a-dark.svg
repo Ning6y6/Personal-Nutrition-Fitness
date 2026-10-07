@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Preview only: the rounded mask is applied by iOS. Do not import this file into Icon Composer. -->
+  <defs><clipPath id="m"><rect x="0" y="0" width="1024" height="1024" rx="229"/></clipPath></defs>
+  <g clip-path="url(#m)">
+    <rect x="0" y="0" width="1024" height="1024" fill="#0F1A16"/>
+    <rect x="212" y="302" width="600" height="48" rx="24" fill="#F2B84B"/>
+    <rect x="212" y="374" width="600" height="48" rx="24" fill="#F2B84B"/>
+    <path d="M 248 442 H 776 C 776 600 660 692 512 692 C 364 692 248 600 248 442 Z" fill="#3DD598"/>
+    <rect x="436" y="680" width="152" height="40" rx="14" fill="#3DD598"/>
+  </g>
+</svg>

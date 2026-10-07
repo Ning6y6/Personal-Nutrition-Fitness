@@ -28,26 +28,33 @@ public enum NutritionProgressIssue: String, Codable, Sendable, Equatable {
     case unknownConsumed, unsetTarget, nonPositiveEnergyTarget
 }
 
+/// Semantic presentation roles, not platform colors. Critical is legacy v1 only.
+public enum NutritionProgressTone: String, Codable, Sendable, Equatable {
+    case neutral, theme, amber, critical
+}
+
 public enum NutritionDisplayPolicyError: Error, Sendable, Equatable {
     case unsupportedVersion(Int)
     case invalidSummary
 }
 
-/// Interpretation and thresholds travel together; v1 is not a medical recommendation.
+/// Interpretation and thresholds travel together; neither version is a medical recommendation.
 public struct NutritionDisplayPolicy: Codable, Sendable, Equatable {
-    public static let v1 = NutritionDisplayPolicy(v1: ())
+    public static let v1 = NutritionDisplayPolicy(version: 1)
+    public static let v2 = NutritionDisplayPolicy(version: 2)
+    public static let standard = v2
     public let version: Int
     public let upperWarningRatio: Double
     public let budgetSignificantOverageRatio: Double
 
-    private init(v1: ()) {
-        version = 1
+    private init(version: Int) {
+        self.version = version
         upperWarningRatio = 0.80
         budgetSignificantOverageRatio = 1.10
     }
 
     public init(version: Int = 1, upperWarningRatio: Double, budgetSignificantOverageRatio: Double) throws {
-        guard version == 1 else { throw NutritionDisplayPolicyError.unsupportedVersion(version) }
+        guard version == 1 || version == 2 else { throw NutritionDisplayPolicyError.unsupportedVersion(version) }
         try DomainValidation.nonnegative(upperWarningRatio, field: "upperWarningRatio")
         guard upperWarningRatio > 0, upperWarningRatio < 1 else {
             throw DomainValidationError.invalidValue(field: "upperWarningRatio")
@@ -118,6 +125,21 @@ public struct NutritionDisplayPolicy: Codable, Sendable, Equatable {
     private func summary(consumed: Double?, target: Double?, semantics: NutritionGoalSemantics, status: NutritionProgressStatus, issue: NutritionProgressIssue) -> NutritionProgressSummary {
         NutritionProgressSummary(consumed: consumed, target: target, semantics: semantics, status: status, progress: nil, remaining: nil, overage: nil, displayPolicy: self, issue: issue)
     }
+
+    func tone(for status: NutritionProgressStatus) -> NutritionProgressTone {
+        switch status {
+        case .unset, .unavailable, .invalidInput:
+            .neutral
+        case .belowMinimum:
+            version == 1 ? .neutral : .theme
+        case .approachingMaximum, .atMaximum, .overBudget:
+            .amber
+        case .overMaximum, .significantlyOverBudget:
+            version == 1 ? .critical : .amber
+        case .minimumMet, .withinBudget, .atBudget, .belowMaximum:
+            .theme
+        }
+    }
 }
 
 /// Derived output. Invalid or unavailable data cannot carry fabricated progress.
@@ -132,6 +154,9 @@ public struct NutritionProgressSummary: Codable, Sendable, Equatable {
     public let displayPolicy: NutritionDisplayPolicy
     public let policyVersion: Int
     public let issue: NutritionProgressIssue?
+
+    /// Derived from the versioned policy; a serialized status cannot choose its own color.
+    public var displayTone: NutritionProgressTone { displayPolicy.tone(for: status) }
 
     init(consumed: Double?, target: Double?, semantics: NutritionGoalSemantics, status: NutritionProgressStatus, progress: Double?, remaining: Double?, overage: Double?, displayPolicy: NutritionDisplayPolicy, issue: NutritionProgressIssue?) {
         self.consumed = consumed

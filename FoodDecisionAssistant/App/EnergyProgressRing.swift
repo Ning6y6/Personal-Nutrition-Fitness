@@ -3,6 +3,7 @@ import SwiftUI
 
 struct EnergyProgressRing: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let consumedKcal: Double
     let targetKcal: Double
@@ -16,55 +17,58 @@ struct EnergyProgressRing: View {
 
     var body: some View {
         let evaluated = summary
-        let display = NutritionProgressPresentation(summary: evaluated.nutritionProgress, unit: "kcal")
-        ZStack {
-            Circle()
-                .stroke(.quaternary, lineWidth: 14)
-
-            Circle()
-                .trim(from: 0, to: display.progress ?? 0)
-                .stroke(
-                    display.tone.color,
-                    style: StrokeStyle(lineWidth: 14, lineCap: .round)
+        let display = EnergyRingPresentation(summary: evaluated)
+        VStack {
+            ZStack {
+                Circle().stroke(.quaternary, lineWidth: DesignTokens.ringLineWidth)
+                EnergyRingArc(
+                    progress: evaluated.baseLap ?? 0,
+                    startColor: DesignTokens.ringStart,
+                    endColor: DesignTokens.ringEnd,
+                    showsEndpoint: evaluated.baseLap == 1
                 )
-                .rotationEffect(.degrees(-90))
-
-            VStack {
-                Image(systemName: display.symbol)
-                    .foregroundStyle(display.tone.color)
-                    .accessibilityHidden(true)
-
-                Text(display.currentText)
-                    .font(.title.bold())
-                    .contentTransition(.numericText())
-
-                Text("预算 \(display.targetText) kcal")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Text(display.message)
-                    .font(.caption)
-                    .foregroundStyle(display.tone.color)
+                EnergyRingArc(
+                    progress: evaluated.overflowLap ?? 0,
+                    startColor: DesignTokens.overflowStart,
+                    endColor: DesignTokens.overflowEnd,
+                    showsEndpoint: (evaluated.overflowLap ?? 0) > 0
+                )
+                if !dynamicTypeSize.isAccessibilitySize {
+                    EnergyRingValue(display: display.nutrition)
+                        .padding(DesignTokens.ringLineWidth)
+                }
             }
-            .multilineTextAlignment(.center)
+            .frame(maxWidth: DesignTokens.ringDiameter)
+            .frame(height: DesignTokens.ringDiameter)
+            .padding(DesignTokens.ringLineWidth / 2)
+            .accessibilityHidden(true)
+
+            if dynamicTypeSize.isAccessibilitySize {
+                EnergyRingValue(display: display.nutrition)
+            }
+            Label(display.message, systemImage: display.nutrition.symbol)
+                .font(.subheadline)
+                .foregroundStyle(display.nutrition.tone.color)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .aspectRatio(1, contentMode: .fit)
-        .animation(reduceMotion ? nil : .smooth, value: display.progress)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .animation(reduceMotion ? nil : .default, value: evaluated.baseLap)
+        .animation(reduceMotion ? nil : .default, value: evaluated.overflowLap)
         .animation(reduceMotion ? nil : .smooth, value: evaluated.status)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("今日热量")
-        .accessibilityValue("已摄入 \(display.currentText) 千卡，预算 \(display.targetText) 千卡，\(display.message)")
+        .accessibilityValue("已记录 \(display.nutrition.currentText) 千卡，预算 \(display.nutrition.targetText) 千卡，\(display.message)")
     }
 }
 
-#Preview("目标内") {
+#Preview("预算内 · 浅色") {
     EnergyProgressRing(consumedKcal: 1_420, targetKcal: 2_000)
-        .frame(maxWidth: 180)
         .padding()
 }
 
-#Preview("显著超出") {
-    EnergyProgressRing(consumedKcal: 2_260, targetKcal: 2_000)
-        .frame(maxWidth: 180)
+#Preview("3.2倍 · 深色") {
+    EnergyProgressRing(consumedKcal: 6_400, targetKcal: 2_000)
         .padding()
+        .preferredColorScheme(.dark)
 }

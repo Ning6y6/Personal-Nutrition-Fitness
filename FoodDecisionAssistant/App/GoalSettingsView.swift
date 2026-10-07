@@ -47,16 +47,16 @@ struct GoalSettingsView: View {
                     }
                 }
                 Section {
-                    goalField("热量 (kcal)", text: $draft.energyKcal, field: .energy)
+                    goalField("热量预算 (kcal)", text: $draft.energyKcal, field: .energy)
                 } header: {
-                    Text("能量目标")
+                    Text("热量预算")
                 } footer: {
                     Text("请填写你主动选择的目标，不使用未经确认的示例值。")
                 }
-                Section("宏量营养素目标") {
-                    goalField("蛋白质 (g)", text: $draft.proteinGrams, field: .protein)
-                    goalField("碳水化合物 (g)", text: $draft.carbohydrateGrams, field: .carbohydrate)
-                    goalField("脂肪 (g)", text: $draft.fatGrams, field: .fat)
+                Section("营养预算与目标") {
+                    goalField("蛋白质目标 (g)", text: $draft.proteinGrams, field: .protein)
+                    goalField("碳水预算 (g)", text: $draft.carbohydrateGrams, field: .carbohydrate)
+                    goalField("脂肪预算 (g)", text: $draft.fatGrams, field: .fat)
                 }
                 Section {
                     goalField("饱和脂肪上限 (g)", text: $draft.saturatedFatLimitGrams, field: .saturatedFat, optional: true)
@@ -67,13 +67,13 @@ struct GoalSettingsView: View {
                     Text("留空表示未设置，不代表 0。系统不会自动生成医疗阈值；如依据医嘱，请使用已确认的数值。")
                 }
                 Section {
-                    Toggle("我已核对并确认这些目标", isOn: $draft.isConfirmed)
+                    Toggle("我已核对并确认预算、目标与上限", isOn: $draft.isConfirmed)
                 } footer: {
                     Text("修改任一数值后需要重新确认。小数分隔符为“\(decimalSeparator)”，请勿输入千分位或单位。")
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .navigationTitle("每日目标")
+            .navigationTitle("每日预算与目标")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

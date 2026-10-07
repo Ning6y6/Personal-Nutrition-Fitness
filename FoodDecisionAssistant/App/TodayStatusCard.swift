@@ -2,6 +2,7 @@ import FoodDecisionCore
 import SwiftUI
 
 struct TodayStatusCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let goal: GoalProfile?
     let nutrients: NutrientValues?
     let mealCount: Int
@@ -12,18 +13,18 @@ struct TodayStatusCard: View {
     var body: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading) {
-                Text("今日已记录摄入")
+                Text(availability.canShowNutritionProgress ? "今日已记录摄入" : "今日记录")
                     .font(.headline)
-                Text("\(mealCount) 餐计入合计")
+                Text(availability == .unavailable ? "\(mealCount) 餐已记录，合计暂不可用" : availability.canShowNutritionProgress ? "\(mealCount) 餐计入合计" : "尚无正式摄入合计")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .contentTransition(.numericText())
+                    .contentTransition(reduceMotion ? .identity : .numericText())
             }
 
             if hasGoalReadError {
-                Label("已保存目标暂不可用", systemImage: "exclamationmark.triangle")
+                Label("已保存预算与目标暂不可用", systemImage: "exclamationmark.triangle")
                     .font(.headline)
-                Text("无法读取或校验目标，请到目标页检查。原数据保留，未按无目标或零目标计算。")
+                Text("无法读取或校验预算与目标，请到预算与目标页检查。原数据保留，未按未设置或零值计算。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -37,25 +38,24 @@ struct TodayStatusCard: View {
                     consumedKcal: nutrients.energyKcal,
                     targetKcal: goal.energyKcal
                 )
-                .frame(maxWidth: 180)
                 .frame(maxWidth: .infinity)
 
                 NutritionProgressRow(
-                    title: "蛋白质",
+                    title: "蛋白质目标",
                     current: nutrients.proteinGrams,
                     target: goal.proteinGrams,
                     unit: "g",
                     metric: .protein
                 )
                 NutritionProgressRow(
-                    title: "碳水",
+                    title: "碳水预算",
                     current: nutrients.carbohydrateGrams,
                     target: goal.carbohydrateGrams,
                     unit: "g",
                     metric: .carbohydrate
                 )
                 NutritionProgressRow(
-                    title: "脂肪",
+                    title: "脂肪预算",
                     current: nutrients.fatGrams,
                     target: goal.fatGrams,
                     unit: "g",
@@ -63,7 +63,7 @@ struct TodayStatusCard: View {
                 )
 
                 NutritionProgressRow(
-                    title: "饱和脂肪",
+                    title: "饱和脂肪上限",
                     current: nutrients.saturatedFatGrams,
                     target: goal.saturatedFatLimitGrams,
                     unit: "g",
@@ -76,9 +76,9 @@ struct TodayStatusCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if !hasGoalReadError {
-                Label("尚未设置每日目标", systemImage: "target")
+                Label("尚未设置营养预算与目标", systemImage: "target")
                     .font(.headline)
-                Text("设置目标后，这里会显示热量圆环和营养缺口。")
+                Text("设置预算与目标后，这里会显示热量圆环和营养差额。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -88,9 +88,16 @@ struct TodayStatusCard: View {
                     showsTarget: availability.canShowNutritionProgress && goal != nil && !hasGoalReadError
                 )
             }
+            if availability == .available {
+                Text(availability.explanation)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.background, in: RoundedRectangle(cornerRadius: 18))
+        .background(DesignTokens.surface, in: RoundedRectangle(cornerRadius: 18))
     }
 }
 

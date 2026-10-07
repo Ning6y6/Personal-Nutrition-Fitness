@@ -17,7 +17,7 @@ struct EmptyIntakeSummaryView: View {
 
             if let goal {
                 Divider()
-                DisclosureGroup("查看已保存目标") {
+                DisclosureGroup("查看已保存预算与目标") {
                     Text("尚未计算摄入进度")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

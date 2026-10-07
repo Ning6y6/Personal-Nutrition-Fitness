@@ -93,7 +93,7 @@ struct ContentView: View {
                 }
                 .padding()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(DesignTokens.background)
             .navigationTitle("今日")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -102,7 +102,7 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("目标") {
+                    Button("预算与目标") {
                         isShowingGoalSettings = true
                     }
                 }
@@ -247,7 +247,7 @@ private struct HomeActionCard: View {
                 .font(.title2)
                 .frame(width: 42, height: 42)
                 .background(
-                    Color.green.opacity(0.15),
+                    DesignTokens.accent.opacity(0.15),
                     in: RoundedRectangle(cornerRadius: 12)
                 )
             VStack(alignment: .leading, spacing: 4) {

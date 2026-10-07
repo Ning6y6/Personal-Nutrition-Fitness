@@ -227,7 +227,7 @@ struct NutritionProgressPresentationTests {
 
     @Test("The energy ring and generic budget use the same policy-derived presentation", arguments: [0.0, 1_200, 2_000, 2_100, 2_200, 2_201])
     func energyRingSharesBudgetPresentation(consumed: Double) {
-        let energy = EnergyProgressPolicy.standard.evaluate(consumedKcal: consumed, targetKcal: 2_000)
+        let energy = EnergyProgressPolicy.v1.evaluate(consumedKcal: consumed, targetKcal: 2_000)
         let common = NutritionDisplayPolicy.v1.evaluate(consumed: consumed, target: 2_000, semantics: .budget)
         let ring = NutritionProgressPresentation(summary: energy.nutritionProgress, unit: "kcal")
         let row = NutritionProgressPresentation(summary: common, unit: "kcal")

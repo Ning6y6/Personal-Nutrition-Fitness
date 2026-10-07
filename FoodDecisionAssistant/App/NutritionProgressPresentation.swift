@@ -7,9 +7,8 @@ enum NutritionDisplayTone: Equatable, Sendable {
     var color: Color {
         switch self {
         case .neutral: .secondary
-        case .success: .green
-        case .warning: .orange
-        case .danger: .red
+        case .success: DesignTokens.accent
+        case .warning, .danger: DesignTokens.warningText
         }
     }
 }
@@ -32,59 +31,61 @@ struct NutritionProgressPresentation: Equatable, Sendable {
         progress = summary.progress
         let remaining = summary.remaining.map(Self.formatted) ?? "—"
         let overage = summary.overage.map(Self.formatted) ?? "—"
+        // v1 remains readable, but even legacy nutrition must not use hard-constraint red.
+        switch summary.displayTone {
+        case .neutral: tone = .neutral
+        case .theme: tone = .success
+        case .amber: tone = .warning
+        case .critical: tone = .danger
+        }
         switch summary.status {
         case .belowMinimum:
             message = "距最低目标还差 \(remaining) \(unit)"
             symbol = "circle.dotted"
-            tone = .neutral
         case .minimumMet:
             message = "已达最低目标"
             symbol = "checkmark.circle.fill"
-            tone = .success
         case .withinBudget:
             message = "预算剩余 \(remaining) \(unit)"
             symbol = "circle.dotted"
-            tone = .success
         case .atBudget:
-            message = "已达到预算"
+            message = "已达到预算，尚未超出"
             symbol = "checkmark.circle.fill"
-            tone = .success
         case .overBudget:
             message = "超出预算 \(overage) \(unit)"
             symbol = "exclamationmark.circle.fill"
-            tone = .warning
         case .significantlyOverBudget:
-            message = "明显超出预算 \(overage) \(unit)"
-            symbol = "exclamationmark.triangle.fill"
-            tone = .danger
+            message = summary.policyVersion == 1 ? "明显超出预算 \(overage) \(unit)" : "超出预算 \(overage) \(unit)"
+            symbol = summary.policyVersion == 1 ? "exclamationmark.triangle.fill" : "exclamationmark.circle.fill"
         case .belowMaximum:
             message = "距上限剩余 \(remaining) \(unit)"
             symbol = "circle.dotted"
-            tone = .success
         case .approachingMaximum:
             message = "接近上限，剩余 \(remaining) \(unit)"
             symbol = "exclamationmark.circle.fill"
-            tone = .warning
         case .atMaximum:
             message = "已到上限，尚未超出"
             symbol = "exclamationmark.circle.fill"
-            tone = .warning
         case .overMaximum:
             message = "已超出上限 \(overage) \(unit)"
             symbol = "exclamationmark.triangle.fill"
-            tone = .danger
         case .unset:
-            message = "未设置目标"
+            message = "未设置\(Self.goalTerm(summary.semantics))"
             symbol = "target"
-            tone = .neutral
         case .unavailable:
             message = "摄入数据未提供，无法计算缺口"
             symbol = "questionmark.circle"
-            tone = .neutral
         case .invalidInput:
             message = "数据无效，无法计算进度"
             symbol = "exclamationmark.triangle"
-            tone = .neutral
+        }
+    }
+
+    private static func goalTerm(_ semantics: NutritionGoalSemantics) -> String {
+        switch semantics {
+        case .minimum: "目标"
+        case .budget: "预算"
+        case .maximum: "上限"
         }
     }
 

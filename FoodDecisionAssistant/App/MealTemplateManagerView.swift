@@ -29,7 +29,7 @@ struct MealTemplateManagerView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "bookmark.fill")
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(DesignTokens.accent)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(template.name)
                                         .font(.body.weight(.medium))

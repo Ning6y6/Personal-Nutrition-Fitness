@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AB0000000000000000000001 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001; };
+		AB0000000000000000000002 /* EnergyRingArc.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002; };
+		AB0000000000000000000003 /* EnergyRingEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000003; };
+		AB0000000000000000000004 /* EnergyRingPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000004; };
+		AB0000000000000000000005 /* EnergyRingValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000005; };
+		AB0000000000000000000006 /* TodayStatusPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000006; };
+		AB0000000000000000000007 /* UI1PreviewScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000007; };
+		AB0000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000008; };
+		AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000009; };
+		AB000000000000000000000A /* UI1NativePreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000A; };
 		AA0000000000000000000001 /* FormDismissalGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0000000000000000000001 /* FormDismissalGuard.swift */; };
 		AA0000000000000000000002 /* FormDraftSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0000000000000000000002 /* FormDraftSnapshot.swift */; };
 		AA0000000000000000000003 /* MealFormComponentDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0000000000000000000003 /* MealFormComponentDraft.swift */; };
@@ -73,6 +83,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BB0000000000000000000001 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		BB0000000000000000000002 /* EnergyRingArc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingArc.swift; sourceTree = "<group>"; };
+		BB0000000000000000000003 /* EnergyRingEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingEndpoint.swift; sourceTree = "<group>"; };
+		BB0000000000000000000004 /* EnergyRingPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingPresentation.swift; sourceTree = "<group>"; };
+		BB0000000000000000000005 /* EnergyRingValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingValue.swift; sourceTree = "<group>"; };
+		BB0000000000000000000006 /* TodayStatusPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayStatusPreview.swift; sourceTree = "<group>"; };
+		BB0000000000000000000007 /* UI1PreviewScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI1PreviewScenario.swift; sourceTree = "<group>"; };
+		BB0000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BB0000000000000000000009 /* EnergyRingPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/EnergyRingPresentationTests.swift; sourceTree = "<group>"; };
+		BB000000000000000000000A /* UI1NativePreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/UI1NativePreviewTests.swift; sourceTree = "<group>"; };
 		BA0000000000000000000001 /* FormDismissalGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormDismissalGuard.swift; sourceTree = "<group>"; };
 		BA0000000000000000000002 /* FormDraftSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormDraftSnapshot.swift; sourceTree = "<group>"; };
 		BA0000000000000000000003 /* MealFormComponentDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealFormComponentDraft.swift; sourceTree = "<group>"; };
@@ -178,6 +198,8 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BB0000000000000000000009 /* EnergyRingPresentationTests.swift */,
+				BB000000000000000000000A /* UI1NativePreviewTests.swift */,
 				BA0000000000000000000004 /* FormDismissalGuardTests.swift */,
 				BA0000000000000000000005 /* MealFormComponentDraftTests.swift */,
 				B90000000000000000000006 /* TodayMealSummaryTests.swift */,
@@ -209,6 +231,7 @@
 		D00000000000000000000002 /* FoodDecisionAssistant */ = {
 			isa = PBXGroup;
 			children = (
+				BB0000000000000000000008 /* Assets.xcassets */,
 				D00000000000000000000003 /* App */,
 				B00000000000000000000004 /* FoodDecisionAssistant.entitlements */,
 				7C70F41D3070297A0089CDBC /* Persistence */,
@@ -219,6 +242,13 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				BB0000000000000000000001 /* DesignTokens.swift */,
+				BB0000000000000000000002 /* EnergyRingArc.swift */,
+				BB0000000000000000000003 /* EnergyRingEndpoint.swift */,
+				BB0000000000000000000004 /* EnergyRingPresentation.swift */,
+				BB0000000000000000000005 /* EnergyRingValue.swift */,
+				BB0000000000000000000006 /* TodayStatusPreview.swift */,
+				BB0000000000000000000007 /* UI1PreviewScenario.swift */,
 				BA0000000000000000000001 /* FormDismissalGuard.swift */,
 				BA0000000000000000000002 /* FormDraftSnapshot.swift */,
 				BA0000000000000000000003 /* MealFormComponentDraft.swift */,
@@ -354,6 +384,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0000000000000000000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -364,6 +395,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */,
+				AB000000000000000000000A /* UI1NativePreviewTests.swift in Sources */,
 				AA0000000000000000000004 /* FormDismissalGuardTests.swift in Sources */,
 				AA0000000000000000000005 /* MealFormComponentDraftTests.swift in Sources */,
 				A90000000000000000000006 /* TodayMealSummaryTests.swift in Sources */,
@@ -386,6 +419,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0000000000000000000001 /* DesignTokens.swift in Sources */,
+				AB0000000000000000000002 /* EnergyRingArc.swift in Sources */,
+				AB0000000000000000000003 /* EnergyRingEndpoint.swift in Sources */,
+				AB0000000000000000000004 /* EnergyRingPresentation.swift in Sources */,
+				AB0000000000000000000005 /* EnergyRingValue.swift in Sources */,
+				AB0000000000000000000006 /* TodayStatusPreview.swift in Sources */,
+				AB0000000000000000000007 /* UI1PreviewScenario.swift in Sources */,
 				AA0000000000000000000001 /* FormDismissalGuard.swift in Sources */,
 				AA0000000000000000000002 /* FormDraftSnapshot.swift in Sources */,
 				AA0000000000000000000003 /* MealFormComponentDraft.swift in Sources */,

@@ -3,6 +3,63 @@ import Testing
 @testable import FoodDecisionCore
 
 struct NutritionDisplayPolicyTests {
+    @Test("V2 is the current display policy without changing the deterministic thresholds")
+    func currentVersion() {
+        #expect(NutritionDisplayPolicy.standard == .v2)
+        #expect(EnergyProgressPolicy.standard.displayPolicy == .v2)
+        #expect(NutritionDisplayPolicy.v2.version == 2)
+        #expect(NutritionDisplayPolicy.v2.upperWarningRatio == NutritionDisplayPolicy.v1.upperWarningRatio)
+        #expect(NutritionDisplayPolicy.v2.budgetSignificantOverageRatio == NutritionDisplayPolicy.v1.budgetSignificantOverageRatio)
+    }
+
+    @Test("V2 uses theme for lower-bound progress and amber for every budget or upper-bound excess", arguments: [
+        (NutritionGoalSemantics.minimum, 0.0, NutritionProgressTone.theme),
+        (.minimum, 99.0, .theme), (.minimum, 100.0, .theme), (.minimum, 200.0, .theme),
+        (.budget, 0.0, .theme), (.budget, 100.0, .theme), (.budget, 110.0, .amber), (.budget, 200.0, .amber),
+        (.maximum, 0.0, .theme), (.maximum, 79.9, .theme), (.maximum, 80.0, .amber),
+        (.maximum, 100.0, .amber), (.maximum, 200.0, .amber)
+    ])
+    func currentDisplayTones(semantics: NutritionGoalSemantics, consumed: Double, expected: NutritionProgressTone) {
+        let summary = NutritionDisplayPolicy.v2.evaluate(consumed: consumed, target: 100, semantics: semantics)
+        #expect(summary.displayTone == expected)
+        #expect(summary.displayTone != .critical)
+        #expect(summary.policyVersion == 2)
+    }
+
+    @Test("Invalid, missing and unset values stay neutral in both versions", arguments: [NutritionDisplayPolicy.v1, .v2], NutritionGoalSemantics.allCases)
+    func unavailableDisplayTones(policy: NutritionDisplayPolicy, semantics: NutritionGoalSemantics) {
+        for values: (Double?, Double?) in [(nil, 100), (0, nil), (-1, 100), (0, -.infinity)] {
+            #expect(policy.evaluate(consumed: values.0, target: values.1, semantics: semantics).displayTone == .neutral)
+        }
+    }
+
+    @Test("V1 retains its legacy colors without leaking them into the current policy")
+    func legacyDisplayTones() {
+        #expect(NutritionDisplayPolicy.v1.evaluate(consumed: 99, target: 100, semantics: .minimum).displayTone == .neutral)
+        #expect(NutritionDisplayPolicy.v1.evaluate(consumed: 100, target: 100, semantics: .minimum).displayTone == .theme)
+        #expect(NutritionDisplayPolicy.v1.evaluate(consumed: 110, target: 100, semantics: .budget).displayTone == .amber)
+        #expect(NutritionDisplayPolicy.v1.evaluate(consumed: 111, target: 100, semantics: .budget).displayTone == .critical)
+        #expect(NutritionDisplayPolicy.v1.evaluate(consumed: 101, target: 100, semantics: .maximum).displayTone == .critical)
+    }
+
+    @Test("Both display versions round-trip with the same status, values and version-specific tone", arguments: [NutritionDisplayPolicy.v1, .v2], NutritionGoalSemantics.allCases)
+    func versionedSummaryRoundTrips(policy: NutritionDisplayPolicy, semantics: NutritionGoalSemantics) throws {
+        for values: (Double?, Double?) in [(nil, 100), (0, nil), (0, 0), (79.9, 100), (80, 100), (100, 100), (111, 100), (.greatestFiniteMagnitude, .leastNonzeroMagnitude)] {
+            let original = policy.evaluate(consumed: values.0, target: values.1, semantics: semantics)
+            let decoded = try JSONDecoder().decode(NutritionProgressSummary.self, from: JSONEncoder().encode(original))
+            #expect(decoded == original)
+            #expect(decoded.displayTone == original.displayTone)
+            #expect(decoded.policyVersion == policy.version)
+        }
+    }
+
+    @Test("A legacy energy policy stays v1 instead of silently adopting the new runtime default")
+    func legacyEnergyPolicyDecoding() throws {
+        let decoded = try JSONDecoder().decode(EnergyProgressPolicy.self, from: Data(#"{"significantOverageRatio":1.1}"#.utf8))
+        #expect(decoded.displayPolicy.version == 1)
+        #expect(decoded.evaluate(consumedKcal: 120, targetKcal: 100).nutritionProgress.displayTone == .critical)
+    }
+
     @Test("Nutrients have centrally defined minimum, budget, and maximum semantics", arguments: NutritionGoalMetric.allCases)
     func nutrientSemantics(metric: NutritionGoalMetric) {
         switch metric {
@@ -92,7 +149,7 @@ struct NutritionDisplayPolicyTests {
         #expect(result.status == .significantlyOverBudget)
         #expect(result.progress == 1)
         #expect(result.overage?.isFinite == true)
-        let energy = EnergyProgressPolicy.standard.evaluate(consumedKcal: .greatestFiniteMagnitude, targetKcal: .leastNonzeroMagnitude)
+        let energy = EnergyProgressPolicy.v1.evaluate(consumedKcal: .greatestFiniteMagnitude, targetKcal: .leastNonzeroMagnitude)
         #expect(energy.ratio?.isFinite == true)
         #expect(energy.ratioIsSaturated == true)
         #expect(energy.nutritionProgress == result)
@@ -118,7 +175,7 @@ struct NutritionDisplayPolicyTests {
         #expect(throws: expected) { try decoder().decode(NutritionDisplayPolicy.self, from: data) }
     }
 
-    @Test("Unknown policy versions cannot silently use v1 interpretation", arguments: [0, -1, 2])
+    @Test("Unknown policy versions cannot silently use a supported interpretation", arguments: [0, -1, 3])
     func policyVersionValidation(version: Int) throws {
         #expect(throws: NutritionDisplayPolicyError.unsupportedVersion(version)) {
             try NutritionDisplayPolicy(version: version, upperWarningRatio: 0.8, budgetSignificantOverageRatio: 1.1)

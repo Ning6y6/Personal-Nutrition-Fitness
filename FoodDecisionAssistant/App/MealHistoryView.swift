@@ -54,7 +54,7 @@ struct MealSummaryRow: View {
         HStack(spacing: 12) {
             Image(systemName: "fork.knife.circle.fill")
                 .font(.title2)
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignTokens.accent)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(meal.title)

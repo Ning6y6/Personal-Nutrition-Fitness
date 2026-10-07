@@ -16,6 +16,7 @@ struct ShiHengApp: App {
                     StoreRecoveryView(bootstrap: bootstrap)
                 }
             }
+            .tint(DesignTokens.accent)
             .environment(\.storeBootstrap, bootstrap)
         }
     }

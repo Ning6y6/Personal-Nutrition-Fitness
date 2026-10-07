@@ -153,7 +153,7 @@ private struct MealReuseRow: View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .frame(width: 30)
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignTokens.accent)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)

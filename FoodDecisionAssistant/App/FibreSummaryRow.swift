@@ -56,7 +56,7 @@ struct FibreSummaryRow: View {
     var body: some View {
         let display = FibreSummaryPresentation(summary: summary)
         if showsTarget, let exact = display.exactGrams {
-            NutritionProgressRow(title: "纤维", current: exact, target: target, unit: "g", metric: .fibre)
+            NutritionProgressRow(title: "纤维目标", current: exact, target: target, unit: "g", metric: .fibre)
         } else {
             VStack(alignment: .leading, spacing: 4) {
                 LabeledContent("纤维", value: display.amountText)

@@ -18,6 +18,11 @@ public struct EnergyProgressSummary: Codable, Sendable, Equatable {
     public let overageKcal: Double?
     public let status: EnergyProgressStatus
 
+    /// The first lap and overflow lap are presentation only; intake is never clamped.
+    public var baseLap: Double? { ratio.map { min($0, 1) } }
+    public var overflowLap: Double? { ratio.map { min(max($0 - 1, 0), 1) } }
+    public var multiple: Double? { ratio }
+
     init(nutritionProgress: NutritionProgressSummary) {
         self.nutritionProgress = nutritionProgress
         consumedKcal = nutritionProgress.consumed
@@ -77,7 +82,9 @@ public struct EnergyProgressSummary: Codable, Sendable, Equatable {
 }
 
 public struct EnergyProgressPolicy: Codable, Sendable, Equatable {
-    public static let standard = EnergyProgressPolicy(displayPolicy: .v1)
+    public static let v1 = EnergyProgressPolicy(displayPolicy: .v1)
+    public static let v2 = EnergyProgressPolicy(displayPolicy: .v2)
+    public static let standard = v2
     public let displayPolicy: NutritionDisplayPolicy
     public var significantOverageRatio: Double { displayPolicy.budgetSignificantOverageRatio }
 

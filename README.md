@@ -1,4 +1,6 @@
-# 食衡（ShiHeng）
+# 食衡 Evenfare
+
+Calm precision for every bowl.
 
 个人使用的原生 iOS 饮食、营养与训练平衡 App。第一阶段优先完成称重记录、拍照估算餐、动态目标、食品约束判断、营养标签扫描和 HealthKit 同步。
 
@@ -23,7 +25,7 @@
 
 当前已批准执行S0–S2可靠性加固，先保护已有数据再收紧校验，见[优化执行清单](docs/OPTIMIZATION_EXECUTION_PLAN.md)及[实际执行状态](docs/EXECUTION_STATUS.md)。个人或一两位朋友各自本机使用，不启用云或共享数据；分支与交付规范见AGENTS.md。
 
-S0–S2已完成代码与自动化交付：Core87个测试声明/302次执行、App101个声明/169次执行及构建通过；受保护旧库16条记录恢复一致。人工真机交互/文件保护验收未完成，后续S3–S5未批准，不自动启动。
+S0–S2已完成代码与自动化交付；最新草稿保护基线为Core98个测试声明/325次执行、App166个声明/365次执行及构建通过。2026-10-08用户确认真机备份、恢复、文件保护及旧餐食、目标、模板、新增餐检查无问题；未提供的VoiceOver、跨午夜/时区和复用计时证据仍待验。UI-1视觉基础、随后B-1显示名品牌已获限定批准；其余S3–S5及四栏导航不自动启动。
 
 后续开发优先级见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，本次完整变更见 [`CHANGELOG.md`](CHANGELOG.md)。
 
@@ -52,4 +54,4 @@ swift test --package-path Packages/FoodDecisionCore
 
 Xcode失败后的诊断收集可能耗时很久；需要快速取得测试结果时可用`./scripts/test-ios.sh -parallel-testing-enabled NO -collect-test-diagnostics never`。当前冻结经真机磁盘哈希确认的12实体V1，早期9/10实体结构没有部署样本，不宣称自动迁移支持。详见[兼容与恢复契约](docs/STORE_COMPATIBILITY.md)。模拟器不报告iOS文件保护等级；真机锁屏保护、文件选择和恢复操作仍需人工验收。
 
-正式显示名称为 `食衡`，英文产品名为 `ShiHeng`，应用标识为 `com.ning6y6.ShiHeng`。真机运行前需要在 Xcode 中选择已登录的开发团队。
+中文产品名为 `食衡`，英文产品名为 `Evenfare`。B-1将单独交付主屏幕显示名本地化；内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。真机运行前需要在 Xcode 中选择已登录的开发团队；覆盖安装，不卸载以保留本地记录。

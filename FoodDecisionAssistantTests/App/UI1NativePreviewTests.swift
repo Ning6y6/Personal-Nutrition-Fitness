@@ -29,7 +29,7 @@ struct UI1NativePreviewTests {
         ("multiple", "light", true),
         ("multiple", "dark", true),
     ])
-    func recordNativePreview(configuration: (String, String, Bool)) throws {
+    func recordNativePreview(configuration: (String, String, Bool)) async throws {
         let (scenarioName, appearance, usesLargestType) = configuration
         let scenario = try #require(UI1PreviewScenario(rawValue: scenarioName))
         let content = TodayStatusPreview(scenario: scenario)
@@ -39,7 +39,7 @@ struct UI1NativePreviewTests {
             .frame(width: 430, alignment: .topLeading)
 
         let typeSuffix = usesLargestType ? "-AX5" : "-default-type"
-        try recordPNG(
+        try await recordPNG(
             content,
             named: "UI1-\(scenarioName)-\(appearance)\(typeSuffix).png",
             appearance: appearance
@@ -47,7 +47,7 @@ struct UI1NativePreviewTests {
     }
 
     @Test("UI-1 recorded intake without a target PNGs", arguments: ["light", "dark"])
-    func recordNoTargetPreview(appearance: String) throws {
+    func recordNoTargetPreview(appearance: String) async throws {
         let nutrients = try UI1PreviewScenario.withinBudget.nutrients()
         let fibre = try FibreIntakeSummary(snapshots: [nutrients])
         let content = TodayStatusCard(
@@ -65,7 +65,7 @@ struct UI1NativePreviewTests {
         .environment(\.locale, Locale(identifier: "zh_CN"))
         .frame(width: 430, alignment: .topLeading)
 
-        try recordPNG(content, named: "UI1-no-target-\(appearance).png", appearance: appearance)
+        try await recordPNG(content, named: "UI1-no-target-\(appearance).png", appearance: appearance)
     }
 
     private func recordPNG<Content: View>(
@@ -73,13 +73,8 @@ struct UI1NativePreviewTests {
         named name: String,
         appearance: String,
         sourceLocation: SourceLocation = #_sourceLocation
-    ) throws {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let scene = try #require(
-            scenes.first { $0.activationState == .foregroundActive } ?? scenes.first,
-            "The app-hosted simulator render requires a window scene.",
-            sourceLocation: sourceLocation
-        )
+    ) async throws {
+        let scene = try await waitForWindowScene(sourceLocation: sourceLocation)
         let controller = UIHostingController(rootView: content)
         // This artifact captures an isolated card, not the phone's navigation/status bars.
         // Public safeAreaRegions avoids adding the device's top/bottom bars to the card.
@@ -131,5 +126,31 @@ struct UI1NativePreviewTests {
         #expect(bytes.count > 8, sourceLocation: sourceLocation)
         #expect(Array(bytes.prefix(8)) == [137, 80, 78, 71, 13, 10, 26, 10], sourceLocation: sourceLocation)
         Attachment.record(bytes, named: name, sourceLocation: sourceLocation)
+    }
+
+    private func waitForWindowScene(
+        sourceLocation: SourceLocation
+    ) async throws -> UIWindowScene {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(10))
+        var connectedScene: UIWindowScene?
+
+        // App-hosted tests may start before UIKit connects the first scene. Poll actual
+        // public readiness, yielding the main actor between attempts, not a fixed delay
+        // that assumes launch succeeded. No app lifecycle or global preference is changed.
+        while true {
+            try Task.checkCancellation()
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            connectedScene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+            if connectedScene != nil || clock.now >= deadline { break }
+            let remaining = clock.now.duration(to: deadline)
+            try await Task.sleep(for: min(.milliseconds(50), remaining))
+        }
+
+        return try #require(
+            connectedScene,
+            "The app-hosted simulator render requires a connected UIWindowScene; none became available within 10 seconds.",
+            sourceLocation: sourceLocation
+        )
     }
 }

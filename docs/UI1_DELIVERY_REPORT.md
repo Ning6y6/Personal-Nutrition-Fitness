@@ -37,3 +37,11 @@ Core保留v1，新增v2作为默认显示策略；数值阈值、营养计算和
 真机本轮视觉覆盖更新、VoiceOver实际朗读、系统减少动态效果、动画/帧率、全屏页面交互、iOS26运行时与所有支持宽度未测。430pt最大字体卡片没有观察到文字裁切，不把这一观察扩展为全App无障碍通过。历史报告中的时间换行、独立数值舍入、表单无障碍标签等不在本次修复范围。
 
 用户已报告真机备份恢复、文件保护及旧餐/目标/模板/新餐正常，记录为用户验收；不重复声称本轮代理检查真机。B-1随后独立提交；`.icon`由用户按design/brand/README在Icon Composer合成，缺文件与小尺寸证据时仍未完成。
+
+## 预览测试启动就绪修正（独立test/提交）
+
+UI-1初次交付使用iPhone17e UnitQA，174声明/394执行通过。随后B-1回归在默认iPhone17上复现测试先于UIKit连接窗口Scene启动：仅16次PNG预览失败，品牌及其他381次执行通过。该失败不是显示名或数据库错误，不计为完整回归通过。
+
+`UI1NativePreviewTests`改为异步等待真实公开`connectedScenes`就绪：MainActor上使用ContinuousClock限定10秒，异步暂停不超过50ms或剩余时限，取消或超时仍明确失败。不伪造Scene、不忽略测试、不修改App启动或截图内容。此修正单独归`test/ui-preview-scene-readiness`，不混入品牌提交。
+
+排除B-1文件后的独立回归结果包为`.build/ui-1-scene-readiness-2026-10-08.xcresult`：iPhone17/iOS27，174声明/394执行，零失败、零跳过、runtimeWarnings为空；仍包含16张原生PNG。原失败结果包只保留诊断，不覆盖此前或本次成功证据。

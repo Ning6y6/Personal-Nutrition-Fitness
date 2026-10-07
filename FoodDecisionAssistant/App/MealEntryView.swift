@@ -17,7 +17,8 @@ struct MealEntryView: View {
     @State private var eatenAt: Date
     @State private var entryMethod: MealEntryMethod
     @State private var coverageStatus: MealCoverageStatus
-    @State private var rows: [MealEntryDraftComponent]
+    @State private var rows: [MealFormComponentDraft]
+    @State private var dismissalGuard: FormDismissalGuard
     @State private var saveError: Error?
     @State private var seedImportError: Error?
     @State private var isShowingAdvancedOptions = false
@@ -33,29 +34,34 @@ struct MealEntryView: View {
         mealToEdit = meal
         sourceTemplateID = draft?.sourceTemplateID
         self.onSaved = onSaved
-        _title = State(initialValue: meal?.title ?? draft?.title ?? Self.defaultMealTitle())
-        _eatenAt = State(initialValue: meal?.eatenAt ?? draft?.eatenAt ?? .now)
-        _entryMethod = State(
-            initialValue: meal.flatMap { MealEntryMethod(rawValue: $0.entryMethodRawValue) }
-                ?? draft?.entryMethod
-                ?? .weighed
-        )
-        _coverageStatus = State(
-            initialValue: meal.flatMap { MealCoverageStatus(rawValue: $0.coverageStatusRawValue) }
-                ?? draft?.coverageStatus
-                ?? .complete
-        )
-        _rows = State(
-            initialValue: meal?.components
-                .sorted { $0.sortIndex < $1.sortIndex }
-                .map {
-                    MealEntryDraftComponent(
-                        foodItemID: $0.foodItemID,
-                        foodName: $0.foodName,
-                        weightGrams: $0.consumedWeightGrams
-                    )
-                } ?? draft?.components ?? []
-        )
+        let initialTitle = meal?.title ?? draft?.title ?? Self.defaultMealTitle()
+        let initialDate = meal?.eatenAt ?? draft?.eatenAt ?? .now
+        let initialMethod = meal.flatMap { MealEntryMethod(rawValue: $0.entryMethodRawValue) }
+            ?? draft?.entryMethod ?? .weighed
+        let initialCoverage = meal.flatMap { MealCoverageStatus(rawValue: $0.coverageStatusRawValue) }
+            ?? draft?.coverageStatus ?? .complete
+        let components = meal?.components
+            .sorted { $0.sortIndex < $1.sortIndex }
+            .map {
+                MealEntryDraftComponent(
+                    foodItemID: $0.foodItemID,
+                    foodName: $0.foodName,
+                    weightGrams: $0.consumedWeightGrams
+                )
+            } ?? draft?.components ?? []
+        // Prepare the default empty row before capturing the baseline, not in a later task.
+        let initialRows = components.isEmpty
+            ? [MealFormComponentDraft()]
+            : components.map { MealFormComponentDraft(component: $0) }
+        _title = State(initialValue: initialTitle)
+        _eatenAt = State(initialValue: initialDate)
+        _entryMethod = State(initialValue: initialMethod)
+        _coverageStatus = State(initialValue: initialCoverage)
+        _rows = State(initialValue: initialRows)
+        _dismissalGuard = State(initialValue: FormDismissalGuard(baseline: .meal(
+            title: initialTitle, eatenAt: initialDate, entryMethod: initialMethod,
+            coverageStatus: initialCoverage, components: initialRows
+        )))
     }
 
     var body: some View {
@@ -76,9 +82,14 @@ struct MealEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        dismiss()
-                    }
+                    Button("取消", action: cancelEditing)
+                        .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
+                            Button("放弃修改", role: .destructive) { dismiss() }
+                            // Popovers omit role.cancel; keep the safe exit explicitly visible.
+                            Button("继续编辑") {}
+                        } message: {
+                            Text("本次输入尚未保存，放弃后无法恢复。")
+                        }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
@@ -94,7 +105,7 @@ struct MealEntryView: View {
                 }
             }
             .task(id: foodItems.count) {
-                importSeedsAndPrepareFirstRow()
+                importSeedsIfNeeded()
             }
             .alert(
                 "无法保存餐食",
@@ -119,6 +130,17 @@ struct MealEntryView: View {
                 Text(seedImportError?.localizedDescription ?? "")
             }
         }
+        .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+    }
+
+    private var draftSnapshot: FormDraftSnapshot {
+        .meal(title: title, eatenAt: eatenAt, entryMethod: entryMethod,
+              coverageStatus: coverageStatus, components: rows)
+    }
+
+    private func cancelEditing() {
+        focusedField = nil
+        if dismissalGuard.requestCancellation(comparedTo: draftSnapshot) { dismiss() }
     }
 
     private var mealDetailsSection: some View {
@@ -183,8 +205,7 @@ struct MealEntryView: View {
                     HStack {
                         TextField(
                             "重量",
-                            value: $row.weightGrams,
-                            format: .number.precision(.fractionLength(0...1))
+                            text: $row.weightText
                         )
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .weight(row.id))
@@ -310,19 +331,16 @@ struct MealEntryView: View {
         source.components(separatedBy: " · ").first ?? source
     }
 
-    private func importSeedsAndPrepareFirstRow() {
+    private func importSeedsIfNeeded() {
         do {
             try SeedFoodCatalog.importIfNeeded(into: modelContext)
-            if rows.isEmpty, !foodItems.isEmpty {
-                rows = [MealEntryDraftComponent()]
-            }
         } catch {
             seedImportError = error
         }
     }
 
     private func addRow() {
-        rows.append(MealEntryDraftComponent())
+        rows.append(MealFormComponentDraft())
     }
 
     private func deleteRows(at offsets: IndexSet) {
@@ -332,7 +350,7 @@ struct MealEntryView: View {
     private func saveMeal() {
         do {
             // Revalidate every draft row at the write boundary; never save a compacted subset.
-            let components = try MealDraftValidation.components(from: rows, foods: foodItems)
+            let components = try MealDraftValidation.components(from: rows.map(\.domainDraft), foods: foodItems)
             let meal = try MealLog(
                 id: mealToEdit?.id ?? UUID(),
                 eatenAt: eatenAt,

@@ -9,6 +9,7 @@ struct GoalSettingsView: View {
     let onSaved: () -> Void
 
     @State private var draft = GoalInputDraft()
+    @State private var dismissalGuard = FormDismissalGuard(baseline: .goal(GoalInputDraft()))
     @State private var existingID: UUID?
     @State private var effectiveFrom = Date.now
     @State private var hasLoaded = false
@@ -33,6 +34,11 @@ struct GoalSettingsView: View {
                         Label("无法读取已保存目标，未载入默认值。", systemImage: "exclamationmark.triangle")
                         Text(loadError.localizedDescription).font(.footnote)
                         Button("重试读取") { loadGoalOnce() }
+                            .disabled(!dismissalGuard.canLoadInitialValues(comparedTo: .goal(draft)))
+                        if !dismissalGuard.canLoadInitialValues(comparedTo: .goal(draft)) {
+                            Text("已有未保存输入，重试不会覆盖它。请取消并确认放弃后，再重新打开目标页。")
+                                .font(.footnote)
+                        }
                     }
                 }
                 if hasInvalidStoredGoal {
@@ -71,7 +77,15 @@ struct GoalSettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }.disabled(isSaving)
+                    Button("取消", action: cancelEditing)
+                        .disabled(isSaving)
+                        .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
+                            Button("放弃修改", role: .destructive) { dismiss() }
+                            // Popovers omit role.cancel; keep the safe exit explicitly visible.
+                            Button("继续编辑") {}
+                        } message: {
+                            Text("本次输入尚未保存，放弃后无法恢复。")
+                        }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") { saveGoal() }.disabled(!canSave)
@@ -93,6 +107,12 @@ struct GoalSettingsView: View {
                 Text(saveError?.localizedDescription ?? "请检查输入并重试。")
             }
         }
+        .interactiveDismissDisabled(isSaving || dismissalGuard.hasUnsavedChanges(comparedTo: .goal(draft)))
+    }
+
+    private func cancelEditing() {
+        focusedField = nil
+        if dismissalGuard.requestCancellation(comparedTo: .goal(draft)) { dismiss() }
     }
 
     private func goalField(_ title: String, text: Binding<String>, field: GoalField, optional: Bool = false) -> some View {
@@ -108,7 +128,7 @@ struct GoalSettingsView: View {
     }
 
     private func loadGoalOnce() {
-        guard !hasLoaded else { return }
+        guard !hasLoaded, dismissalGuard.canLoadInitialValues(comparedTo: .goal(draft)) else { return }
         do {
             let reader = ModelContext(modelContext.container)
             reader.autosaveEnabled = false
@@ -126,6 +146,7 @@ struct GoalSettingsView: View {
                 hasInvalidStoredGoal = (try? row.domainModel) == nil
             }
             draft.isConfirmed = false
+            dismissalGuard.resetBaseline(to: .goal(draft))
             hasLoaded = true
             loadError = nil
         } catch {

@@ -12,7 +12,8 @@ struct MealTemplateEditorView: View {
     private let templateToEdit: PersistentMealTemplate?
 
     @State private var name: String
-    @State private var rows: [MealEntryDraftComponent]
+    @State private var rows: [MealFormComponentDraft]
+    @State private var dismissalGuard: FormDismissalGuard
     @State private var saveError: Error?
     @State private var seedImportError: Error?
 
@@ -24,34 +25,39 @@ struct MealTemplateEditorView: View {
     ) {
         precondition(template == nil || sourceMeal == nil, "A template editor accepts one source only.")
         templateToEdit = template
-        _name = State(initialValue: template?.name ?? sourceMeal?.title ?? "")
+        let initialName = template?.name ?? sourceMeal?.title ?? ""
+        let components: [MealEntryDraftComponent]
 
         if let template {
-            _rows = State(
-                initialValue: template.components
-                    .sorted { $0.sortIndex < $1.sortIndex }
-                    .map {
-                        MealEntryDraftComponent(
-                            id: $0.id,
-                            foodItemID: $0.foodItemID,
-                            foodName: $0.foodName,
-                            weightGrams: $0.defaultWeightGrams
-                        )
-                    }
-            )
-        } else if let sourceMeal {
-            _rows = State(
-                initialValue: sourceMeal.components.map {
+            components = template.components
+                .sorted { $0.sortIndex < $1.sortIndex }
+                .map {
                     MealEntryDraftComponent(
+                        id: $0.id,
                         foodItemID: $0.foodItemID,
                         foodName: $0.foodName,
-                        weightGrams: $0.consumedWeightGrams
+                        weightGrams: $0.defaultWeightGrams
                     )
                 }
-            )
+        } else if let sourceMeal {
+            components = sourceMeal.components.map {
+                MealEntryDraftComponent(
+                    foodItemID: $0.foodItemID,
+                    foodName: $0.foodName,
+                    weightGrams: $0.consumedWeightGrams
+                )
+            }
         } else {
-            _rows = State(initialValue: [])
+            components = []
         }
+        let initialRows = components.isEmpty
+            ? [MealFormComponentDraft()]
+            : components.map { MealFormComponentDraft(component: $0) }
+        _name = State(initialValue: initialName)
+        _rows = State(initialValue: initialRows)
+        _dismissalGuard = State(initialValue: FormDismissalGuard(baseline: .template(
+            name: initialName, components: initialRows
+        )))
     }
 
     var body: some View {
@@ -89,8 +95,7 @@ struct MealTemplateEditorView: View {
                             HStack {
                                 TextField(
                                     "默认重量",
-                                    value: $row.weightGrams,
-                                    format: .number.precision(.fractionLength(0...1))
+                                    text: $row.weightText
                                 )
                                 .keyboardType(.decimalPad)
                                 .focused($focusedField, equals: .weight(row.id))
@@ -102,7 +107,7 @@ struct MealTemplateEditorView: View {
                     .onDelete(perform: deleteRows)
 
                     Button("添加食物", systemImage: "plus.circle.fill") {
-                        rows.append(MealEntryDraftComponent())
+                        rows.append(MealFormComponentDraft())
                     }
                     .disabled(foodItems.isEmpty)
                 } header: {
@@ -116,9 +121,14 @@ struct MealTemplateEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        dismiss()
-                    }
+                    Button("取消", action: cancelEditing)
+                        .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
+                            Button("放弃修改", role: .destructive) { dismiss() }
+                            // Popovers omit role.cancel; keep the safe exit explicitly visible.
+                            Button("继续编辑") {}
+                        } message: {
+                            Text("本次输入尚未保存，放弃后无法恢复。")
+                        }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
@@ -134,7 +144,7 @@ struct MealTemplateEditorView: View {
                 }
             }
             .task(id: foodItems.count) {
-                importSeedsAndPrepareFirstRow()
+                importSeedsIfNeeded()
             }
             .alert(
                 "无法保存模板",
@@ -159,6 +169,16 @@ struct MealTemplateEditorView: View {
                 Text(seedImportError?.localizedDescription ?? "")
             }
         }
+        .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+    }
+
+    private var draftSnapshot: FormDraftSnapshot {
+        .template(name: name, components: rows)
+    }
+
+    private func cancelEditing() {
+        focusedField = nil
+        if dismissalGuard.requestCancellation(comparedTo: draftSnapshot) { dismiss() }
     }
 
     private var canSave: Bool {
@@ -172,12 +192,9 @@ struct MealTemplateEditorView: View {
             }
     }
 
-    private func importSeedsAndPrepareFirstRow() {
+    private func importSeedsIfNeeded() {
         do {
             try SeedFoodCatalog.importIfNeeded(into: modelContext)
-            if rows.isEmpty, !foodItems.isEmpty {
-                rows = [MealEntryDraftComponent()]
-            }
         } catch {
             seedImportError = error
         }

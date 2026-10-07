@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f2">
+  <meta name="description" content="食衡本地交互设计预览：配色、营养进度与页面流程。仅使用虚构数据。">
+  <title>食衡 · UI 调色工作台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%232ED158'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%2318251F' stroke-width='6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='i18n.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='trends.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='motion.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <header class="workbench-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">衡</span><div><h1>食衡 <span>调色工作台</span></h1><p>温和精确 · Calm Precision</p></div></div>
+    <div class="header-actions"><span class="local-badge">本地原型 · 虚构数据</span><button id="toggle-controls" class="mobile-controls-toggle" type="button" aria-expanded="false" aria-controls="design-controls">调色</button></div>
+  </header>
+  <main class="workbench">
+    <aside class="controls" id="design-controls" aria-label="设计调整">
+      <button id="close-controls" class="mobile-controls-close" type="button">完成调色，返回预览</button>
+      <section class="control-section">
+        <div class="section-heading"><h2>01 / 外观</h2><span>实时预览</span></div>
+        <div class="segmented" aria-label="外观模式"><button id="light-mode" type="button" aria-pressed="true">浅色</button><button id="dark-mode" type="button" aria-pressed="false">深色</button></div>
+        <div id="color-controls" class="color-controls"></div>
+        <label class="slider-label" for="radius">卡片圆角 <output id="radius-value">22 px</output></label>
+        <input id="radius" type="range" min="12" max="32" step="1" value="22">
+        <label class="slider-label" for="density">内容间距 <output id="density-value">100%</output></label>
+        <input id="density" type="range" min="85" max="115" step="1" value="100">
+      </section>
+      <section class="control-section">
+        <div class="section-heading"><h2>02 / 热量状态</h2></div>
+        <div class="presets" aria-label="示例状态">
+          <button type="button" data-preset="normal" class="active">有余量</button><button type="button" data-preset="near">接近预算</button><button type="button" data-preset="full">刚好达到</button><button type="button" data-preset="over">超过预算</button><button type="button" data-preset="empty">没有记录</button><button type="button" data-preset="noGoal">未设目标</button>
+        </div>
+        <div class="number-pair"><label for="intake">已记录 kcal<input id="intake" type="number" min="0" max="10000" step="1" value="1420"></label><label for="goal">热量预算 kcal<input id="goal" type="number" min="1" max="10000" step="1" value="2000"></label></div>
+        <label class="slider-label" for="intake-slider">模拟摄入 <output id="intake-value">71%</output></label>
+        <input id="intake-slider" type="range" min="0" max="3000" step="10" value="1420">
+        <label class="slider-label" for="warning">变黄起点 <output id="warning-value">80%</output></label>
+        <input id="warning" type="range" min="50" max="99" step="1" value="80">
+        <p class="field-note">仅演示拟议配色：预算未到变黄线为绿，接近为黄，达到或超过为红。下限营养素不套用此规则。</p>
+      </section>
+      <section class="control-section compact-section">
+        <div class="section-heading"><h2>03 / 保留方案</h2></div>
+        <div class="file-actions"><button id="export-design" class="secondary-button" type="button">导出配色 JSON</button><label class="secondary-button import-label" for="import-design">导入方案<input id="import-design" type="file" accept="application/json,.json"></label></div>
+        <button id="reset-design" class="text-button" type="button">恢复初始方案</button>
+        <p class="field-note" id="storage-note">配色仅保存在此浏览器。模拟餐食刷新后重置。</p>
+      </section>
+      <p id="workbench-message" class="workbench-message" role="status" aria-live="polite"></p>
+    </aside>
+    <section class="preview-stage" aria-label="手机交互预览">
+      <div class="stage-top"><div><h2>iPhone 18 Pro Max <span>风格预览</span></h2><p>点手机内的按钮试流程；改左侧参数看变化。</p></div><span class="canvas-note">示意画布 · 非 iOS 模拟器</span></div>
+      <div class="phone" id="phone" data-theme="light">
+        <div class="device-key key-one"></div><div class="device-key key-two"></div>
+        <div class="phone-screen" id="phone-screen">
+          <div class="status-bar" aria-hidden="true"><span>9:41</span><div class="dynamic-island"></div><div class="status-icons"><svg viewBox="0 0 52 18"><path d="M2 14v-3M7 14V8M12 14V5M17 14V2" stroke="currentColor" stroke-width="3"/><path d="M25 6q8-7 16 0M28 9q5-4 10 0M31 12q2-2 4 0" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="33" cy="15" r="1" fill="currentColor"/></svg><span class="battery">100</span></div></div>
+          <header id="phone-toolbar" class="top-toolbar"></header>
+          <div class="phone-content" id="phone-content"><p class="loading">正在载入本地预览…</p></div>
+          <nav class="tab-bar" aria-label="主页面">
+            <span class="tab-selection" aria-hidden="true"></span>
+            <button type="button" data-page="today" aria-current="page"><span data-icon="today"></span><span>今日</span></button>
+            <button type="button" data-page="scan"><span data-icon="scan"></span><span>扫描</span></button>
+            <button type="button" data-page="calendar"><span data-icon="calendar"></span><span>趋势</span></button>
+            <button type="button" data-page="settings"><span data-icon="settings"></span><span>设置</span></button>
+          </nav>
+          <div id="morph-backdrop" class="morph-backdrop" hidden></div>
+          <div id="record-morph" class="record-morph"><button type="button" class="morph-trigger" data-action="entry" aria-label="记录一餐" aria-haspopup="dialog" aria-controls="record-panel" aria-expanded="false"></button><div id="record-panel" class="morph-content" hidden></div></div>
+          <div class="home-indicator" aria-hidden="true"></div>
+          <div id="sheet-layer" class="sheet-layer" hidden></div>
+          <div id="phone-toast" class="phone-toast" role="status" aria-live="polite" hidden></div>
+        </div>
+      </div>
+      <div class="stage-foot"><span class="palette-chip"><i id="legend-green"></i>有余量</span><span class="palette-chip"><i id="legend-yellow"></i>接近预算</span><span class="palette-chip"><i id="legend-red"></i>已达 / 超出</span><span class="stage-foot-note">颜色之外，始终显示状态文字</span></div>
+    </section>
+  </main>
+</body>
+</html>

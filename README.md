@@ -34,6 +34,12 @@ S0–S2已完成代码与自动化交付：Core87个测试声明/302次执行、
 - HealthKit（尚未接入，须先在隔离测试餐完成更新与删除实验）
 - 本地 Swift Package：`FoodDecisionCore`
 
+## 独立 UI 调色原型
+
+用户另行批准的 Flask 手机风格预览在 [`tools/ui-preview`](tools/ui-preview/README.md)。它提供实时配色、明暗主题、圆角/间距、热量状态和四页模拟交互，仅使用虚构数据；不是 iOS 模拟器，不改 SwiftData 或正式营养规则，不表示四栏导航、日历或扫描业务已实现。
+
+运行 `.build/ui-preview-venv/bin/python tools/ui-preview/app.py` 后打开 <http://127.0.0.1:5058>。首次依赖安装、测试与设计 JSON 契约见工具说明。
+
 ## 本地验证
 
 ```bash

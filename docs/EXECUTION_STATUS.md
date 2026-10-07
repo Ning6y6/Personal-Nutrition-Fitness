@@ -10,10 +10,10 @@
 - iPhone 16 Pro Max：2026-10-08用户确认真机备份、恢复、文件保护，以及旧餐食、目标、模板和新增餐无问题。记录为用户报告的验收，不冒充本轮代理操作或自动化证据；未说明的验收项仍待验证。Personal Team 描述文件需每 7 天重新签名
 - 代码仓库：工程骨架、核心规则包和 SwiftData v1 已建立
 - `FoodDecisionAssistantTests`：已建立并接入共享 Scheme
-- 最新iPhone17e专用UnitQA、iOS27模拟器测试：App174个测试声明/394次展开执行全部通过（2026-10-08，UI-1）；原生卡片预览及限制见[UI-1交付证据](UI1_DELIVERY_REPORT.md)
+- 最新iPhone17、iOS27模拟器测试：App176个测试声明/397次展开执行全部通过（2026-10-08，B-1）；UI-1原生卡片预览及限制见[UI-1交付证据](UI1_DELIVERY_REPORT.md)，显示名证据见[B-1交付证据](B1_DELIVERY_REPORT.md)
 - `FoodDecisionCore`：Swift Testing108个测试声明/367次展开执行全部通过
 - S0–S2及另行批准的日期刷新/空记录限定切片已交付自动化验证；上述真机数据保护检查由用户确认通过；VoiceOver、跨午夜/时区、最大字体和复用计时等未确认事项仍待验。S3其余事项与S4–S5仍待批准
-- 正式产品名称：`食衡` / `Evenfare`；B-1显示名本地化已批准，尚未交付；内部`PRODUCT_NAME = ShiHeng`不变
+- 正式产品名称：`食衡` / `Evenfare`；B-1主屏幕显示名本地化已交付，图标合成 / 接入 / 真机辨识仍未完成；内部`PRODUCT_NAME = ShiHeng`不变
 - 正式 Bundle ID：`com.ning6y6.ShiHeng`
 
 以下早期功能切片保留其当时的测试数量；最新结果以本节及“已批准优化”中的最终证据为准，不把历史13/28误作当前总数。
@@ -39,7 +39,18 @@
 - [x] Core108声明/367执行、App174声明/394执行全部通过，App构建成功；没有改冻结12实体V1、保存事务、餐食编辑/删除或导航。
 - [ ] 本轮真机浅深色/大字号、VoiceOver、减少动态效果与动画验收。原生卡片截图不代表全屏交互或所有设备已验收。
 
-最终结果与文件列表见[UI1_DELIVERY_REPORT](UI1_DELIVERY_REPORT.md)。B-1显示名随后独立交付，图标仍按Icon Composer流程实施；UI-BEH-01异常输入核对没有开工。
+最终结果与文件列表见[UI1_DELIVERY_REPORT](UI1_DELIVERY_REPORT.md)。另以独立`test/ui-preview-scene-readiness`修正默认iPhone17上测试早于窗口Scene连接的启动竞态，174声明/394执行再次通过，不改App生命周期。UI-BEH-01异常输入核对没有开工。
+
+### B-1品牌：显示名部分已交付（2026-10-08）
+
+- [x] `feat/b-1-display-name`独立实施：`en.lproj/InfoPlist.strings`为Evenfare，`zh-Hans.lproj/InfoPlist.strings`为食衡，默认显示名为Evenfare。
+- [x] Xcode注册本地化资源和测试；实际App Bundle资源及身份测试新增2声明/3执行。
+- [x] 最终App176声明/397执行，零失败、零跳过、runtimeWarnings为空；App构建通过。结果包为`.build/b-1-release-2026-10-08.xcresult`。
+- [x] Bundle ID、PRODUCT_NAME、可执行文件、Target/Scheme、TEST_HOST和最低iOS26未改变；冻结12实体V1、保存事务、营养计算与导航未改。
+- [ ] Icon Composer合成`.icon`、工程接入及主屏幕60pt / 设置和Spotlight29pt辨识。已有SVG和预览不等于图标已安装。
+- [ ] 本轮真机中英文主屏幕显示名与UI-1视觉验收；完整英文界面未开发。
+
+文件和边界见[B1_DELIVERY_REPORT](B1_DELIVERY_REPORT.md)。图标由用户按`design/brand/README.md`合成，提供文件后继续已批准的B-1图标接入；没有自动开启原生外壳或S3。
 
 ## 第 1 周：基础和规则
 
@@ -249,7 +260,8 @@ Git交付：2026-10-07，历史模拟器报告基线`b4a0792`和修复`0102fef`�
 
 ## 需要用户完成
 
-1. 用Xcode在相同Bundle ID下覆盖更新，不卸载；确认修复后能正常进入首页、原记录可见，退出重开后仍在。若仍失败，保留数据并提供新的错误提示。
+1. 既有备份恢复、文件保护与旧餐 / 目标 / 模板 / 新餐已获用户报告正常，不重复要求同一验收。本轮用相同Bundle ID覆盖更新，不卸载；检查主屏幕显示名、浅深色、最大辅助字体与热量环v2，兼做原记录保留回归。VoiceOver、减少动态效果和跨午夜 / 时区仍各自待验。
 2. 若需要 App 超过 Personal Team 的 7 天签名期持续可用，或后续使用付费账号能力，需确认 Apple Developer Program 会员资格。
 3. 在真机上手动记录一餐，确认中文菜单、键盘、保存与首页刷新符合你的操作习惯。
 4. 开始第一次 HealthKit 真机验证时，在 iPhone 上授权读取步数、活动能量和训练，并授权写入六类营养数据。
+5. 在Icon Composer合成三层图标，提供`.icon`后接入工程；随后完成60pt / 29pt两根筷子辨识。尚未完成的品牌图标不标交付。

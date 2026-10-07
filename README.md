@@ -25,7 +25,7 @@ Calm precision for every bowl.
 
 当前已批准执行S0–S2可靠性加固，先保护已有数据再收紧校验，见[优化执行清单](docs/OPTIMIZATION_EXECUTION_PLAN.md)及[实际执行状态](docs/EXECUTION_STATUS.md)。个人或一两位朋友各自本机使用，不启用云或共享数据；分支与交付规范见AGENTS.md。
 
-S0–S2及UI-1已完成代码与自动化交付；UI-1基线为Core108个测试声明/367次执行、App174个声明/394次执行及构建通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。2026-10-08用户确认真机备份、恢复、文件保护及旧餐食、目标、模板、新增餐检查无问题；未提供的VoiceOver、跨午夜/时区和复用计时证据仍待验。B-1随后独立交付；其余S3–S5及四栏导航不自动启动。
+S0–S2及UI-1已完成代码与自动化交付；Core108个测试声明/367次执行通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。B-1显示名本地化已独立交付，最新App176个声明/397次执行及构建通过，详见[品牌交付证据](docs/B1_DELIVERY_REPORT.md)。图标合成与接入仍未完成。2026-10-08用户确认真机备份、恢复、文件保护及旧餐食、目标、模板、新增餐检查无问题；未提供的VoiceOver、跨午夜/时区和复用计时证据仍待验。其余S3–S5及四栏导航不自动启动。
 
 后续开发优先级见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，本次完整变更见 [`CHANGELOG.md`](CHANGELOG.md)。
 
@@ -54,4 +54,4 @@ swift test --package-path Packages/FoodDecisionCore
 
 Xcode失败后的诊断收集可能耗时很久；需要快速取得测试结果时可用`./scripts/test-ios.sh -parallel-testing-enabled NO -collect-test-diagnostics never`。当前冻结经真机磁盘哈希确认的12实体V1，早期9/10实体结构没有部署样本，不宣称自动迁移支持。详见[兼容与恢复契约](docs/STORE_COMPATIBILITY.md)。模拟器不报告iOS文件保护等级；用户已报告真机备份恢复及文件保护正常，相关证据与自动化分开记录，本轮没有重新操作真机数据。
 
-中文产品名为 `食衡`，英文产品名为 `Evenfare`。B-1将单独交付主屏幕显示名本地化；内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。真机运行前需要在 Xcode 中选择已登录的开发团队；覆盖安装，不卸载以保留本地记录。
+主屏幕显示名已本地化：简体中文为 `食衡`，英文为 `Evenfare`。这不是完整界面翻译，界面暂仍为中文。内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。图标仍需按[素材说明](design/brand/README.md)在Icon Composer合成并接入。真机运行前需要在 Xcode 中选择已登录的开发团队；覆盖安装，不卸载以保留本地记录。

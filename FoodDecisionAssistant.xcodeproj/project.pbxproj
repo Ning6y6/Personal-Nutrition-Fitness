@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC0000000000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = DC0000000000000000000001 /* InfoPlist.strings */; };
+		AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC0000000000000000000003 /* BrandLocalizationTests.swift */; };
 		AB0000000000000000000001 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001; };
 		AB0000000000000000000002 /* EnergyRingArc.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002; };
 		AB0000000000000000000003 /* EnergyRingEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000003; };
@@ -83,6 +85,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BC0000000000000000000001 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		BC0000000000000000000002 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		BC0000000000000000000003 /* BrandLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/BrandLocalizationTests.swift; sourceTree = "<group>"; };
 		BB0000000000000000000001 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		BB0000000000000000000002 /* EnergyRingArc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingArc.swift; sourceTree = "<group>"; };
 		BB0000000000000000000003 /* EnergyRingEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRingEndpoint.swift; sourceTree = "<group>"; };
@@ -198,6 +203,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BC0000000000000000000003 /* BrandLocalizationTests.swift */,
 				BB0000000000000000000009 /* EnergyRingPresentationTests.swift */,
 				BB000000000000000000000A /* UI1NativePreviewTests.swift */,
 				BA0000000000000000000004 /* FormDismissalGuardTests.swift */,
@@ -231,6 +237,7 @@
 		D00000000000000000000002 /* FoodDecisionAssistant */ = {
 			isa = PBXGroup;
 			children = (
+				DC0000000000000000000001 /* InfoPlist.strings */,
 				BB0000000000000000000008 /* Assets.xcassets */,
 				D00000000000000000000003 /* App */,
 				B00000000000000000000004 /* FoodDecisionAssistant.entitlements */,
@@ -356,6 +363,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = D00000000000000000000001;
@@ -384,6 +392,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0000000000000000000001 /* InfoPlist.strings in Resources */,
 				AB0000000000000000000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -395,6 +404,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */,
 				AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */,
 				AB000000000000000000000A /* UI1NativePreviewTests.swift in Sources */,
 				AA0000000000000000000004 /* FormDismissalGuardTests.swift in Sources */,
@@ -475,6 +485,18 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		DC0000000000000000000001 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BC0000000000000000000001 /* en */,
+				BC0000000000000000000002 /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		100000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -508,7 +530,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4QJUB83P5N;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "食衡";
+				INFOPLIST_KEY_CFBundleDisplayName = "Evenfare";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取步数、活动能量和训练，用于调整每日饮食目标。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "写入餐食的热量、三大营养素、饱和脂肪和纤维。";
@@ -536,7 +558,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4QJUB83P5N;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "食衡";
+				INFOPLIST_KEY_CFBundleDisplayName = "Evenfare";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取步数、活动能量和训练，用于调整每日饮食目标。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "写入餐食的热量、三大营养素、饱和脂肪和纤维。";

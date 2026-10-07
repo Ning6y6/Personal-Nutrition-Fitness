@@ -2,6 +2,14 @@
 
 本项目尚未发布到 App Store；当前版本号用于记录个人开发里程碑。
 
+## B-1显示名本地化 - 2026-10-08
+
+- 主屏幕显示名：`en`为Evenfare、`zh-Hans`为食衡，默认名Evenfare；实际App Bundle资源新增2项测试声明 / 3次执行。
+- 仅注册本地化资源和测试；Bundle ID、PRODUCT_NAME、可执行文件、Target/Scheme、TEST_HOST和最低iOS26不变，未改数据库或完整界面语言。
+- 最终App176声明/397执行通过，零失败 / 跳过 / runtimeWarnings，App构建成功。品牌与UI-1、Flask归档分别提交，详见B1_DELIVERY_REPORT。
+- 此前另以`test/ui-preview-scene-readiness`修正测试早于UIKit窗口Scene连接的竞态，独立174/394回归通过；不改App生命周期，不隐藏预览失败。
+- 图标`.icon`合成、接入、小尺寸真机辨识和本轮视觉回归仍未完成；四栏、就地展开、日历 / 趋势、异常输入保存确认未开始。
+
 ## UI-1视觉基础 - 2026-10-08
 
 - 采用浅深色翡翠主题、实体卡片和语义颜色Assets，统一预算/目标/上限用词；下限达标不警告，营养超出全部琥珀，硬约束红不用于热量。

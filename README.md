@@ -18,6 +18,7 @@ Calm precision for every bowl.
 - 导出全部本地业务数据的版本化JSON，验证独立恢复库后经二次确认切换；保留原库，不合并或覆盖原库。
 - 数据库无法打开时显示恢复页，允许重试或恢复已有JSON，不自动删库。
 - 正式餐食执行严格数值和完整分项校验；旧异常记录与未确认草稿保留在历史中，不参与正式汇总，并显示提示。
+- 系统“今日、扫描、日历、设置”四栏，各自独立导航；目标与既有备份入口迁入设置，今日保留同一目标编辑流程的快捷入口。扫描 / 日历明确未开放，不代表业务已实现。
 
 拍照 AI、食品标签 OCR、HealthKit 和 CloudKit 尚未接入。复用与模板切片的落实和待完成真机验收见 [`docs/MEAL_REUSE_TEMPLATE_PLAN.md`](docs/MEAL_REUSE_TEMPLATE_PLAN.md)。
 
@@ -27,7 +28,7 @@ Calm precision for every bowl.
 
 S0–S2及UI-1已完成代码与自动化交付；Core108个测试声明/367次执行通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。B-1显示名本地化独立交付，详见[品牌交付证据](docs/B1_DELIVERY_REPORT.md)。图标工程及App177个声明/398次执行、Debug构建通过；用户本轮确认Normal / Dark / Tinted / Clear与Settings缩小显示正常，详见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)。Spotlight、中英文显示名与UI-1真机视觉专项仍待验。此前真机备份 / 恢复 / 文件保护和既有数据检查由用户确认；未提供的VO、跨午夜 / 时区和复用计时证据不宣称通过。
 
-本轮另行批准原生整改 **UI-2A导航 / 设置迁移→UI-2B今日记录入口 / 原生表单→UI-2C轻量餐食展开**，均尚未实施，逐片独立验证交付，不只做底栏，也不等全部业务。完整计划见[NATIVE_UI_EXECUTION_PLAN](docs/NATIVE_UI_EXECUTION_PLAN.md)；扫描 / 日历仍明确未开放，食品搜索 / 日确认 / 目标历史等新业务及S4–S5未新增批准，不改Schema或已有保存保护。
+本轮另行批准原生整改 **UI-2A导航 / 设置迁移→UI-2B今日记录入口 / 原生表单→UI-2C轻量餐食展开**，逐片独立验证交付，不只做底栏，也不等全部业务。UI-2A已实施：Core108声明/367执行、App单元180声明/410执行及XCTest实际UI交互4/4通过，iOS合计184声明/414执行，零失败/跳过；10张整页原生PNG已检查，最终构建通过。两条键盘frame运行时警告待定位，真机、VO与iOS26专项仍待验，见[原生UI交付证据](docs/NATIVE_UI_DELIVERY_REPORT.md)。UI-2B已批准、尚未实施，为下一片；UI-2C等待UI-2B门禁。完整计划见[NATIVE_UI_EXECUTION_PLAN](docs/NATIVE_UI_EXECUTION_PLAN.md)；食品搜索 / 日确认 / 目标历史等新业务及S4–S5未新增批准，不改Schema或已有保存保护。
 
 后续开发优先级见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，本次完整变更见 [`CHANGELOG.md`](CHANGELOG.md)。
 

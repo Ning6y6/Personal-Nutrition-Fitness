@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0000000000000000000001; };
+		AE0000000000000000000001 /* AppTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000001; };
+		AE0000000000000000000002 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000002; };
+		AE0000000000000000000003 /* LabelScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000003; };
+		AE0000000000000000000004 /* NutritionCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000004; };
+		AE0000000000000000000005 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000005; };
+		AE0000000000000000000006 /* NativeShellPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000006; };
+		AE0000000000000000000007 /* NativeNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000007; };
 		AD0000000000000000000001 /* Evenfare.icon in Resources */ = {isa = PBXBuildFile; fileRef = BD0000000000000000000001 /* Evenfare.icon */; };
 		AC0000000000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = DC0000000000000000000001 /* InfoPlist.strings */; };
 		AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC0000000000000000000003 /* BrandLocalizationTests.swift */; };
@@ -76,6 +84,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		CF0000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000001;
+			remoteInfo = FoodDecisionAssistant;
+		};
 		7C70F42430702A5B0089CDBC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F00000000000000000000001 /* Project object */;
@@ -86,6 +101,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BF0000000000000000000001 /* NativeNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeNavigationUITests.swift; sourceTree = "<group>"; };
+		BF0000000000000000000002 /* FoodDecisionAssistantUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FoodDecisionAssistantUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE0000000000000000000001 /* AppTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTab.swift; sourceTree = "<group>"; };
+		BE0000000000000000000002 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		BE0000000000000000000003 /* LabelScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelScannerView.swift; sourceTree = "<group>"; };
+		BE0000000000000000000004 /* NutritionCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionCalendarView.swift; sourceTree = "<group>"; };
+		BE0000000000000000000005 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BE0000000000000000000006 /* NativeShellPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeShellPreviews.swift; sourceTree = "<group>"; };
+		BE0000000000000000000007 /* NativeNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/NativeNavigationTests.swift; sourceTree = "<group>"; };
 		BD0000000000000000000001 /* Evenfare.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "design/brand/icon-a/Evenfare.icon"; sourceTree = SOURCE_ROOT; };
 		BC0000000000000000000001 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		BC0000000000000000000002 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -157,6 +181,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		CF0000000000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		7C70F42730702A5B0089CDBC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -176,6 +201,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DF0000000000000000000001 /* FoodDecisionAssistantUITests */ = {
+			isa = PBXGroup;
+			children = (BF0000000000000000000001 /* NativeNavigationUITests.swift */,);
+			path = FoodDecisionAssistantUITests;
+			sourceTree = "<group>";
+		};
 		C80000000000000000000001 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,6 +236,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BE0000000000000000000007 /* NativeNavigationTests.swift */,
 				BC0000000000000000000003 /* BrandLocalizationTests.swift */,
 				BB0000000000000000000009 /* EnergyRingPresentationTests.swift */,
 				BB000000000000000000000A /* UI1NativePreviewTests.swift */,
@@ -230,6 +262,7 @@
 		D00000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				DF0000000000000000000001 /* FoodDecisionAssistantUITests */,
 				D00000000000000000000002 /* FoodDecisionAssistant */,
 				D00000000000000000000004 /* Products */,
 				7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */,
@@ -252,6 +285,12 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				BE0000000000000000000001 /* AppTab.swift */,
+				BE0000000000000000000002 /* TodayView.swift */,
+				BE0000000000000000000003 /* LabelScannerView.swift */,
+				BE0000000000000000000004 /* NutritionCalendarView.swift */,
+				BE0000000000000000000005 /* SettingsView.swift */,
+				BE0000000000000000000006 /* NativeShellPreviews.swift */,
 				BB0000000000000000000001 /* DesignTokens.swift */,
 				BB0000000000000000000002 /* EnergyRingArc.swift */,
 				BB0000000000000000000003 /* EnergyRingEndpoint.swift */,
@@ -291,6 +330,7 @@
 		D00000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				BF0000000000000000000002 /* FoodDecisionAssistantUITests.xctest */,
 				B00000000000000000000003 /* ShiHeng.app */,
 				7C70F42330702A5B0089CDBC /* FoodDecisionAssistantTests.xctest */,
 			);
@@ -300,6 +340,17 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		EF0000000000000000000001 /* FoodDecisionAssistantUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EF0000000000000000000002;
+			buildPhases = (CF0000000000000000000003 /* Sources */, CF0000000000000000000002 /* Frameworks */, CF0000000000000000000004 /* Resources */,);
+			buildRules = ();
+			dependencies = (CF0000000000000000000005 /* PBXTargetDependency */,);
+			name = FoodDecisionAssistantUITests;
+			productName = FoodDecisionAssistantUITests;
+			productReference = BF0000000000000000000002 /* FoodDecisionAssistantUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		7C70F42930702A5B0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7C70F42A30702A5B0089CDBC /* Build configuration list for PBXNativeTarget "FoodDecisionAssistantTests" */;
@@ -351,6 +402,10 @@
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
+					EF0000000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = E00000000000000000000001;
+					};
 					7C70F42930702A5B0089CDBC = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = E00000000000000000000001;
@@ -377,6 +432,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				EF0000000000000000000001 /* FoodDecisionAssistantUITests */,
 				E00000000000000000000001 /* FoodDecisionAssistant */,
 				7C70F42930702A5B0089CDBC /* FoodDecisionAssistantTests */,
 			);
@@ -384,6 +440,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		CF0000000000000000000004 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		7C70F42830702A5B0089CDBC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -404,10 +461,12 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		CF0000000000000000000003 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
 		7C70F42630702A5B0089CDBC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE0000000000000000000007 /* NativeNavigationTests.swift in Sources */,
 				AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */,
 				AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */,
 				AB000000000000000000000A /* UI1NativePreviewTests.swift in Sources */,
@@ -433,6 +492,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE0000000000000000000001 /* AppTab.swift in Sources */,
+				AE0000000000000000000002 /* TodayView.swift in Sources */,
+				AE0000000000000000000003 /* LabelScannerView.swift in Sources */,
+				AE0000000000000000000004 /* NutritionCalendarView.swift in Sources */,
+				AE0000000000000000000005 /* SettingsView.swift in Sources */,
+				AE0000000000000000000006 /* NativeShellPreviews.swift in Sources */,
 				AB0000000000000000000001 /* DesignTokens.swift in Sources */,
 				AB0000000000000000000002 /* EnergyRingArc.swift in Sources */,
 				AB0000000000000000000003 /* EnergyRingEndpoint.swift in Sources */,
@@ -482,6 +547,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		CF0000000000000000000005 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = E00000000000000000000001 /* FoodDecisionAssistant */; targetProxy = CF0000000000000000000001 /* PBXContainerItemProxy */; };
 		7C70F42530702A5B0089CDBC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E00000000000000000000001 /* FoodDecisionAssistant */;
@@ -502,6 +568,36 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1F0000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHengUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = FoodDecisionAssistant;
+			};
+			name = Debug;
+		};
+		1F0000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ning6y6.ShiHengUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = FoodDecisionAssistant;
+			};
+			name = Release;
+		};
 		100000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -623,6 +719,12 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		EF0000000000000000000002 /* Build configuration list for PBXNativeTarget "FoodDecisionAssistantUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (1F0000000000000000000001 /* Debug */, 1F0000000000000000000002 /* Release */,);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		7C70F42A30702A5B0089CDBC /* Build configuration list for PBXNativeTarget "FoodDecisionAssistantTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

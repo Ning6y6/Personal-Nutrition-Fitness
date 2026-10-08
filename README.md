@@ -25,7 +25,9 @@ Calm precision for every bowl.
 
 当前已批准执行S0–S2可靠性加固，先保护已有数据再收紧校验，见[优化执行清单](docs/OPTIMIZATION_EXECUTION_PLAN.md)及[实际执行状态](docs/EXECUTION_STATUS.md)。个人或一两位朋友各自本机使用，不启用云或共享数据；分支与交付规范见AGENTS.md。
 
-S0–S2及UI-1已完成代码与自动化交付；Core108个测试声明/367次执行通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。B-1显示名本地化已独立交付，详见[品牌交付证据](docs/B1_DELIVERY_REPORT.md)。随后用户完成Icon Composer图标，工程接入和资源编译通过；最新App177个声明/398次执行及Debug构建通过，详见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)。图标60pt / 29pt辨识、默认 / 深色 / 着色 / 透明外观，以及本轮UI-1真机视觉仍待验。2026-10-08用户确认真机备份、恢复、文件保护及旧餐食、目标、模板、新增餐检查无问题；未提供的VoiceOver、跨午夜/时区和复用计时证据仍待验。其余S3–S5及四栏导航不自动启动。
+S0–S2及UI-1已完成代码与自动化交付；Core108个测试声明/367次执行通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。B-1显示名本地化独立交付，详见[品牌交付证据](docs/B1_DELIVERY_REPORT.md)。图标工程及App177个声明/398次执行、Debug构建通过；用户本轮确认Normal / Dark / Tinted / Clear与Settings缩小显示正常，详见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)。Spotlight、中英文显示名与UI-1真机视觉专项仍待验。此前真机备份 / 恢复 / 文件保护和既有数据检查由用户确认；未提供的VO、跨午夜 / 时区和复用计时证据不宣称通过。
+
+本轮另行批准原生整改 **UI-2A导航 / 设置迁移→UI-2B今日记录入口 / 原生表单→UI-2C轻量餐食展开**，均尚未实施，逐片独立验证交付，不只做底栏，也不等全部业务。完整计划见[NATIVE_UI_EXECUTION_PLAN](docs/NATIVE_UI_EXECUTION_PLAN.md)；扫描 / 日历仍明确未开放，食品搜索 / 日确认 / 目标历史等新业务及S4–S5未新增批准，不改Schema或已有保存保护。
 
 后续开发优先级见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，本次完整变更见 [`CHANGELOG.md`](CHANGELOG.md)。
 
@@ -54,4 +56,4 @@ swift test --package-path Packages/FoodDecisionCore
 
 Xcode失败后的诊断收集可能耗时很久；需要快速取得测试结果时可用`./scripts/test-ios.sh -parallel-testing-enabled NO -collect-test-diagnostics never`。当前冻结经真机磁盘哈希确认的12实体V1，早期9/10实体结构没有部署样本，不宣称自动迁移支持。详见[兼容与恢复契约](docs/STORE_COMPATIBILITY.md)。模拟器不报告iOS文件保护等级；用户已报告真机备份恢复及文件保护正常，相关证据与自动化分开记录，本轮没有重新操作真机数据。
 
-主屏幕显示名已本地化：简体中文为 `食衡`，英文为 `Evenfare`。这不是完整界面翻译，界面暂仍为中文。内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。用户制作的`Evenfare.icon`已接入工程，构建产物的`CFBundleIconName`为`Evenfare`；真机图标外观与小尺寸验收仍按[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)执行，不自动修改用户艺术源。真机运行前需要在 Xcode 中选择已登录的开发团队；覆盖安装，不卸载以保留本地记录。
+主屏幕显示名已本地化：简体中文为 `食衡`，英文为 `Evenfare`，真机两语言专项尚未报告。这不是完整界面翻译，界面暂仍为中文。内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。用户制作的`Evenfare.icon`已接入工程，产物`CFBundleIconName`为`Evenfare`；四种外观 / Settings缩小显示的用户验收与剩余专项见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)，不自动修改艺术源。真机运行前在Xcode选择已登录开发团队；覆盖安装，不卸载以保留本地记录。

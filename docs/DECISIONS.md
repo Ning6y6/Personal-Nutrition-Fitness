@@ -154,13 +154,13 @@ App的TodayDateContext只保存瞬时界面状态。活跃时由结构化任务�
 
 ## 019：英文名 Evenfare 与图标方向 A「筷衡」
 
-状态：已确认（2026-10-07，Ning）；2026-10-08 B-1显示名已交付，用户制作的Icon Composer图标已接入并通过资源编译；真机小尺寸 / 外观仍待验（见 `docs/BRAND_UI_DECISIONS.md` 第 6 节、`B1_DELIVERY_REPORT.md` 及 [B1_ICON_DELIVERY_REPORT](B1_ICON_DELIVERY_REPORT.md)）
+状态：已确认（2026-10-07，Ning）；2026-10-08 B-1显示名与图标工程已交付，本轮用户确认Normal / Dark / Tinted / Clear及Settings缩小显示正常；Spotlight与两种语言显示名专项仍待验（见 `docs/BRAND_UI_DECISIONS.md` 第 6 节、`B1_DELIVERY_REPORT.md` 及 [B1_ICON_DELIVERY_REPORT](B1_ICON_DELIVERY_REPORT.md)）
 
 英文名定为 Evenfare，取代 005 中的英文产品名 `ShiHeng`；中文名“食衡”不变。落地时只做显示名本地化（中文“食衡”，英文“Evenfare”），不改 Bundle ID `com.ning6y6.ShiHeng`，`PRODUCT_NAME` 与内部 Target 暂不改。
 
 App 图标定为方向 A「筷衡」：一只碗，上方两根平放的筷子组成“＝”。按背景、碗、筷子三层导出纯色 SVG，用 Icon Composer 合成 `.icon`。几何、颜色以及同期的 UI 审查和配色建议（建议部分尚未确认）见 `docs/BRAND_UI_DECISIONS.md`。
 
-用户提供的`design/brand/icon-a/Evenfare.icon`作为艺术源保留，工程资源名为`Evenfare`；Debug构建产物包含`CFBundleIconName=Evenfare`、`Assets.car`和生成的60pt图标。默认 / 深色颜色采用用户导出的Display P3数据，不宣称与原sRGB hex严格同色，不擅自改筷子尺寸。最新iPhone17 / iOS27回归177声明/398执行通过；这不替代默认 / 深色 / 着色 / 透明外观与60pt / 29pt真机验收，也不改变Bundle ID或冻结V1。
+用户提供的`design/brand/icon-a/Evenfare.icon`作为艺术源保留，工程资源名为`Evenfare`；Debug构建产物包含`CFBundleIconName=Evenfare`、`Assets.car`和生成的60pt图标。默认 / 深色颜色采用用户导出的Display P3数据，不宣称与原sRGB hex严格同色，不擅自改筷子尺寸。iPhone17 / iOS27回归177声明/398执行通过；后续四种外观与Settings缩小显示的用户反馈独立记录，不冒称代理实测、Spotlight或精确尺寸测量通过，也不改变Bundle ID或冻结V1。
 
 ## 020：营养显示配色 v2——红色只用于硬约束，热量环最多两圈
 
@@ -169,3 +169,13 @@ App 图标定为方向 A「筷衡」：一只碗，上方两根平放的筷子�
 本条修改 008 第三段和 014 中的颜色规则：营养显示不再使用红色。预算型（热量、碳水、脂肪）超出一律用琥珀；上限型（饱和脂肪）80% 起琥珀预警，超过 100% 仍为琥珀，并写明超出量；红色只用于清真、用药等硬约束结论。014 的营养语义（minimum / budget / maximum）、差额计算和“颜色从不单独表达状态”保持不变。
 
 主题色改为翡翠绿（浅 `#1B7F5B` / 深 `#3DD598`），背景和卡片用系统色。热量环在预算内用同色系渐变，不用“绿→琥珀”的位置渐变；超出部分用琥珀叠在第一圈上，最多两圈，倍数用文字表达。`NutritionDisplayPolicy` 升为 v2，v1 保留用于兼容解码。单餐超过预算 1.5 倍或单项超过 2,000 g 的保存前核对单独登记为UI-BEH-01行为任务，尚未批准实施，不能混入颜色 / 圆环改动。细节见 `docs/BRAND_UI_DECISIONS.md` 第 3、7、8 节。
+
+## 021：原生UI整改分三切片交付，不仅是底栏
+
+状态：本轮2026-10-08用户正式批准；UI-2A / UI-2B / UI-2C代码均未实施
+
+UI-1与B-1原限定批准及历史验证保持不变。本轮新增批准顺序为：UI-2A系统四栏 / 独立导航栈与既有设置迁移→UI-2B今日专属记录入口与原生表单→UI-2C今日 / 历史餐食轻量就地展开。每片独立验证、提交，相关预览、模拟器保护和全量回归通过后才进入下一片，不同时开工，不能只交底栏就声称完整整改已完成。具体计划见[NATIVE_UI_EXECUTION_PLAN](NATIVE_UI_EXECUTION_PLAN.md)。
+
+不等待AI / HealthKit或全部S3 / S4 / S5；未测VO、iOS26、真实跨午夜 / 时区等继续待验，不统一阻塞不触数据库的UI任务。保留身份、冻结12实体V1、唯一约束、营养快照、保存 / 失败 / 取消 / 草稿保护及备份恢复能力，已有功能仍可达。
+
+扫描 / 日历只提供明确未开放页面；食品搜索、日确认、目标历史、有限查询、自定义食物 / 菜谱批次、完整日历 / 趋势、UI-BEH-01和完整英文界面未新增批准。009的系统导航结构由UI-2A落实；完整日历另待依赖及具体批准，趋势仍保留S5后P5排期。

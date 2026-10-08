@@ -154,11 +154,13 @@ App的TodayDateContext只保存瞬时界面状态。活跃时由结构化任务�
 
 ## 019：英文名 Evenfare 与图标方向 A「筷衡」
 
-状态：已确认（2026-10-07，Ning）；2026-10-08 B-1显示名已交付，图标合成 / 接入 / 真机辨识仍未完成（见 `docs/BRAND_UI_DECISIONS.md` 第 6 节及 `B1_DELIVERY_REPORT.md`）
+状态：已确认（2026-10-07，Ning）；2026-10-08 B-1显示名已交付，用户制作的Icon Composer图标已接入并通过资源编译；真机小尺寸 / 外观仍待验（见 `docs/BRAND_UI_DECISIONS.md` 第 6 节、`B1_DELIVERY_REPORT.md` 及 [B1_ICON_DELIVERY_REPORT](B1_ICON_DELIVERY_REPORT.md)）
 
 英文名定为 Evenfare，取代 005 中的英文产品名 `ShiHeng`；中文名“食衡”不变。落地时只做显示名本地化（中文“食衡”，英文“Evenfare”），不改 Bundle ID `com.ning6y6.ShiHeng`，`PRODUCT_NAME` 与内部 Target 暂不改。
 
 App 图标定为方向 A「筷衡」：一只碗，上方两根平放的筷子组成“＝”。按背景、碗、筷子三层导出纯色 SVG，用 Icon Composer 合成 `.icon`。几何、颜色以及同期的 UI 审查和配色建议（建议部分尚未确认）见 `docs/BRAND_UI_DECISIONS.md`。
+
+用户提供的`design/brand/icon-a/Evenfare.icon`作为艺术源保留，工程资源名为`Evenfare`；Debug构建产物包含`CFBundleIconName=Evenfare`、`Assets.car`和生成的60pt图标。默认 / 深色颜色采用用户导出的Display P3数据，不宣称与原sRGB hex严格同色，不擅自改筷子尺寸。最新iPhone17 / iOS27回归177声明/398执行通过；这不替代默认 / 深色 / 着色 / 透明外观与60pt / 29pt真机验收，也不改变Bundle ID或冻结V1。
 
 ## 020：营养显示配色 v2——红色只用于硬约束，热量环最多两圈
 

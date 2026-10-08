@@ -10,10 +10,10 @@
 - iPhone 16 Pro Max：2026-10-08用户确认真机备份、恢复、文件保护，以及旧餐食、目标、模板和新增餐无问题。记录为用户报告的验收，不冒充本轮代理操作或自动化证据；未说明的验收项仍待验证。Personal Team 描述文件需每 7 天重新签名
 - 代码仓库：工程骨架、核心规则包和 SwiftData v1 已建立
 - `FoodDecisionAssistantTests`：已建立并接入共享 Scheme
-- 最新iPhone17、iOS27模拟器测试：App176个测试声明/397次展开执行全部通过（2026-10-08，B-1）；UI-1原生卡片预览及限制见[UI-1交付证据](UI1_DELIVERY_REPORT.md)，显示名证据见[B-1交付证据](B1_DELIVERY_REPORT.md)
+- 最新iPhone17、iOS27模拟器测试：App177个测试声明/398次展开执行全部通过（2026-10-08，B-1图标接入）；UI-1原生卡片预览及限制见[UI-1交付证据](UI1_DELIVERY_REPORT.md)，显示名证据见[B-1显示名交付证据](B1_DELIVERY_REPORT.md)，图标证据见[B-1图标交付证据](B1_ICON_DELIVERY_REPORT.md)
 - `FoodDecisionCore`：Swift Testing108个测试声明/367次展开执行全部通过
 - S0–S2及另行批准的日期刷新/空记录限定切片已交付自动化验证；上述真机数据保护检查由用户确认通过；VoiceOver、跨午夜/时区、最大字体和复用计时等未确认事项仍待验。S3其余事项与S4–S5仍待批准
-- 正式产品名称：`食衡` / `Evenfare`；B-1主屏幕显示名本地化已交付，图标合成 / 接入 / 真机辨识仍未完成；内部`PRODUCT_NAME = ShiHeng`不变
+- 正式产品名称：`食衡` / `Evenfare`；B-1主屏幕显示名已本地化，用户制作的`Evenfare.icon`已接入并编译，真机小尺寸辨识及各外观仍待验；内部`PRODUCT_NAME = ShiHeng`不变
 - 正式 Bundle ID：`com.ning6y6.ShiHeng`
 
 以下早期功能切片保留其当时的测试数量；最新结果以本节及“已批准优化”中的最终证据为准，不把历史13/28误作当前总数。
@@ -24,7 +24,7 @@
 
 1. 分别提交已完成的Flask原型与品牌/计划第8节同步，不把网页演示当作原生交付。
 2. UI-1：仅配色、统一“预算 / 目标 / 上限”用词、显示策略v2和热量环v2。先建立浅/深色、最大辅助字体、空态、达到预算及超出状态的原生`#Preview`并渲染检查，再验证集成。不改营养计算、冻结V1、保存或删除行为。
-3. UI-1验证之后实施B-1，单独提交显示名本地化。图标三层SVG已有；Icon Composer合成与60pt/29pt真机辨识仍需实际验证。不改Bundle ID、PRODUCT_NAME、Target或Scheme。
+3. UI-1验证之后实施B-1，单独提交显示名本地化；用户提供合成图标后，工程接入另一个独立提交。60pt/29pt真机辨识及各外观仍需实际验证。不改Bundle ID、PRODUCT_NAME、Target或Scheme。
 4. 单餐超过预算1.5倍 / 分项超过2000g的保存确认登记为独立行为任务，尚未批准实现，不混入UI-1。
 
 本次没有批准四栏原生外壳、设置迁移、就地展开改造、完整日历/趋势或S3–S5。月历以后只显示日期和记录状态，数字放选中日详情；历史预算按当日有效目标，依赖目标历史、日确认和有限查询。今日/全部历史的详情、编辑、改日期、删除和今日汇总重算已经可用，不必等待S3；食品更新后的快照编辑边界仍属于OPT-14。
@@ -41,16 +41,18 @@
 
 最终结果与文件列表见[UI1_DELIVERY_REPORT](UI1_DELIVERY_REPORT.md)。另以独立`test/ui-preview-scene-readiness`修正默认iPhone17上测试早于窗口Scene连接的启动竞态，174声明/394执行再次通过，不改App生命周期。UI-BEH-01异常输入核对没有开工。
 
-### B-1品牌：显示名部分已交付（2026-10-08）
+### B-1品牌：显示名与图标工程接入已交付（2026-10-08）
 
 - [x] `feat/b-1-display-name`独立实施：`en.lproj/InfoPlist.strings`为Evenfare，`zh-Hans.lproj/InfoPlist.strings`为食衡，默认显示名为Evenfare。
 - [x] Xcode注册本地化资源和测试；实际App Bundle资源及身份测试新增2声明/3执行。
 - [x] 最终App176声明/397执行，零失败、零跳过、runtimeWarnings为空；App构建通过。结果包为`.build/b-1-release-2026-10-08.xcresult`。
 - [x] Bundle ID、PRODUCT_NAME、可执行文件、Target/Scheme、TEST_HOST和最低iOS26未改变；冻结12实体V1、保存事务、营养计算与导航未改。
-- [ ] Icon Composer合成`.icon`、工程接入及主屏幕60pt / 设置和Spotlight29pt辨识。已有SVG和预览不等于图标已安装。
+- [x] 用户已在Icon Composer制作`design/brand/icon-a/Evenfare.icon`；工程以图标资源类型注册，Debug / Release主图标名称均为Evenfare。保留用户的图层、Display P3色值、透明度和阴影。
+- [x] 图标接入回归：App177声明/398执行，零失败、跳过和运行时告警；Debug / Release构建成功。结果包为`.build/b-1-icon-2026-10-08.xcresult`；实际产物含主图标元数据、`Assets.car`和编译生成的PNG。
+- [ ] 真机主屏幕60pt / 设置和Spotlight29pt两根筷子辨识，Default / Dark / Tinted / Clear外观。编译产物检查不代替真机验收。
 - [ ] 本轮真机中英文主屏幕显示名与UI-1视觉验收；完整英文界面未开发。
 
-文件和边界见[B1_DELIVERY_REPORT](B1_DELIVERY_REPORT.md)。图标由用户按`design/brand/README.md`合成，提供文件后继续已批准的B-1图标接入；没有自动开启原生外壳或S3。
+显示名历史证据见[B1_DELIVERY_REPORT](B1_DELIVERY_REPORT.md)，本次图标证据见[B1_ICON_DELIVERY_REPORT](B1_ICON_DELIVERY_REPORT.md)。B-1真机验收未标整项完成；没有自动开启原生外壳或S3。
 
 ## 第 1 周：基础和规则
 
@@ -264,4 +266,4 @@ Git交付：2026-10-07，历史模拟器报告基线`b4a0792`和修复`0102fef`�
 2. 若需要 App 超过 Personal Team 的 7 天签名期持续可用，或后续使用付费账号能力，需确认 Apple Developer Program 会员资格。
 3. 在真机上手动记录一餐，确认中文菜单、键盘、保存与首页刷新符合你的操作习惯。
 4. 开始第一次 HealthKit 真机验证时，在 iPhone 上授权读取步数、活动能量和训练，并授权写入六类营养数据。
-5. 在Icon Composer合成三层图标，提供`.icon`后接入工程；随后完成60pt / 29pt两根筷子辨识。尚未完成的品牌图标不标交付。
+5. 用户合成图标已接入工程；相同Bundle ID覆盖更新后，完成60pt / 29pt两根筷子辨识及Default / Dark / Tinted / Clear外观验收。不要卸载或清库，不把资源编译当作真机验收。

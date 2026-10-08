@@ -31,4 +31,14 @@ struct BrandLocalizationTests {
         #expect(Bundle.main.bundleURL.lastPathComponent == "ShiHeng.app")
         #expect(Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String == "Evenfare")
     }
+
+    @Test("The built app registers the compiled Icon Composer resource as its primary icon")
+    func primaryAppIcon() throws {
+        let icons = try #require(Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any])
+        let primaryIcon = try #require(icons["CFBundlePrimaryIcon"] as? [String: Any])
+        #expect(primaryIcon["CFBundleIconName"] as? String == "Evenfare")
+        let catalogURL = try #require(Bundle.main.url(forResource: "Assets", withExtension: "car"))
+        let catalogSize = try #require(try catalogURL.resourceValues(forKeys: [.fileSizeKey]).fileSize)
+        #expect(catalogSize > 0, "Icon metadata must be accompanied by a compiled asset catalog.")
+    }
 }

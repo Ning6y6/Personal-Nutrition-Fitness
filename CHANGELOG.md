@@ -2,6 +2,12 @@
 
 本项目尚未发布到 App Store；当前版本号用于记录个人开发里程碑。
 
+## B-1图标工程接入 - 2026-10-08
+
+- 接入用户制作的`design/brand/icon-a/Evenfare.icon`，不重绘、不修改图层、配色或材质；Xcode按`folder.iconcomposer.icon`注册并由资源编译器处理，Debug / Release主图标名称为Evenfare。
+- 新增实际App Bundle的主图标元数据 / 编译资源回归；App177声明 / 398执行全部通过，零失败、跳过和运行时告警；Core108声明 / 367执行通过，Debug / Release构建成功。
+- Bundle ID、PRODUCT_NAME、最低iOS26、Target / Scheme、数据库与保存行为不变；真机小尺寸及Default / Dark / Tinted / Clear外观仍待验，未自动开展原生外壳或S3。详见[B-1图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)。
+
 ## B-1显示名本地化 - 2026-10-08
 
 - 主屏幕显示名：`en`为Evenfare、`zh-Hans`为食衡，默认名Evenfare；实际App Bundle资源新增2项测试声明 / 3次执行。

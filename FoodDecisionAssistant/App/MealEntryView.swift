@@ -5,6 +5,7 @@ import SwiftUI
 struct MealEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let mealToEdit: PersistentMealLog?
     private let sourceTemplateID: UUID?
@@ -77,12 +78,13 @@ struct MealEntryView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("meal.form")
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: cancelEditing)
+                    Button("取消", role: .cancel, action: cancelEditing)
                         .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
                             Button("放弃修改", role: .destructive) { dismiss() }
                             // Popovers omit role.cancel; keep the safe exit explicitly visible.
@@ -102,6 +104,7 @@ struct MealEntryView: View {
                     Button("完成") {
                         focusedField = nil
                     }
+                    .accessibilityIdentifier("meal.keyboardDone")
                 }
             }
             .task(id: foodItems.count) {
@@ -131,6 +134,7 @@ struct MealEntryView: View {
             }
         }
         .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+        .presentationDetents([.large])
     }
 
     private var draftSnapshot: FormDraftSnapshot {
@@ -145,14 +149,8 @@ struct MealEntryView: View {
 
     private var mealDetailsSection: some View {
         Section {
-            TextField("餐食名称", text: $title)
-                .focused($focusedField, equals: .title)
-                .submitLabel(.done)
-                .onSubmit {
-                    focusedField = nil
-                }
-            DatePicker("时间", selection: $eatenAt)
-                .environment(\.locale, Locale(identifier: "zh_Hans_CN"))
+            mealNameField
+            mealDatePicker
 
             DisclosureGroup(isExpanded: $isShowingAdvancedOptions) {
                 Picker("记录方式", selection: $entryMethod) {
@@ -179,6 +177,56 @@ struct MealEntryView: View {
         }
     }
 
+    @ViewBuilder
+    private var mealNameField: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                Text("餐食名称")
+                    .accessibilityHidden(true)
+                mealNameInput
+                    .accessibilityLabel("餐食名称")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                Text("餐食名称")
+                    .accessibilityHidden(true)
+                mealNameInput
+                    .accessibilityLabel("餐食名称")
+            }
+        }
+    }
+
+    private var mealNameInput: some View {
+        TextField("请输入", text: $title)
+            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+            .focused($focusedField, equals: .title)
+            .submitLabel(.done)
+            .onSubmit { focusedField = nil }
+            .accessibilityIdentifier("meal.name")
+    }
+
+    @ViewBuilder
+    private var mealDatePicker: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                // Keep a visible heading without duplicating the picker's
+                // native accessibility label. Its date/time binding is shared.
+                Text("时间")
+                    .accessibilityHidden(true)
+                DatePicker("时间", selection: $eatenAt)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .accessibilityIdentifier("meal.time")
+            }
+            .environment(\.locale, Locale(identifier: "zh_Hans_CN"))
+        } else {
+            DatePicker("时间", selection: $eatenAt)
+                .environment(\.locale, Locale(identifier: "zh_Hans_CN"))
+                .accessibilityIdentifier("meal.time")
+        }
+    }
+
     private var componentsSection: some View {
         Section {
             if foodItems.isEmpty {
@@ -187,7 +235,12 @@ struct MealEntryView: View {
 
             ForEach($rows) { $row in
                 VStack(alignment: .leading, spacing: 10) {
-                    Picker("食物", selection: $row.foodItemID) {
+                    NativeFoodMenuRow(
+                        selection: $row.foodItemID,
+                        selectedName: foodItem(for: row.foodItemID)?.name
+                            ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择"),
+                        identifier: "meal.food.\(row.id.uuidString)"
+                    ) {
                         Text("请选择").tag(UUID?.none)
                         if
                             let selectedID = row.foodItemID,
@@ -200,18 +253,8 @@ struct MealEntryView: View {
                             Text(foodItem.name).tag(Optional(foodItem.id))
                         }
                     }
-                    .pickerStyle(.menu)
 
-                    HStack {
-                        TextField(
-                            "重量",
-                            text: $row.weightText
-                        )
-                        .keyboardType(.decimalPad)
-                        .focused($focusedField, equals: .weight(row.id))
-                        Text("g")
-                            .foregroundStyle(.secondary)
-                    }
+                    weightField(for: $row)
 
                     if let foodItem = foodItem(for: row.foodItemID) {
                         Text("营养来源：\(foodSourceName(foodItem.source))")
@@ -219,6 +262,7 @@ struct MealEntryView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .fixedSize(horizontal: false, vertical: true)
             }
             .onDelete(perform: deleteRows)
 
@@ -233,6 +277,37 @@ struct MealEntryView: View {
         } footer: {
             Text("请选择与实际称重状态一致的条目，例如生肉用生重条目，熟米饭用熟重条目；油和酱汁需要单独添加。")
         }
+    }
+
+    @ViewBuilder
+    private func weightField(for row: Binding<MealFormComponentDraft>) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                Text("重量 (g)")
+                    .accessibilityHidden(true)
+                weightInput(for: row)
+                    .accessibilityLabel("重量 (g)")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                Text("重量")
+                    .accessibilityHidden(true)
+                weightInput(for: row)
+                    .accessibilityLabel("重量 (g)")
+                Text("g")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func weightInput(for row: Binding<MealFormComponentDraft>) -> some View {
+        TextField("请输入", text: row.weightText)
+            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+            .keyboardType(.decimalPad)
+            .focused($focusedField, equals: .weight(row.wrappedValue.id))
+            .accessibilityIdentifier("meal.weight.\(row.wrappedValue.id.uuidString)")
     }
 
     private func nutritionPreviewSection(_ previewNutrients: NutrientValues) -> some View {

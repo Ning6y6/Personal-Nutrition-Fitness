@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000001; };
+		AG0000000000000000000002 /* NativeMealEntryPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000002; };
+		AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000003; };
+		AG0000000000000000000004 /* NativeFoodMenuRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000004; };
 		AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0000000000000000000001; };
 		AE0000000000000000000001 /* AppTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000001; };
 		AE0000000000000000000002 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000000000000000000002; };
@@ -101,6 +105,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BG0000000000000000000001 /* TodayMealEntryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayMealEntryButton.swift; sourceTree = "<group>"; };
+		BG0000000000000000000002 /* NativeMealEntryPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMealEntryPreviews.swift; sourceTree = "<group>"; };
+		BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/NativeMealEntryPreviewTests.swift; sourceTree = "<group>"; };
+		BG0000000000000000000004 /* NativeFoodMenuRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeFoodMenuRow.swift; sourceTree = "<group>"; };
 		BF0000000000000000000001 /* NativeNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeNavigationUITests.swift; sourceTree = "<group>"; };
 		BF0000000000000000000002 /* FoodDecisionAssistantUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FoodDecisionAssistantUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE0000000000000000000001 /* AppTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTab.swift; sourceTree = "<group>"; };
@@ -236,6 +244,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */,
 				BE0000000000000000000007 /* NativeNavigationTests.swift */,
 				BC0000000000000000000003 /* BrandLocalizationTests.swift */,
 				BB0000000000000000000009 /* EnergyRingPresentationTests.swift */,
@@ -285,6 +294,9 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				BG0000000000000000000001 /* TodayMealEntryButton.swift */,
+				BG0000000000000000000002 /* NativeMealEntryPreviews.swift */,
+				BG0000000000000000000004 /* NativeFoodMenuRow.swift */,
 				BE0000000000000000000001 /* AppTab.swift */,
 				BE0000000000000000000002 /* TodayView.swift */,
 				BE0000000000000000000003 /* LabelScannerView.swift */,
@@ -466,6 +478,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */,
 				AE0000000000000000000007 /* NativeNavigationTests.swift in Sources */,
 				AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */,
 				AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */,
@@ -492,6 +505,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */,
+				AG0000000000000000000002 /* NativeMealEntryPreviews.swift in Sources */,
+				AG0000000000000000000004 /* NativeFoodMenuRow.swift in Sources */,
 				AE0000000000000000000001 /* AppTab.swift in Sources */,
 				AE0000000000000000000002 /* TodayView.swift in Sources */,
 				AE0000000000000000000003 /* LabelScannerView.swift in Sources */,

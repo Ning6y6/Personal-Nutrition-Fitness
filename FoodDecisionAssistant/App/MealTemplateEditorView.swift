@@ -5,6 +5,7 @@ import SwiftUI
 struct MealTemplateEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(sort: \PersistentFoodItem.name)
     private var foodItems: [PersistentFoodItem]
@@ -64,10 +65,7 @@ struct MealTemplateEditorView: View {
         NavigationStack {
             Form {
                 Section("模板信息") {
-                    TextField("模板名称", text: $name)
-                        .focused($focusedField, equals: .name)
-                        .submitLabel(.done)
-                        .onSubmit { focusedField = nil }
+                    templateNameField
                 }
 
                 Section {
@@ -77,7 +75,12 @@ struct MealTemplateEditorView: View {
 
                     ForEach($rows) { $row in
                         VStack(alignment: .leading, spacing: 10) {
-                            Picker("食物", selection: $row.foodItemID) {
+                            NativeFoodMenuRow(
+                                selection: $row.foodItemID,
+                                selectedName: foodItems.first(where: { $0.id == row.foodItemID })?.name
+                                    ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择"),
+                                identifier: "template.food.\(row.id.uuidString)"
+                            ) {
                                 Text("请选择").tag(UUID?.none)
                                 if
                                     let selectedID = row.foodItemID,
@@ -90,19 +93,10 @@ struct MealTemplateEditorView: View {
                                     Text(foodItem.name).tag(Optional(foodItem.id))
                                 }
                             }
-                            .pickerStyle(.menu)
 
-                            HStack {
-                                TextField(
-                                    "默认重量",
-                                    text: $row.weightText
-                                )
-                                .keyboardType(.decimalPad)
-                                .focused($focusedField, equals: .weight(row.id))
-                                Text("g")
-                                    .foregroundStyle(.secondary)
-                            }
+                            weightField(for: $row)
                         }
+                        .fixedSize(horizontal: false, vertical: true)
                     }
                     .onDelete(perform: deleteRows)
 
@@ -116,12 +110,13 @@ struct MealTemplateEditorView: View {
                     Text("模板只保存食物和默认克重。每次使用时会按当前食物库重新计算营养。")
                 }
             }
+            .accessibilityIdentifier("template.form")
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(templateToEdit == nil ? "新建常用模板" : "编辑常用模板")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: cancelEditing)
+                    Button("取消", role: .cancel, action: cancelEditing)
                         .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
                             Button("放弃修改", role: .destructive) { dismiss() }
                             // Popovers omit role.cancel; keep the safe exit explicitly visible.
@@ -141,6 +136,7 @@ struct MealTemplateEditorView: View {
                     Button("完成") {
                         focusedField = nil
                     }
+                    .accessibilityIdentifier("template.keyboardDone")
                 }
             }
             .task(id: foodItems.count) {
@@ -170,6 +166,67 @@ struct MealTemplateEditorView: View {
             }
         }
         .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+        .presentationDetents([.large])
+    }
+
+    @ViewBuilder
+    private var templateNameField: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                Text("模板名称")
+                    .accessibilityHidden(true)
+                templateNameInput
+                    .accessibilityLabel("模板名称")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                Text("模板名称")
+                    .accessibilityHidden(true)
+                templateNameInput
+                    .accessibilityLabel("模板名称")
+            }
+        }
+    }
+
+    private var templateNameInput: some View {
+        TextField("请输入", text: $name)
+            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+            .focused($focusedField, equals: .name)
+            .submitLabel(.done)
+            .onSubmit { focusedField = nil }
+            .accessibilityIdentifier("template.name")
+    }
+
+    @ViewBuilder
+    private func weightField(for row: Binding<MealFormComponentDraft>) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                Text("默认重量 (g)")
+                    .accessibilityHidden(true)
+                weightInput(for: row)
+                    .accessibilityLabel("默认重量 (g)")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                Text("默认重量")
+                    .accessibilityHidden(true)
+                weightInput(for: row)
+                    .accessibilityLabel("默认重量 (g)")
+                Text("g")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func weightInput(for row: Binding<MealFormComponentDraft>) -> some View {
+        TextField("请输入", text: row.weightText)
+            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+            .keyboardType(.decimalPad)
+            .focused($focusedField, equals: .weight(row.wrappedValue.id))
+            .accessibilityIdentifier("template.weight.\(row.wrappedValue.id.uuidString)")
     }
 
     private var draftSnapshot: FormDraftSnapshot {

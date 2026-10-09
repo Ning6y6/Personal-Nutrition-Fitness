@@ -5,18 +5,27 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
+    private let mealEntryPlacement: TodayMealEntryButton.Placement
+
     @State private var selectedTab: AppTab
     @State private var seedImportError: Error?
 
-    init(initialTab: AppTab = .today) {
+    init(
+        initialTab: AppTab = .today,
+        mealEntryPlacement: TodayMealEntryButton.Placement = .bottom
+    ) {
         _selectedTab = State(initialValue: initialTab)
+        self.mealEntryPlacement = mealEntryPlacement
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(AppTab.today.title, systemImage: AppTab.today.systemImage, value: AppTab.today) {
                 NavigationStack {
-                    TodayView(isSelected: selectedTab == .today)
+                    TodayView(
+                        isSelected: selectedTab == .today,
+                        mealEntryPlacement: mealEntryPlacement
+                    )
                 }
             }
             Tab(AppTab.scan.title, systemImage: AppTab.scan.systemImage, value: AppTab.scan) {

@@ -88,22 +88,24 @@ struct MealStartView: View {
                             .accessibilityHint("使用模板并在保存前修改本次重量")
                         }
                     }
-
-                    Button("管理常用模板", systemImage: "slider.horizontal.3") {
-                        isShowingTemplateManager = true
-                    }
                 } header: {
                     Text("个人常用菜")
                 } footer: {
                     Text("复用会建立新餐食，不会修改原记录或模板。默认按证据 B 保存。")
                 }
             }
+            .accessibilityIdentifier("meal.start")
             .navigationTitle("记录一餐")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
                         dismiss()
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button("管理常用模板", systemImage: "slider.horizontal.3") {
+                        isShowingTemplateManager = true
                     }
                 }
             }
@@ -128,6 +130,7 @@ struct MealStartView: View {
                 Text(preparationError?.localizedDescription ?? "请编辑模板后重试。")
             }
         }
+        .presentationDetents([.large])
     }
 
     private func prepareDraft(from template: PersistentMealTemplate) {

@@ -46,12 +46,14 @@ struct MealTemplateManagerView: View {
                             .contentShape(.rect)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("template.manage.\(template.id.uuidString)")
                         .swipeActions {
                             Button("删除", systemImage: "trash", role: .destructive) {
                                 templatePendingDeletion = template
                             }
                         }
                     }
+                    .accessibilityIdentifier("templates.list")
                 }
             }
             .navigationTitle("常用模板")

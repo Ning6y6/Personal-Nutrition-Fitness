@@ -10,6 +10,7 @@ struct TodayView: View {
     private var mealLogs: [PersistentMealLog]
 
     let isSelected: Bool
+    private let mealEntryPlacement: TodayMealEntryButton.Placement
 
     @State private var isShowingGoalSettings = false
     @State private var isShowingMealStart = false
@@ -19,8 +20,12 @@ struct TodayView: View {
     @State private var hasGoalReadError = false
     @State private var dateContext = TodayDateContext()
 
-    init(isSelected: Bool = true) {
+    init(
+        isSelected: Bool = true,
+        mealEntryPlacement: TodayMealEntryButton.Placement = .bottom
+    ) {
         self.isSelected = isSelected
+        self.mealEntryPlacement = mealEntryPlacement
     }
 
     private var todayMeals: [PersistentMealLog] {
@@ -62,17 +67,6 @@ struct TodayView: View {
                     .font(.subheadline)
                     .foregroundStyle(.orange)
                 }
-                Button {
-                    isShowingMealStart = true
-                } label: {
-                    HomeActionCard(
-                        title: "记录一餐",
-                        subtitle: "称重录入家常菜，或使用标准份量估算",
-                        systemImage: "fork.knife",
-                        isAvailable: true
-                    )
-                }
-                .buttonStyle(.plain)
                 if dateContext.dayWindow != nil {
                     RecentMealsCard(
                         meals: Array(todayMeals.prefix(3)),
@@ -88,10 +82,24 @@ struct TodayView: View {
             }
             .padding()
         }
+        .accessibilityIdentifier("today.content")
         .background(DesignTokens.background)
+        .safeAreaInset(edge: .bottom) {
+            if isSelected, mealEntryPlacement == .bottom {
+                TodayMealEntryButton(action: showMealStart)
+                    .padding()
+            }
+        }
         .navigationTitle(AppTab.today.title)
         .navigationSubtitle(Text(dateSubtitle))
         .toolbar {
+            if isSelected, mealEntryPlacement == .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("记录一餐", systemImage: "plus", action: showMealStart)
+                        .labelStyle(.iconOnly)
+                        .accessibilityIdentifier("today.recordMeal")
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("预算与目标") {
                     isShowingGoalSettings = true
@@ -135,6 +143,11 @@ struct TodayView: View {
         }
     }
 
+    private func showMealStart() {
+        guard !isShowingMealStart else { return }
+        isShowingMealStart = true
+    }
+
     private func refreshDate() {
         dateContext.refresh()
     }
@@ -165,8 +178,7 @@ struct TodayView: View {
     }
 }
 
-// Existing homepage cards stay unchanged in this slice. Entry placement and
-// lightweight meal expansion belong to their separately approved later slices.
+// Lightweight meal expansion belongs to the separately gated UI-2C slice.
 private struct RecentMealsCard: View {
     let meals: [PersistentMealLog]
     let hasHistory: Bool
@@ -206,43 +218,6 @@ private struct RecentMealsCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background, in: RoundedRectangle(cornerRadius: 18))
-    }
-}
-
-private struct HomeActionCard: View {
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-    let systemImage: String
-    let isAvailable: Bool
-
-    var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: systemImage)
-                .font(.title2)
-                .frame(width: 42, height: 42)
-                .background(
-                    DesignTokens.accent.opacity(0.15),
-                    in: RoundedRectangle(cornerRadius: 12)
-                )
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if isAvailable {
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
-            } else {
-                Text("开发中")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 18))
     }
 }

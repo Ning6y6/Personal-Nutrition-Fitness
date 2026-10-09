@@ -5,6 +5,7 @@ import SwiftUI
 struct GoalSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let onSaved: () -> Void
 
@@ -72,12 +73,13 @@ struct GoalSettingsView: View {
                     Text("修改任一数值后需要重新确认。小数分隔符为“\(decimalSeparator)”，请勿输入千分位或单位。")
                 }
             }
+            .accessibilityIdentifier("goal.form")
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("每日预算与目标")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: cancelEditing)
+                    Button("取消", role: .cancel, action: cancelEditing)
                         .disabled(isSaving)
                         .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
                             Button("放弃修改", role: .destructive) { dismiss() }
@@ -93,6 +95,7 @@ struct GoalSettingsView: View {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("完成") { focusedField = nil }
+                        .accessibilityIdentifier("goal.keyboardDone")
                 }
             }
             .task { loadGoalOnce() }
@@ -108,6 +111,7 @@ struct GoalSettingsView: View {
             }
         }
         .interactiveDismissDisabled(isSaving || dismissalGuard.hasUnsavedChanges(comparedTo: .goal(draft)))
+        .presentationDetents([.large])
     }
 
     private func cancelEditing() {
@@ -115,16 +119,34 @@ struct GoalSettingsView: View {
         if dismissalGuard.requestCancellation(comparedTo: .goal(draft)) { dismiss() }
     }
 
+    @ViewBuilder
     private func goalField(_ title: String, text: Binding<String>, field: GoalField, optional: Bool = false) -> some View {
-        LabeledContent(title) {
-            TextField(optional ? "未设置" : "请输入", text: text)
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.decimalPad)
-                .focused($focusedField, equals: field)
-                .submitLabel(.done)
-                .onSubmit { focusedField = nil }
-                .accessibilityLabel(title)
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) {
+                Text(title)
+                    .accessibilityHidden(true)
+                goalInput(text: text, field: field, optional: optional)
+                    .accessibilityLabel(title)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                Text(title)
+                    .accessibilityHidden(true)
+                goalInput(text: text, field: field, optional: optional)
+                    .accessibilityLabel(title)
+            }
         }
+    }
+
+    private func goalInput(text: Binding<String>, field: GoalField, optional: Bool) -> some View {
+        TextField(optional ? "未设置" : "请输入", text: text)
+            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+            .keyboardType(.decimalPad)
+            .focused($focusedField, equals: field)
+            .submitLabel(.done)
+            .onSubmit { focusedField = nil }
+            .accessibilityIdentifier("goal.\(field.rawValue)")
     }
 
     private func loadGoalOnce() {
@@ -177,6 +199,6 @@ struct GoalSettingsView: View {
     }
 }
 
-private enum GoalField: Hashable {
+private enum GoalField: String, Hashable {
     case energy, protein, carbohydrate, fat, saturatedFat, fibre
 }

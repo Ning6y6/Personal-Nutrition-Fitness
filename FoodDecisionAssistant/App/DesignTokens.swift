@@ -15,4 +15,8 @@ enum DesignTokens {
     static let overflowEnd = Color.orange
     static let ringDiameter: CGFloat = 240
     static let ringLineWidth: CGFloat = 16
+    // A slightly wider, outlined endpoint remains visible where two laps overlap.
+    static let ringEndpointDiameter: CGFloat = ringLineWidth + 4
+    static let ringEndpointOutlineWidth: CGFloat = 2
+    static let ringEndpointShadowRadius: CGFloat = 3
 }

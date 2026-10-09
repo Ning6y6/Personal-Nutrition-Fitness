@@ -33,7 +33,7 @@ struct NutritionProgressPresentationTests {
         #expect(summary.status == .belowMinimum)
         #expect(summary.remaining == 20)
         #expect(display.tone == .neutral)
-        #expect(display.symbol == "circle.dotted")
+        #expect(display.symbol == "arrow.up.circle")
         #expect(display.message.contains("最低目标"))
         #expect(display.message.contains("还差"))
         #expect(display.message.contains("20"))
@@ -63,7 +63,7 @@ struct NutritionProgressPresentationTests {
             #expect(summary.status == .withinBudget)
             #expect(display.message.contains("剩余"))
             #expect(display.tone == .success)
-            #expect(display.symbol == "circle.dotted")
+            #expect(display.symbol == "chart.pie")
         } else if consumed == 2_000 {
             #expect(summary.status == .atBudget)
             #expect(display.message.contains("已达到"))
@@ -93,7 +93,7 @@ struct NutritionProgressPresentationTests {
             #expect(summary.status == .belowMaximum)
             #expect(display.message.contains("剩余"))
             #expect(display.tone == .success)
-            #expect(display.symbol == "circle.dotted")
+            #expect(display.symbol == "arrow.left.and.right.circle")
         } else if consumed < 10 {
             #expect(summary.status == .approachingMaximum)
             #expect(display.message.contains("接近"))

@@ -558,6 +558,93 @@ final class NativeNavigationUITests: XCTestCase {
         try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
     }
 
+    func testMealWeightFirstFocusDeletesLastDigitAndSaves() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let mealName = "[UI测试] 光标餐食-\(UUID().uuidString.prefix(8))"
+        try createRiceMeal(named: mealName, grams: 500, in: app)
+        let id = try expandMeal(named: mealName, in: app)
+        let edit = app.buttons["meal.edit.\(id)"]
+        try reveal(edit, in: app)
+        try tap(edit)
+
+        try verifyWeightCaretAtEnd(
+            in: singleField(prefix: "meal.weight.", in: app),
+            doneIdentifier: "meal.keyboardDone", app: app
+        )
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(50, rice: "熟长粒白米饭（无盐）", in: app)
+        attachScreen(app, name: "WeightCaret-meal-saved-50g")
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    func testTemplateWeightFirstFocusDeletesLastDigitAndDiscardPreservesMeal() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let mealName = "[UI测试] 光标模板来源-\(UUID().uuidString.prefix(8))"
+        try createRiceMeal(named: mealName, grams: 500, in: app)
+        try openMeal(named: mealName, in: app)
+        let templateAction = app.buttons["保存为常用模板"]
+        try reveal(templateAction, in: app)
+        try tap(templateAction)
+        let bar = app.navigationBars["新建常用模板"]
+        try requireExists(bar)
+        try verifyWeightCaretAtEnd(
+            in: singleField(prefix: "template.weight.", in: app),
+            doneIdentifier: "template.keyboardDone", app: app
+        )
+        try tap(bar.buttons["取消"])
+        try requireExists(app.buttons["继续编辑"])
+        try tap(app.buttons["继续编辑"])
+        XCTAssertEqual(try singleField(prefix: "template.weight.", in: app).value as? String, "50")
+        try tap(bar.buttons["取消"])
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+        try verifyRiceWeight(500, rice: "熟长粒白米饭（无盐）", in: app)
+        attachScreen(app, name: "WeightCaret-template-discard-source-still-500g")
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    private func verifyWeightCaretAtEnd(
+        in field: XCUIElement, doneIdentifier: String, app: XCUIApplication
+    ) throws {
+        XCTAssertEqual(field.value as? String, "500")
+        try reveal(field, in: app)
+        // A normal tap in the broad native field, not a corrective tap next to the digits.
+        // Delete proves the actual insertion point; no Select All or forced resignation.
+        try tap(field)
+        try requireExists(app.keyboards.firstMatch)
+        field.typeText(XCUIKeyboardKey.delete.rawValue)
+        XCTAssertEqual(field.value as? String, "50", "First focus must place the caret after the last digit.")
+        // Stay in the same focus session, then tap before the visible digits.
+        // Initial end placement must not continually steal the user's insertion point.
+        let bounds = field.frame
+        guard bounds.width.isFinite, bounds.height.isFinite, bounds.width > 0, bounds.height > 0 else {
+            XCTFail("The live native weight field must have usable bounds.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
+        field.typeText("1")
+        XCTAssertEqual(field.value as? String, "150", "A subsequent tap must still allow insertion before the value.")
+        field.typeText(XCUIKeyboardKey.delete.rawValue)
+        XCTAssertEqual(field.value as? String, "50")
+        attachScreen(app, name: "WeightCaret-\(doneIdentifier)-first-focus-at-end")
+        try finishKeyboardEditing(identifier: doneIdentifier, in: app)
+
+        // The value is now shorter than at the first focus. An old end index is invalid.
+        try tap(field)
+        try requireExists(app.keyboards.firstMatch)
+        field.typeText(XCUIKeyboardKey.delete.rawValue)
+        XCTAssertEqual(field.value as? String, "5", "Refocusing must use the shorter current value, not a stale index.")
+        field.typeText("0")
+        XCTAssertEqual(field.value as? String, "50")
+        try finishKeyboardEditing(identifier: doneIdentifier, in: app)
+    }
+
     private func launchApp() throws -> XCUIApplication {
         continueAfterFailure = false
         #if !targetEnvironment(simulator)

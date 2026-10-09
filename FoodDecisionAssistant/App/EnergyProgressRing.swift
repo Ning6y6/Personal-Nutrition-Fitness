@@ -25,7 +25,9 @@ struct EnergyProgressRing: View {
                     progress: evaluated.baseLap ?? 0,
                     startColor: DesignTokens.ringStart,
                     endColor: DesignTokens.ringEnd,
-                    showsEndpoint: evaluated.baseLap == 1
+                    // Once an overflow lap exists, only its current end is a marker.
+                    // Highlighting the covered base end would create two apparent positions.
+                    showsEndpoint: evaluated.baseLap == 1 && (evaluated.overflowLap ?? 0) == 0
                 )
                 EnergyRingArc(
                     progress: evaluated.overflowLap ?? 0,
@@ -71,4 +73,21 @@ struct EnergyProgressRing: View {
     EnergyProgressRing(consumedKcal: 6_400, targetKcal: 2_000)
         .padding()
         .preferredColorScheme(.dark)
+}
+
+#Preview("超出40% · 浅色末端") {
+    EnergyProgressRing(consumedKcal: 3_080, targetKcal: 2_200)
+        .padding()
+}
+
+#Preview("超出40% · 深色末端") {
+    EnergyProgressRing(consumedKcal: 3_080, targetKcal: 2_200)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+
+#Preview("两圈闭合 · 大字号") {
+    EnergyProgressRing(consumedKcal: 4_400, targetKcal: 2_200)
+        .padding()
+        .dynamicTypeSize(.accessibility5)
 }

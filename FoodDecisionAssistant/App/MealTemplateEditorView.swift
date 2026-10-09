@@ -222,9 +222,11 @@ struct MealTemplateEditorView: View {
     }
 
     private func weightInput(for row: Binding<MealFormComponentDraft>) -> some View {
-        TextField("请输入", text: row.weightText)
+        WeightTextField(
+            text: row.weightText,
+            isFocused: focusedField == .weight(row.wrappedValue.id)
+        )
             .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
-            .keyboardType(.decimalPad)
             .focused($focusedField, equals: .weight(row.wrappedValue.id))
             .accessibilityIdentifier("template.weight.\(row.wrappedValue.id.uuidString)")
     }

@@ -23,9 +23,13 @@ struct EnergyRingArc: View {
                 .rotationEffect(.degrees(-90))
                 .overlay {
                     if showsEndpoint {
-                        EnergyRingEndpoint(progress: progress, diameter: DesignTokens.ringLineWidth)
+                        EnergyRingEndpoint(progress: progress, diameter: DesignTokens.ringEndpointDiameter)
                             .fill(endColor)
-                            .shadow(color: .black.opacity(0.22), radius: 2, y: 1)
+                            .overlay {
+                                EnergyRingEndpoint(progress: progress, diameter: DesignTokens.ringEndpointDiameter)
+                                    .stroke(.primary, lineWidth: DesignTokens.ringEndpointOutlineWidth)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: DesignTokens.ringEndpointShadowRadius, y: 1)
                     }
                 }
                 .accessibilityHidden(true)

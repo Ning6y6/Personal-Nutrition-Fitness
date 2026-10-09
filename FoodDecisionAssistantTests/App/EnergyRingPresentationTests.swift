@@ -1,4 +1,5 @@
 import FoodDecisionCore
+import Foundation
 import Testing
 
 @testable import FoodDecisionAssistant
@@ -19,7 +20,7 @@ struct EnergyRingPresentationTests {
         let summary = NutritionDisplayPolicy.standard.evaluate(consumed: 20, target: 30, semantics: .minimum)
         let display = NutritionProgressPresentation(summary: summary, unit: "g")
         #expect(display.tone == .success)
-        #expect(display.symbol == "circle.dotted")
+        #expect(display.symbol == "arrow.up.circle")
         #expect(display.message.contains("还差"))
     }
 
@@ -62,5 +63,52 @@ struct EnergyRingPresentationTests {
         #expect(display.message.contains("倍数超出可显示精度"))
         #expect(display.message.contains("至少") == false)
         #expect(display.message.contains("约为预算") == false)
+    }
+
+    @Test("Ordinary remaining states use distinct static symbols, not a loading or warning mark", arguments: NutritionGoalSemantics.allCases)
+    func remainingSymbolsAreSemantic(semantics: NutritionGoalSemantics) {
+        let summary = NutritionDisplayPolicy.standard.evaluate(consumed: 2, target: 10, semantics: semantics)
+        let display = NutritionProgressPresentation(summary: summary, unit: "g")
+        let expected = switch semantics {
+        case .minimum: "arrow.up.circle"
+        case .budget: "chart.pie"
+        case .maximum: "arrow.left.and.right.circle"
+        }
+        #expect(display.symbol == expected)
+        #expect(display.symbol.contains("dotted") == false)
+        #expect(display.symbol.contains("exclamationmark") == false)
+        #expect(display.tone == .success)
+        #expect(display.message.contains("还差") || display.message.contains("剩余"))
+    }
+
+    @Test("Endpoint geometry follows the same clockwise lap, beginning at twelve o'clock", arguments: [0.0, 0.25, 0.5, 0.75, 1.0])
+    func endpointTracksLap(progress: Double) {
+        let rect = CGRect(x: 10, y: 20, width: 240, height: 240)
+        let bounds = EnergyRingEndpoint.bounds(in: rect, progress: progress, diameter: DesignTokens.ringEndpointDiameter)
+        let expectedCenter: CGPoint
+        switch progress {
+        case 0, 1: expectedCenter = CGPoint(x: 130, y: 20)
+        case 0.25: expectedCenter = CGPoint(x: 250, y: 140)
+        case 0.5: expectedCenter = CGPoint(x: 130, y: 260)
+        default: expectedCenter = CGPoint(x: 10, y: 140)
+        }
+        #expect(abs(bounds.midX - expectedCenter.x) < 0.0001)
+        #expect(abs(bounds.midY - expectedCenter.y) < 0.0001)
+        #expect(bounds.width == DesignTokens.ringEndpointDiameter)
+        #expect(bounds.height == DesignTokens.ringEndpointDiameter)
+    }
+
+    @Test("The overlap cap is wider than the lap stroke and has a visible outline")
+    func endpointIsDistinctFromStroke() {
+        #expect(DesignTokens.ringEndpointDiameter > DesignTokens.ringLineWidth)
+        #expect(DesignTokens.ringEndpointOutlineWidth >= 2)
+        #expect(DesignTokens.ringEndpointShadowRadius > 0)
+    }
+
+    @Test("A non-square endpoint viewport uses the centered ring radius")
+    func endpointSupportsNonSquareBounds() {
+        let bounds = EnergyRingEndpoint.bounds(in: CGRect(x: 0, y: 0, width: 300, height: 200), progress: 0.25, diameter: 20)
+        #expect(abs(bounds.midX - 250) < 0.0001)
+        #expect(abs(bounds.midY - 100) < 0.0001)
     }
 }

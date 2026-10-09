@@ -41,13 +41,13 @@ struct NutritionProgressPresentation: Equatable, Sendable {
         switch summary.status {
         case .belowMinimum:
             message = "距最低目标还差 \(remaining) \(unit)"
-            symbol = "circle.dotted"
+            symbol = "arrow.up.circle"
         case .minimumMet:
             message = "已达最低目标"
             symbol = "checkmark.circle.fill"
         case .withinBudget:
             message = "预算剩余 \(remaining) \(unit)"
-            symbol = "circle.dotted"
+            symbol = "chart.pie"
         case .atBudget:
             message = "已达到预算，尚未超出"
             symbol = "checkmark.circle.fill"
@@ -59,7 +59,7 @@ struct NutritionProgressPresentation: Equatable, Sendable {
             symbol = summary.policyVersion == 1 ? "exclamationmark.triangle.fill" : "exclamationmark.circle.fill"
         case .belowMaximum:
             message = "距上限剩余 \(remaining) \(unit)"
-            symbol = "circle.dotted"
+            symbol = "arrow.left.and.right.circle"
         case .approachingMaximum:
             message = "接近上限，剩余 \(remaining) \(unit)"
             symbol = "exclamationmark.circle.fill"

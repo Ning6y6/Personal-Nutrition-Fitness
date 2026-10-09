@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AFA100000000000000000001 /* WeightTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA100000000000000000001 /* WeightTextField.swift */; };
 		AH0000000000000000000001 /* MealExpandableRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000001; };
 		AH0000000000000000000002 /* NativeInlineMealPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000002; };
 		AH0000000000000000000003 /* InlineMealPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000003; };
@@ -108,6 +109,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BFA100000000000000000001 /* WeightTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightTextField.swift; sourceTree = "<group>"; };
 		BH0000000000000000000001 /* MealExpandableRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealExpandableRow.swift; sourceTree = "<group>"; };
 		BH0000000000000000000002 /* NativeInlineMealPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeInlineMealPreviews.swift; sourceTree = "<group>"; };
 		BH0000000000000000000003 /* InlineMealPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/InlineMealPresentationTests.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				B00000000000000000000001 /* FoodDecisionAssistantApp.swift */,
 				B00000000000000000000002 /* ContentView.swift */,
 				B10000000000000000000002 /* MealEntryView.swift */,
+				BFA100000000000000000001 /* WeightTextField.swift */,
 				B10000000000000000000003 /* TodayStatusCard.swift */,
 				B10000000000000000000004 /* EnergyProgressRing.swift */,
 				B10000000000000000000005 /* NutritionProgressRow.swift */,
@@ -549,6 +552,7 @@
 				7C70F41F3070297A0089CDBC /* VersionedSchemaV1.swift in Sources */,
 				A10000000000000000000001 /* SeedFoodCatalog.swift in Sources */,
 				A10000000000000000000002 /* MealEntryView.swift in Sources */,
+				AFA100000000000000000001 /* WeightTextField.swift in Sources */,
 				A10000000000000000000003 /* TodayStatusCard.swift in Sources */,
 				A10000000000000000000004 /* EnergyProgressRing.swift in Sources */,
 				A10000000000000000000005 /* NutritionProgressRow.swift in Sources */,

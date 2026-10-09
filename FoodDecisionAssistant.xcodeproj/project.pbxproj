@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AH0000000000000000000001 /* MealExpandableRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000001; };
+		AH0000000000000000000002 /* NativeInlineMealPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000002; };
+		AH0000000000000000000003 /* InlineMealPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000003; };
 		AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000001; };
 		AG0000000000000000000002 /* NativeMealEntryPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000002; };
 		AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BG0000000000000000000003; };
@@ -105,6 +108,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BH0000000000000000000001 /* MealExpandableRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealExpandableRow.swift; sourceTree = "<group>"; };
+		BH0000000000000000000002 /* NativeInlineMealPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeInlineMealPreviews.swift; sourceTree = "<group>"; };
+		BH0000000000000000000003 /* InlineMealPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/InlineMealPresentationTests.swift; sourceTree = "<group>"; };
 		BG0000000000000000000001 /* TodayMealEntryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayMealEntryButton.swift; sourceTree = "<group>"; };
 		BG0000000000000000000002 /* NativeMealEntryPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMealEntryPreviews.swift; sourceTree = "<group>"; };
 		BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/NativeMealEntryPreviewTests.swift; sourceTree = "<group>"; };
@@ -245,6 +251,7 @@
 			isa = PBXGroup;
 			children = (
 				BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */,
+				BH0000000000000000000003 /* InlineMealPresentationTests.swift */,
 				BE0000000000000000000007 /* NativeNavigationTests.swift */,
 				BC0000000000000000000003 /* BrandLocalizationTests.swift */,
 				BB0000000000000000000009 /* EnergyRingPresentationTests.swift */,
@@ -297,6 +304,8 @@
 				BG0000000000000000000001 /* TodayMealEntryButton.swift */,
 				BG0000000000000000000002 /* NativeMealEntryPreviews.swift */,
 				BG0000000000000000000004 /* NativeFoodMenuRow.swift */,
+				BH0000000000000000000001 /* MealExpandableRow.swift */,
+				BH0000000000000000000002 /* NativeInlineMealPreviews.swift */,
 				BE0000000000000000000001 /* AppTab.swift */,
 				BE0000000000000000000002 /* TodayView.swift */,
 				BE0000000000000000000003 /* LabelScannerView.swift */,
@@ -479,6 +488,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */,
+				AH0000000000000000000003 /* InlineMealPresentationTests.swift in Sources */,
 				AE0000000000000000000007 /* NativeNavigationTests.swift in Sources */,
 				AC0000000000000000000002 /* BrandLocalizationTests.swift in Sources */,
 				AB0000000000000000000009 /* EnergyRingPresentationTests.swift in Sources */,
@@ -508,6 +518,8 @@
 				AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */,
 				AG0000000000000000000002 /* NativeMealEntryPreviews.swift in Sources */,
 				AG0000000000000000000004 /* NativeFoodMenuRow.swift in Sources */,
+				AH0000000000000000000001 /* MealExpandableRow.swift in Sources */,
+				AH0000000000000000000002 /* NativeInlineMealPreviews.swift in Sources */,
 				AE0000000000000000000001 /* AppTab.swift in Sources */,
 				AE0000000000000000000002 /* TodayView.swift in Sources */,
 				AE0000000000000000000003 /* LabelScannerView.swift in Sources */,

@@ -4,11 +4,25 @@ import SwiftUI
 
 struct MealHistoryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
     private var meals: [PersistentMealLog]
 
     @State private var selectedMeal: PersistentMealLog?
+    @State private var editingMeal: PersistentMealLog?
+    @State private var reuseDraft: MealEntryDraft?
+    @State private var expansion: InlineMealExpansionState
+
+    init(initialExpandedMealID: UUID? = nil) {
+        _expansion = State(initialValue: InlineMealExpansionState(expandedMealID: initialExpandedMealID))
+    }
+
+    // Non-finite raw dates must not make NaN compare unequal on every render
+    // and repeatedly collapse the row. This key never replaces stored dates.
+    private var dateOrder: [Date?] {
+        meals.map { $0.eatenAt.timeIntervalSince1970.isFinite ? $0.eatenAt : nil }
+    }
 
     var body: some View {
         NavigationStack {
@@ -21,14 +35,14 @@ struct MealHistoryView: View {
                     )
                 } else {
                     List(meals) { meal in
-                        Button {
-                            selectedMeal = meal
-                        } label: {
-                            MealSummaryRow(meal: meal, showsDate: true)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("查看、编辑或删除这条餐食记录")
+                        MealExpandableRow(
+                            meal: meal, isExpanded: expansion.expandedMealID == meal.id, showsDate: true,
+                            onToggle: { toggleMeal(meal) }, onEdit: { editingMeal = meal },
+                            onReuse: { reuseDraft = MealEntryDraft(reusing: $0) },
+                            onDetails: { selectedMeal = meal }
+                        )
                     }
+                    .accessibilityIdentifier("meal.history")
                 }
             }
             .navigationTitle("历史餐食")
@@ -42,45 +56,79 @@ struct MealHistoryView: View {
             .sheet(item: $selectedMeal) { meal in
                 MealDetailView(meal: meal)
             }
+            .sheet(item: $editingMeal) { meal in
+                MealEntryView(meal: meal)
+            }
+            .sheet(item: $reuseDraft) { draft in
+                MealEntryView(draft: draft)
+            }
+            .onChange(of: meals.map(\.id)) { expansion.prune(visibleIDs: meals.map(\.id)) }
+            .onChange(of: dateOrder) { expansion.collapse() }
         }
+    }
+
+    private func toggleMeal(_ meal: PersistentMealLog) {
+        withAnimation(reduceMotion ? nil : .default) { expansion.toggle(meal.id) }
     }
 }
 
 struct MealSummaryRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let meal: PersistentMealLog
     var showsDate = false
+    var isExpanded: Bool? = nil
+    var presentation: InlineMealPresentation? = nil
 
     var body: some View {
-        HStack(spacing: 12) {
+        let display = presentation ?? InlineMealPresentation(meal: meal)
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: "fork.knife.circle.fill")
                 .font(.title2)
                 .foregroundStyle(DesignTokens.accent)
+                .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(meal.title)
                     .font(.subheadline.weight(.semibold))
-                Text(meal.eatenAt, format: dateFormat)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Group {
+                    if meal.eatenAt.timeIntervalSince1970.isFinite {
+                        Text(meal.eatenAt, format: dateFormat)
+                    } else {
+                        Text("时间不可用")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 3) { summaryLabels(display) }
+                } else {
+                    HStack(alignment: .top) { summaryLabels(display) }
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("\(meal.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal")
-                    .font(.subheadline)
-                    .contentTransition(.numericText())
-                Text("\(meal.evidenceLabel) · \(meal.coverageLabel)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Image(systemName: "chevron.right")
+            Image(systemName: isExpanded.map { $0 ? "chevron.up" : "chevron.down" } ?? "chevron.right")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .accessibilityHidden(true)
         }
         .contentShape(.rect)
+    }
+
+    @ViewBuilder
+    private func summaryLabels(_ display: InlineMealPresentation) -> some View {
+        Text(display.energyText)
+            .font(.subheadline)
+            .contentTransition(.numericText())
+        Text(display.status == .confirmed
+            ? "\(meal.evidenceLabel) · \(meal.coverageLabel)"
+            : display.status == .draft ? "未确认草稿 · 原始快照" : "需修复 · 原始快照")
+            .font(.caption)
+            .foregroundStyle(display.status == .confirmed ? AnyShapeStyle(.secondary) : AnyShapeStyle(DesignTokens.warningText))
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var dateFormat: Date.FormatStyle {
@@ -161,6 +209,7 @@ struct MealDetailView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("meal.detail")
             .navigationTitle("餐食详情")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

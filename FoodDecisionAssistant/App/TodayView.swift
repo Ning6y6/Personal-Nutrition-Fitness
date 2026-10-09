@@ -5,6 +5,7 @@ import SwiftUI
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
     private var mealLogs: [PersistentMealLog]
@@ -16,16 +17,21 @@ struct TodayView: View {
     @State private var isShowingMealStart = false
     @State private var isShowingMealHistory = false
     @State private var selectedMeal: PersistentMealLog?
+    @State private var editingMeal: PersistentMealLog?
+    @State private var reuseDraft: MealEntryDraft?
+    @State private var expansion: InlineMealExpansionState
     @State private var currentGoal: GoalProfile?
     @State private var hasGoalReadError = false
     @State private var dateContext = TodayDateContext()
 
     init(
         isSelected: Bool = true,
-        mealEntryPlacement: TodayMealEntryButton.Placement = .bottom
+        mealEntryPlacement: TodayMealEntryButton.Placement = .bottom,
+        initialExpandedMealID: UUID? = nil
     ) {
         self.isSelected = isSelected
         self.mealEntryPlacement = mealEntryPlacement
+        _expansion = State(initialValue: InlineMealExpansionState(expandedMealID: initialExpandedMealID))
     }
 
     private var todayMeals: [PersistentMealLog] {
@@ -36,6 +42,8 @@ struct TodayView: View {
     private var todaySummary: MealReadValidation {
         MealReadValidation(todayMeals)
     }
+
+    private var visibleMealIDs: [UUID] { todayMeals.prefix(3).map(\.id) }
 
     private var dateSubtitle: String {
         dateContext.dayWindow?.start.formatted(date: .abbreviated, time: .omitted) ?? "日期暂不可用"
@@ -71,6 +79,10 @@ struct TodayView: View {
                     RecentMealsCard(
                         meals: Array(todayMeals.prefix(3)),
                         hasHistory: !mealLogs.isEmpty,
+                        expandedMealID: expansion.expandedMealID,
+                        toggleMeal: toggleMeal,
+                        editMeal: { editingMeal = $0 },
+                        reuseMeal: { reuseDraft = MealEntryDraft(reusing: $0) },
                         selectMeal: { selectedMeal = $0 },
                         showHistory: { isShowingMealHistory = true }
                     )
@@ -118,6 +130,14 @@ struct TodayView: View {
         .sheet(item: $selectedMeal) { meal in
             MealDetailView(meal: meal)
         }
+        .sheet(item: $editingMeal) { meal in
+            MealEntryView(meal: meal)
+        }
+        .sheet(item: $reuseDraft) { draft in
+            MealEntryView(draft: draft)
+        }
+        .onChange(of: visibleMealIDs) { expansion.prune(visibleIDs: visibleMealIDs) }
+        .onChange(of: dateContext.dayWindow) { expansion.collapse() }
         .onChange(of: isSelected, initial: true) {
             guard isSelected else { return }
             refreshGoal()
@@ -146,6 +166,10 @@ struct TodayView: View {
     private func showMealStart() {
         guard !isShowingMealStart else { return }
         isShowingMealStart = true
+    }
+
+    private func toggleMeal(_ meal: PersistentMealLog) {
+        withAnimation(reduceMotion ? nil : .default) { expansion.toggle(meal.id) }
     }
 
     private func refreshDate() {
@@ -178,10 +202,13 @@ struct TodayView: View {
     }
 }
 
-// Lightweight meal expansion belongs to the separately gated UI-2C slice.
 private struct RecentMealsCard: View {
     let meals: [PersistentMealLog]
     let hasHistory: Bool
+    let expandedMealID: UUID?
+    let toggleMeal: (PersistentMealLog) -> Void
+    let editMeal: (PersistentMealLog) -> Void
+    let reuseMeal: (MealLog) -> Void
     let selectMeal: (PersistentMealLog) -> Void
     let showHistory: () -> Void
 
@@ -199,13 +226,11 @@ private struct RecentMealsCard: View {
                     if index > 0 {
                         Divider()
                     }
-                    Button {
-                        selectMeal(meal)
-                    } label: {
-                        MealSummaryRow(meal: meal)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("查看、编辑或删除这条餐食记录")
+                    MealExpandableRow(
+                        meal: meal, isExpanded: expandedMealID == meal.id,
+                        onToggle: { toggleMeal(meal) }, onEdit: { editMeal(meal) },
+                        onReuse: reuseMeal, onDetails: { selectMeal(meal) }
+                    )
                 }
             }
 

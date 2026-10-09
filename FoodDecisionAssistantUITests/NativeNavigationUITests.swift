@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import XCTest
 
 /// Actual system-tab taps and existing form interactions, separate from PNG render tests.
@@ -52,14 +53,16 @@ final class NativeNavigationUITests: XCTestCase {
     }
 
     func testSettingsSaveRefreshesPreviouslyDisplayedTodayBudget() throws {
-        // Saves two real forms, clears/restores optional fields and verifies
-        // both committed budgets; retain a finite multi-step allowance.
+        // This test isolates invalidation of Today's already displayed budget.
+        // Optional zero/blank and positive-value round trips have independent
+        // real-form tests below. Keep the App alive between both saves so a
+        // relaunch cannot conceal a stale Today view. Do not disable UI synchronization.
         executionTimeAllowance = 360
         let app = try launchApp()
         defer { app.terminate() }
 
         // Establish an explicit baseline through the real form; works with or without an old goal.
-        try saveFictitiousGoal(energy: "2150", saturatedFat: "0", fibre: "", in: app)
+        try saveFictitiousGoal(energy: "2150", saturatedFat: "15", fibre: "30", in: app)
         try selectTab("今日", in: app)
         try verifyTodayBudget(2_150, in: app)
 
@@ -76,6 +79,50 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(app.navigationBars["每日预算与目标"].buttons["取消"])
         XCTAssertTrue(app.navigationBars["每日预算与目标"].waitForNonExistence(timeout: 5))
         XCTAssertFalse(app.buttons["放弃修改"].exists, "Opening without editing must not require discard confirmation.")
+    }
+
+    func testGoalOptionalExplicitZeroAndBlankRoundTripThroughRealForm() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+
+        // Set all fields through the real form. No previous test's goal is a prerequisite.
+        try saveFictitiousGoal(energy: "2425", saturatedFat: "0", fibre: "", in: app)
+        try selectTab("今日", in: app)
+        try verifyTodayBudget(2_425, in: app)
+        try openGoalFromSettings(in: app)
+        let saturatedFat = goalField("饱和脂肪上限 (g)", in: app)
+        let fibre = goalField("纤维目标 (g)", in: app)
+        try reveal(saturatedFat, in: app)
+        XCTAssertEqual(saturatedFat.value as? String, "0.0", "Explicit zero must remain a saved value, not become unset.")
+        try reveal(fibre, in: app)
+        XCTAssertEqual(fibre.value as? String, "", "A blank optional value must remain empty, not become zero.")
+        XCTAssertEqual(fibre.placeholderValue, "未设置", "Unset text belongs to the placeholder, not the saved input.")
+        attachScreen(app, name: "NativeNavigationUI-optional-zero-and-unset")
+        try tap(app.navigationBars["每日预算与目标"].buttons["取消"])
+        XCTAssertTrue(app.navigationBars["每日预算与目标"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "An untouched reopened form must not require discard confirmation.")
+    }
+
+    func testGoalOptionalPositiveValuesRoundTripThroughRealForm() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+
+        try saveFictitiousGoal(energy: "2465", saturatedFat: "15", fibre: "30", in: app)
+        try selectTab("今日", in: app)
+        try verifyTodayBudget(2_465, in: app)
+        try openGoalFromSettings(in: app)
+        let saturatedFat = goalField("饱和脂肪上限 (g)", in: app)
+        let fibre = goalField("纤维目标 (g)", in: app)
+        try reveal(saturatedFat, in: app)
+        XCTAssertEqual(saturatedFat.value as? String, "15.0")
+        try reveal(fibre, in: app)
+        XCTAssertEqual(fibre.value as? String, "30.0")
+        attachScreen(app, name: "NativeNavigationUI-optional-positive-values")
+        try tap(app.navigationBars["每日预算与目标"].buttons["取消"])
+        XCTAssertTrue(app.navigationBars["每日预算与目标"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
     }
 
     func testCancelProtectsDraftWithoutChangingSavedTodayBudget() throws {
@@ -391,6 +438,126 @@ final class NativeNavigationUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["设置"].isSelected)
     }
 
+    func testInlineMealExpandEditReuseDeleteRecalculatesToday() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let suffix = String(UUID().uuidString.prefix(6))
+        let firstName = "[UI测试] 展开甲-\(suffix)"
+        let secondName = "[UI测试] 展开乙-\(suffix)"
+        let reuseName = "[UI测试] 展开复用-\(suffix)"
+        try createRiceMeal(named: firstName, grams: 200, in: app)
+        try createRiceMeal(named: secondName, grams: 100, in: app)
+        let baseline = try recordedTodayEnergy(in: app)
+
+        let firstID = try expandMeal(named: firstName, in: app)
+        XCTAssertFalse(app.navigationBars["餐食详情"].exists, "Expansion must stay in the list, not open a modal.")
+        try tap(app.buttons["meal.row.\(firstID)"])
+        XCTAssertEqual(app.buttons["meal.row.\(firstID)"].value as? String, "已收起")
+        try tap(app.buttons["meal.row.\(firstID)"])
+        let secondID = try expandMeal(named: secondName, in: app)
+        XCTAssertEqual(app.buttons["meal.row.\(firstID)"].value as? String, "已收起", "Only one row per list may remain expanded.")
+        XCTAssertEqual(app.buttons["meal.row.\(secondID)"].value as? String, "已展开")
+        try attachInlineScreen(app, name: "NativeInlineMealUI-switch-one-expanded-row", anchor: app.buttons["meal.details.\(secondID)"])
+
+        _ = try expandMeal(named: firstName, in: app)
+        let edit = app.buttons["meal.edit.\(firstID)"]
+        try reveal(edit, in: app)
+        try tap(edit)
+        try requireExists(app.textFields["meal.name"])
+        XCTAssertEqual(Double(try singleField(prefix: "meal.weight.", in: app).value as? String ?? ""), 200)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: "150", app: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(try recordedTodayEnergy(in: app), baseline - 65.5, accuracy: 1, "Editing must invalidate Today's aggregate from the new snapshot.")
+
+        _ = try expandMeal(named: firstName, in: app)
+        let reuse = app.buttons["meal.reuse.\(firstID)"]
+        try reveal(reuse, in: app)
+        try tap(reuse)
+        try requireExists(app.textFields["meal.name"])
+        XCTAssertEqual(Double(try singleField(prefix: "meal.weight.", in: app).value as? String ?? ""), 150)
+        try replaceText(in: app.textFields["meal.name"], with: reuseName, app: app)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: "75", app: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(try recordedTodayEnergy(in: app), baseline - 65.5 + 98.25, accuracy: 1)
+        try openMeal(named: firstName, in: app)
+        try verifyRiceWeight(150, rice: "熟长粒白米饭（无盐）", in: app)
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+        try openMeal(named: reuseName, in: app)
+        try verifyRiceWeight(75, rice: "熟长粒白米饭（无盐）", in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: true, in: app)
+        XCTAssertFalse(namedRecordButton(reuseName, in: app).exists, "A deleted row must not remain as a ghost expansion.")
+        XCTAssertEqual(try recordedTodayEnergy(in: app), baseline - 65.5, accuracy: 1)
+        try attachInlineScreen(app, name: "NativeInlineMealUI-edit-reuse-delete-recomputed", anchor: app.buttons["meal.row.\(firstID)"])
+
+        // Remove only the two run-specific fictitious meals via their existing confirmed UI.
+        try openMeal(named: firstName, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        try openMeal(named: secondName, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    func testInlineHistoryDateEditMovesMealOutOfTodayAndBack() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 日期-\(String(UUID().uuidString.prefix(6)))"
+        let now = Date()
+        let calendar = Calendar.current
+        let yesterday = try XCTUnwrap(calendar.date(byAdding: .day, value: -1, to: now))
+        try createRiceMeal(named: name, grams: 100, in: app)
+        let baseline = try recordedTodayEnergy(in: app)
+        let id = try expandMeal(named: name, in: app)
+        try reveal(app.buttons["meal.edit.\(id)"], in: app)
+        try tap(app.buttons["meal.edit.\(id)"])
+        try changeMealDate(to: yesterday, in: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(namedRecordButton(name, in: app).exists, "The edited yesterday meal must leave Today's rows.")
+        XCTAssertEqual(try recordedTodayEnergy(in: app), baseline - 131, accuracy: 1)
+        let history = app.buttons["查看全部历史"]
+        try reveal(history, in: app)
+        try tap(history)
+        try requireExists(app.navigationBars["历史餐食"])
+        _ = try expandMeal(named: name, in: app)
+        XCTAssertFalse(app.navigationBars["餐食详情"].exists)
+        try attachInlineScreen(app, name: "NativeInlineMealUI-yesterday-expanded-in-history", anchor: app.buttons["meal.details.\(id)"])
+        let edit = app.buttons["meal.edit.\(id)"]
+        try reveal(edit, in: app)
+        try tap(edit)
+        try changeMealDate(to: now, in: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try tap(app.navigationBars["历史餐食"].buttons["完成"])
+        XCTAssertEqual(try recordedTodayEnergy(in: app), baseline, accuracy: 1)
+        try openMeal(named: name, in: app)
+        try verifyRiceWeight(100, rice: "熟长粒白米饭（无盐）", in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    /// Repeat with the actual simulator system set to AX5; does not change App preferences.
+    func testInlineActionsReachableAtCurrentSystemTextSize() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 大字号展开-\(String(UUID().uuidString.prefix(6)))"
+        try createRiceMeal(named: name, grams: 100, in: app)
+        let id = try expandMeal(named: name, in: app)
+        for action in ["edit", "reuse", "details"] {
+            let button = app.buttons["meal.\(action).\(id)"]
+            try reveal(button, in: app)
+            XCTAssertTrue(button.isHittable, "Each explicit inline action must be reachable at the real current text size.")
+            XCTAssertGreaterThanOrEqual(button.frame.height, 44)
+        }
+        try attachInlineScreen(app, name: "NativeInlineMealUI-system-text-size-visible-actions", anchor: app.buttons["meal.details.\(id)"])
+        try tap(app.buttons["meal.details.\(id)"])
+        try requireExists(app.navigationBars["餐食详情"])
+        try verifyRiceWeight(100, rice: "熟长粒白米饭（无盐）", in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
     private func launchApp() throws -> XCUIApplication {
         continueAfterFailure = false
         #if !targetEnvironment(simulator)
@@ -442,8 +609,10 @@ final class NativeNavigationUITests: XCTestCase {
 
     private func mealEntryBar(in app: XCUIApplication) -> XCUIElement {
         // The start sheet and nested entry share a title. Only the entry owns Save.
-        app.navigationBars.matching(identifier: "记录一餐")
-            .containing(.button, identifier: "保存").firstMatch
+        let bars = app.navigationBars.matching(NSPredicate(format: "identifier IN %@", ["记录一餐", "编辑餐食"]))
+            .containing(.button, identifier: "保存")
+        XCTAssertLessThanOrEqual(bars.count, 1, "The frontmost entry/editor must expose one real Save bar.")
+        return bars.firstMatch
     }
 
     private func singleField(prefix: String, in app: XCUIApplication) throws -> XCUIElement {
@@ -497,9 +666,16 @@ final class NativeNavigationUITests: XCTestCase {
         // A template exists in both the underlying start sheet and the manager.
         // Scope to the actual manager's stable row identifiers, not an arbitrary
         // first match from the two presentations of the same saved template.
-        let candidates = app.navigationBars["常用模板"].exists
-            ? app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "template.manage."))
-            : app.buttons
+        let candidates: XCUIElementQuery
+        if app.navigationBars["常用模板"].exists {
+            candidates = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "template.manage."))
+        } else if app.navigationBars["历史餐食"].exists {
+            // A native sheet can expose the underlying Today's accessibility
+            // elements too. Only query the actual frontmost history list.
+            candidates = app.descendants(matching: .any).matching(identifier: "meal.history").firstMatch.buttons
+        } else {
+            candidates = app.buttons
+        }
         let buttons = candidates.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", name, "\(name)、"))
         if buttons.count == 1 { return buttons.firstMatch }
         let containingText = candidates.containing(.staticText, identifier: name)
@@ -508,8 +684,17 @@ final class NativeNavigationUITests: XCTestCase {
     }
 
     private func openMeal(named name: String, in app: XCUIApplication) throws {
+        let id = try expandMeal(named: name, in: app)
+        let details = app.buttons["meal.details.\(id)"]
+        try reveal(details, in: app)
+        try tap(details)
+        try requireExists(app.navigationBars["餐食详情"])
+    }
+
+    @discardableResult
+    private func expandMeal(named name: String, in app: XCUIApplication) throws -> String {
         var row = namedRecordButton(name, in: app)
-        if !row.exists {
+        if !row.exists && !app.navigationBars["历史餐食"].exists {
             let history = app.buttons["查看全部历史"]
             try reveal(history, in: app)
             try tap(history)
@@ -517,13 +702,169 @@ final class NativeNavigationUITests: XCTestCase {
             row = namedRecordButton(name, in: app)
         }
         try reveal(row, in: app)
-        try tap(row)
-        try requireExists(app.navigationBars["餐食详情"])
+        let prefix = "meal.row."
+        guard row.identifier.hasPrefix(prefix) else {
+            attachFailureEvidence(app: app, element: row, context: "Meal expansion must use its stable actual header identifier.")
+            XCTFail("The intended named meal must resolve to one inline header.")
+            throw NavigationUIFailure.missingControl
+        }
+        let id = String(row.identifier.dropFirst(prefix.count))
+        if row.value as? String != "已展开" { try tap(row) }
+        XCTAssertEqual(row.value as? String, "已展开")
+        return id
+    }
+
+    private func createRiceMeal(named name: String, grams: Int, in app: XCUIApplication) throws {
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        try requireExists(app.textFields["meal.name"])
+        try replaceText(in: app.textFields["meal.name"], with: name, app: app)
+        try selectFoodAtCurrentTextSize("熟长粒白米饭（无盐）", prefix: "meal.food.", in: app)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: String(grams), app: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try requireExists(app.navigationBars["今日"])
+    }
+
+    private func attachInlineScreen(_ app: XCUIApplication, name: String, anchor: XCUIElement) throws {
+        // An immediate post-toggle screenshot caught the actual default animation
+        // mid-transition in R3. Reveal the intended expanded content, then require
+        // its real frame to settle across observations; do not wait a guessed delay.
+        try reveal(anchor, in: app)
+        var previousFrame: CGRect?
+        var stableObservations = 0
+        let settled = NSPredicate { candidate, _ in
+            guard let element = candidate as? XCUIElement, element.exists, element.isHittable else { return false }
+            let current = element.frame
+            guard current.width.isFinite, current.height.isFinite, current.width > 0, current.height > 0 else { return false }
+            stableObservations = previousFrame == current ? stableObservations + 1 : 0
+            previousFrame = current
+            return stableObservations >= 2
+        }
+        try waitFor(settled, on: anchor, timeout: 8, message: "Inline screenshot evidence requires visible settled content.")
+        attachScreen(app, name: name)
+    }
+
+    private func recordedTodayEnergy(in app: XCUIApplication) throws -> Double {
+        // A measured displayed baseline avoids resetting or querying the QA store.
+        let ring = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "今日热量")).firstMatch
+        try reveal(ring, in: app)
+        try requireExists(ring)
+        let value = ring.value as? String ?? ""
+        let expression = try NSRegularExpression(pattern: "已记录 ([0-9,，.]+) 千卡")
+        guard let match = expression.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)),
+              let range = Range(match.range(at: 1), in: value),
+              let number = Double(value[range].replacingOccurrences(of: ",", with: "").replacingOccurrences(of: "，", with: "")) else {
+            attachFailureEvidence(app: app, element: ring, context: "The real ring must expose a finite recorded kcal baseline.")
+            XCTFail("Cannot read the actual Today energy value.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        return number
+    }
+
+    private func deleteCurrentlyOpenedMeal(cancelFirst: Bool, in app: XCUIApplication) throws {
+        let action = app.buttons["删除餐食"]
+        try reveal(action, in: app)
+        try tap(action)
+        let dialog = app.sheets.firstMatch
+        try requireExists(dialog)
+        if cancelFirst {
+            if dialog.buttons["取消"].exists {
+                try tap(dialog.buttons["取消"])
+            } else {
+                // R2's real hierarchy presents confirmationDialog as a native
+                // Popover without a cancel button. Its explicit dismiss region
+                // is outside the popover; derive an uncovered point from the
+                // two observed bounds rather than tapping a guessed location.
+                let region = app.descendants(matching: .any).matching(identifier: "PopoverDismissRegion").firstMatch
+                let popover = app.popovers.firstMatch
+                try requireExists(region)
+                try requireExists(popover)
+                let bounds = region.frame
+                let popup = popover.frame
+                guard region.isHittable, bounds.width.isFinite, bounds.height.isFinite,
+                      bounds.width > 44, bounds.height > 44 else {
+                    XCTFail("The native popover must expose a usable actual dismiss region.")
+                    throw NavigationUIFailure.conditionNotMet
+                }
+                let point = CGPoint(x: bounds.minX + 22, y: bounds.midY)
+                guard bounds.contains(point), !popup.insetBy(dx: -1, dy: -1).contains(point) else {
+                    XCTFail("Cancellation must target the observed native surface outside the confirmation.")
+                    throw NavigationUIFailure.conditionNotMet
+                }
+                region.coordinate(withNormalizedOffset: CGVector(
+                    dx: (point.x - bounds.minX) / bounds.width,
+                    dy: (point.y - bounds.minY) / bounds.height
+                )).tap()
+            }
+            XCTAssertTrue(dialog.waitForNonExistence(timeout: 5), "Cancel must dismiss only the deletion confirmation.")
+            try requireExists(app.navigationBars["餐食详情"])
+            try tap(action)
+            try requireExists(dialog)
+        }
+        try tap(dialog.buttons["删除餐食"])
+        XCTAssertTrue(app.navigationBars["餐食详情"].waitForNonExistence(timeout: 5))
+    }
+
+    private func changeMealDate(to date: Date, in app: XCUIApplication) throws {
+        let picker = app.descendants(matching: .any).matching(identifier: "meal.time").firstMatch
+        try reveal(picker, in: app)
+        let dateButtons = picker.descendants(matching: .button).matching(NSPredicate(format: "label MATCHES %@", "^[0-9]{4}年.*"))
+        guard dateButtons.count == 1 else {
+            attachFailureEvidence(app: app, element: picker, context: "Expected one native compact calendar date button.")
+            XCTFail("The real date picker must expose one date control.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(dateButtons.firstMatch)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "yyyy年M月"
+        let targetMonth = formatter.string(from: date)
+        let header = app.buttons["DatePicker.Show"]
+        try requireExists(header)
+        // A yesterday/today pair can straddle a month boundary. Navigate using
+        // actual native month controls and its observed year/month, not coordinates.
+        for _ in 0..<3 {
+            guard let displayed = header.value as? String else {
+                XCTFail("The native calendar must expose its displayed month.")
+                throw NavigationUIFailure.conditionNotMet
+            }
+            if displayed == targetMonth { break }
+            guard let monthDate = formatter.date(from: displayed) else {
+                XCTFail("The actual displayed calendar month must be readable.")
+                throw NavigationUIFailure.conditionNotMet
+            }
+            try tap(app.buttons[date < monthDate ? "DatePicker.PreviousMonth" : "DatePicker.NextMonth"])
+        }
+        XCTAssertEqual(header.value as? String, targetMonth)
+        formatter.dateFormat = "M月d日"
+        let shortDate = formatter.string(from: date)
+        let days = app.buttons.matching(NSPredicate(
+            format: "label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+            shortDate, "\(shortDate) ", "今天, \(shortDate) "
+        ))
+        guard days.count == 1 else {
+            attachFailureEvidence(app: app, element: header, context: "Expected one native day button for \(shortDate); found \(days.count).")
+            XCTFail("The intended calendar date must resolve uniquely.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(days.firstMatch)
+        // R1 actual hierarchy exposes this native dismiss button. Do not blindly
+        // tap the popover's background or force the date binding in the App.
+        let dismissPopover = app.buttons["PopoverDismissRegion"]
+        if dismissPopover.exists { try tap(dismissPopover) }
+        formatter.dateFormat = "yyyy年M月d日"
+        try requireExists(picker.descendants(matching: .button).matching(identifier: formatter.string(from: date)).firstMatch)
+        try requireExists(mealEntryBar(in: app))
     }
 
     private func verifyRiceWeight(_ grams: Int, rice: String, in app: XCUIApplication) throws {
         let combined = "\(rice)、\(grams) g"
-        let row = app.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", combined, "\(grams) g")).firstMatch
+        // The expanded underlying row also exposes the identical saved weight.
+        // Assert the frontmost detail snapshot, not hidden content behind its sheet.
+        let detail = app.descendants(matching: .any).matching(identifier: "meal.detail").firstMatch
+        try requireExists(detail)
+        let row = detail.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", combined, "\(grams) g")).firstMatch
         try reveal(row, in: app)
         try requireExists(row, "The stored rice snapshot must retain the expected \(grams) g.")
     }
@@ -538,6 +879,7 @@ final class NativeNavigationUITests: XCTestCase {
 
     private func saveFictitiousGoal(energy: String, saturatedFat: String, fibre: String, in app: XCUIApplication) throws {
         try openGoalFromSettings(in: app)
+        var lastEditedField: XCUIElement?
         for (label, value) in [
             ("热量预算 (kcal)", energy),
             ("蛋白质目标 (g)", "145"),
@@ -555,7 +897,23 @@ final class NativeNavigationUITests: XCTestCase {
                 // The existing Double text may include .0. Skip only equal numbers, never blank vs 0.
                 continue
             }
-            try replaceText(in: field, with: value, app: app)
+            // A goal is one multi-field entry session. Keep the real software
+            // keyboard between fields instead of opening/closing it after every
+            // number. Each field still requires a real tap, selection and exact
+            // value assertion. Dedicated keyboard/draft tests keep per-input Done.
+            try replaceText(in: field, with: value, app: app, dismissKeyboard: false)
+            lastEditedField = field
+        }
+        if let lastEditedField {
+            // Interactive scrolling can legitimately dismiss the keyboard while
+            // revealing unchanged lower rows. Refocus the actual edited field if
+            // needed; an edited session must still exercise the real Done button.
+            if !app.keyboards.firstMatch.exists {
+                try reveal(lastEditedField, in: app)
+                try tap(lastEditedField)
+                try revealInputAboveKeyboard(lastEditedField, in: app)
+            }
+            try finishKeyboardEditing(identifier: "goal.keyboardDone", in: app)
         }
         let formBar = app.navigationBars["每日预算与目标"]
         let save = formBar.buttons["保存"]
@@ -615,31 +973,85 @@ final class NativeNavigationUITests: XCTestCase {
         XCTAssertEqual(field.label, expected, "The actual field must expose its visible title exactly once, not a duplicated label.")
     }
 
-    private func replaceText(in field: XCUIElement, with text: String, app: XCUIApplication) throws {
+    private func replaceText(in field: XCUIElement, with text: String, app: XCUIApplication, dismissKeyboard: Bool = true) throws {
         try reveal(field, in: app)
         let oldValue = field.value as? String ?? ""
         let placeholderValues = ["请输入", "未设置", "模板名称", "重量", "默认重量", "克重"]
         let hasExistingText = !oldValue.isEmpty && !placeholderValues.contains(oldValue)
+        if field.identifier.hasPrefix("goal."), app.keyboards.firstMatch.exists {
+            // With a previous input focused, the next row may sit behind the
+            // floating Done toolbar despite reporting isHittable. Reveal its
+            // complete input rectangle before attempting to transfer focus.
+            try revealInputAboveKeyboard(field, in: app)
+        }
         try tap(field)
         try revealInputAboveKeyboard(field, in: app)
+        if field.identifier.hasPrefix("goal.") {
+            // R5's event snapshot retained saturatedFat focus after revealing
+            // the blank fibre row. Retap the now visible actual control before
+            // selection/typeText; never redirect typing to the previous field.
+            try tap(field)
+        }
         if hasExistingText {
             // Hardware Command-A was ignored by the actual simulator in AX5 R3.
             // Use the real touch edit menu on the now-independent input frame,
             // then require its unique Select All action and exact resulting text.
-            field.press(forDuration: 1)
+            if field.identifier.hasPrefix("goal.") {
+                // R3's actual hierarchy/screenshot: this wide, trailing-aligned
+                // TextField's centre was blank. Pressing it left the caret before
+                // 30.0 and produced no menu. GoalSettingsView places text at the
+                // trailing edge normally and leading edge at system AX sizes.
+                // R4 long-pressing the number moved the caret but showed no
+                // menu. Double-tap the actual text to request native selection.
+                // Target that side inside the observed finite input bounds, not
+                // a guessed screen point or a substitute for a failed button tap.
+                let bounds = field.frame
+                guard bounds.width.isFinite, bounds.height.isFinite, bounds.width > 0, bounds.height > 0 else {
+                    XCTFail("A native input edit gesture requires finite non-empty bounds.")
+                    throw NavigationUIFailure.conditionNotMet
+                }
+                let leading = UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
+                field.coordinate(withNormalizedOffset: CGVector(dx: leading ? 0.02 : 0.98, dy: 0.5))
+                    .doubleTap()
+            } else {
+                field.press(forDuration: 1)
+            }
             let selectAllLabels = NSPredicate(format: "label IN %@", ["全选", "Select All"])
             let menuItems = app.menuItems.matching(selectAllLabels)
             let buttons = app.buttons.matching(selectAllLabels)
             let menuAppeared = menuItems.firstMatch.waitForExistence(timeout: 5)
             if !menuAppeared { _ = buttons.firstMatch.waitForExistence(timeout: 5) }
             let actions = menuItems.allElementsBoundByIndex + buttons.allElementsBoundByIndex
-            guard actions.count == 1, let selectAll = actions.first else {
+            if actions.count == 1, let selectAll = actions.first {
+                try tap(selectAll)
+                field.typeText(text.isEmpty ? XCUIKeyboardKey.delete.rawValue : text)
+            } else if actions.isEmpty, field.identifier.hasPrefix("goal.") {
+                // Native selection may already span the whole number, in which
+                // case Select All is omitted. Cut is only evidence of *some*
+                // selection: perform the unique real menu action and require
+                // an entirely empty value before entering new text. Any residue
+                // fails immediately; never blindly delete extra characters.
+                let cutLabels = NSPredicate(format: "label IN %@", ["剪切", "Cut"])
+                let cuts = app.menuItems.matching(cutLabels).allElementsBoundByIndex
+                    + app.buttons.matching(cutLabels).allElementsBoundByIndex
+                guard cuts.count == 1, let cut = cuts.first else {
+                    attachFailureEvidence(app: app, element: field, context: "No unique native Select All or Cut selection action.")
+                    XCTFail("Replacing old input requires a real unambiguous native selection action.")
+                    throw NavigationUIFailure.missingControl
+                }
+                try tap(cut)
+                guard let clearedValue = field.value as? String,
+                      clearedValue.isEmpty || clearedValue == field.placeholderValue else {
+                    attachFailureEvidence(app: app, element: field, context: "Native Cut left text; full selection was not established.")
+                    XCTFail("The entire old value must be cleared before replacement.")
+                    throw NavigationUIFailure.conditionNotMet
+                }
+                if !text.isEmpty { field.typeText(text) }
+            } else {
                 attachFailureEvidence(app: app, element: field, context: "Expected one real touch Select All action; found \(actions.count).")
-                XCTFail("Replacing old input requires an actual unique native Select All action.")
+                XCTFail("Native selection actions must be unambiguous.")
                 throw NavigationUIFailure.missingControl
             }
-            try tap(selectAll)
-            field.typeText(text.isEmpty ? XCUIKeyboardKey.delete.rawValue : text)
         } else if !text.isEmpty {
             field.typeText(text)
         }
@@ -651,11 +1063,11 @@ final class NativeNavigationUITests: XCTestCase {
         }
         let keyboard = app.keyboards.firstMatch
         guard keyboard.waitForExistence(timeout: 5) else {
-            attachFailureEvidence(app: app, element: field, context: "Actual software keyboard missing after text input; Done was not tested.")
-            XCTFail("Text input must expose the software keyboard so its real Done action is verified.")
+            attachFailureEvidence(app: app, element: field, context: "Actual software keyboard missing after text input.")
+            XCTFail("Real text input must expose the software keyboard.")
             throw NavigationUIFailure.missingControl
         }
-        do {
+        if dismissKeyboard {
             let doneIdentifier: String
             switch field.identifier {
             case let identifier where identifier.hasPrefix("meal."):
@@ -669,17 +1081,23 @@ final class NativeNavigationUITests: XCTestCase {
                 XCTFail("The form field must identify its own real keyboard Done button.")
                 throw NavigationUIFailure.missingControl
             }
-            let doneButtons = app.buttons.matching(identifier: doneIdentifier)
-            let done = doneButtons.firstMatch
-            guard done.waitForExistence(timeout: 5), doneButtons.count == 1 else {
-                attachFailureEvidence(app: app, element: done, context: "Expected exactly one \(doneIdentifier) button; found \(doneButtons.count).")
-                XCTFail("The current form must expose exactly one identified keyboard Done button.")
-                throw NavigationUIFailure.missingControl
-            }
-            XCTAssertEqual(done.label, "完成", "The identified action must remain the visible Done control.")
-            try tap(done)
-            XCTAssertTrue(keyboard.waitForNonExistence(timeout: 5), "The real Done action must dismiss the keyboard.")
+            try finishKeyboardEditing(identifier: doneIdentifier, in: app)
         }
+    }
+
+    private func finishKeyboardEditing(identifier: String, in app: XCUIApplication) throws {
+        let keyboard = app.keyboards.firstMatch
+        try requireExists(keyboard, "A real software keyboard must be open before testing Done.")
+        let doneButtons = app.buttons.matching(identifier: identifier)
+        let done = doneButtons.firstMatch
+        guard done.waitForExistence(timeout: 5), doneButtons.count == 1 else {
+            attachFailureEvidence(app: app, element: done, context: "Expected exactly one \(identifier) button; found \(doneButtons.count).")
+            XCTFail("The current form must expose exactly one identified keyboard Done button.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertEqual(done.label, "完成", "The identified action must remain the visible Done control.")
+        try tap(done)
+        XCTAssertTrue(keyboard.waitForNonExistence(timeout: 5), "The real Done action must dismiss the keyboard.")
     }
 
     private func verifyTodayBudget(_ energy: Int, in app: XCUIApplication) throws {
@@ -716,17 +1134,19 @@ final class NativeNavigationUITests: XCTestCase {
                 verifyGoalFieldLabel(element)
                 return
             }
-            try scrollCurrentContentUp(in: app)
+            let frame = element.exists ? element.frame : .zero
+            let navigationBottom = app.navigationBars.allElementsBoundByIndex.filter(\.isHittable).map(\.frame.maxY).max() ?? app.frame.minY
+            try scrollCurrentContentUp(in: app, towardTop: frame.height > 0 && frame.maxY <= navigationBottom)
         }
         try requireExists(element)
         try waitFor(liveHittablePredicate(), on: element, message: "The existing form control must be reachable.")
         verifyGoalFieldLabel(element)
     }
 
-    private func scrollCurrentContentUp(in app: XCUIApplication) throws {
+    private func scrollCurrentContentUp(in app: XCUIApplication, towardTop: Bool = false) throws {
         // Identify the actual frontmost form/list. Swiping the app's centre can
         // change the native AX DatePicker wheel instead of scrolling the form.
-        let identifiers = ["template.form", "meal.form", "goal.form", "templates.list", "meal.start", "today.content"]
+        let identifiers = ["template.form", "meal.form", "goal.form", "meal.detail", "templates.list", "meal.history", "meal.start", "today.content"]
         guard let container = identifiers.lazy.compactMap({ identifier -> XCUIElement? in
             let matches = app.descendants(matching: .any).matching(identifier: identifier)
             guard matches.count == 1, matches.firstMatch.isHittable else { return nil }
@@ -759,8 +1179,8 @@ final class NativeNavigationUITests: XCTestCase {
         }
         // This is a bounded scroll gesture, not a coordinate substitute for a
         // failed control tap. The destination is still checked by exists/hittable.
-        let startY = (visibleTop + visibleHeight * 0.72 - frame.minY) / frame.height
-        let endY = (visibleTop + visibleHeight * 0.25 - frame.minY) / frame.height
+        let startY = (visibleTop + visibleHeight * (towardTop ? 0.25 : 0.72) - frame.minY) / frame.height
+        let endY = (visibleTop + visibleHeight * (towardTop ? 0.72 : 0.25) - frame.minY) / frame.height
         let start = container.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: startY))
         let end = container.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: endY))
         start.press(forDuration: 0.05, thenDragTo: end)

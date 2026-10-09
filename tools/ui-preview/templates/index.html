@@ -11,6 +11,7 @@
   <script src="{{ url_for('static', filename='i18n.js') }}" defer></script>
   <script src="{{ url_for('static', filename='trends.js') }}" defer></script>
   <script src="{{ url_for('static', filename='motion.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='energy-visual.js') }}" defer></script>
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
@@ -32,6 +33,8 @@
       </section>
       <section class="control-section">
         <div class="section-heading"><h2>02 / 热量状态</h2></div>
+        <div class="segmented energy-mode-picker" aria-label="热量显示方式"><button type="button" data-energy-mode="ring" aria-pressed="true">圆环</button><button type="button" data-energy-mode="water" aria-pressed="false">水位圆圈</button></div>
+        <p class="field-note water-mode-note">水位仅表示已记录热量与预算的比例，不是饮水记录；超过预算后水位封顶，实际超出量照常显示。</p>
         <div class="presets" aria-label="示例状态">
           <button type="button" data-preset="normal" class="active">有余量</button><button type="button" data-preset="near">接近预算</button><button type="button" data-preset="full">刚好达到</button><button type="button" data-preset="over">超过预算</button><button type="button" data-preset="empty">没有记录</button><button type="button" data-preset="noGoal">未设目标</button>
         </div>

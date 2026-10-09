@@ -90,6 +90,7 @@
   const $ = selector => document.querySelector(selector);
   const motion = window.ShiHengMotion;
   const trends = window.ShiHengTrends;
+  const energyVisual = window.ShiHengEnergyVisual;
   const localize = () => { window.ShiHengI18n?.translateDOM(document.body, state.language); document.title = state.language === "en" ? "ShiHeng · Design studio" : "食衡 · UI 调色工作台"; };
   const systemReduced = window.matchMedia("(prefers-reduced-motion: reduce)");
   const reduceMotion = () => state.reduceMotion || systemReduced.matches;
@@ -112,11 +113,11 @@
   const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || iconPaths.empty}</svg>`;
   let config, initialConfig, currentSheet = null, toastTimer, pageAnimation;
   let morphAnimation = null, morphOrigin = null, morphDestination = null;
-  let trendScrollTimer, previousTrendValue = null;
+  let trendScrollTimer, previousTrendValue = null, waterAnimation = null;
   const state = {
     page: "today", preset: "normal", goals: clone(DEFAULT_GOALS), totals: clone(FIXTURES.normal), hasRecords: true,
     hasGoal: true, meals: [], scanResult: false, calendarMonth: new Date(2026, 9, 1), selectedDate: DEMO_DATE,
-    trendDate: DEMO_DATE, language: "zh", reduceMotion: false, reduceTransparency: false, pageScroll: {}
+    trendDate: DEMO_DATE, language: "zh", reduceMotion: false, reduceTransparency: false, energyVisualMode: "ring", pageScroll: {}
   };
   function message(text, error = false) { $("#workbench-message").textContent = text; $("#workbench-message").classList.toggle("error", error); localize(); }
   function toast(text) { clearTimeout(toastTimer); $("#phone-toast").textContent = text; $("#phone-toast").hidden = false; localize(); toastTimer = setTimeout(() => { $("#phone-toast").hidden = true; }, 2700); }
@@ -144,8 +145,10 @@
     phone.style.setProperty("--glass", mixColor(surface, surfaceInk, .025));
     phone.style.setProperty("--action-ink", readableColor("#102c19", config.colors.green));
     phone.dataset.motion = reduceMotion() ? "reduce" : "full";
+    if (reduceMotion()) { waterAnimation?.cancel(); waterAnimation = null; }
     phone.dataset.transparency = state.reduceTransparency ? "reduce" : "full";
     $("#light-mode").setAttribute("aria-pressed", String(config.theme === "light")); $("#dark-mode").setAttribute("aria-pressed", String(config.theme === "dark"));
+    for (const button of document.querySelectorAll("[data-energy-mode]")) button.setAttribute("aria-pressed", String(button.dataset.energyMode === state.energyVisualMode));
     for (const button of document.querySelectorAll(".primary-button")) button.style.color = readableColor("#102c19", config.colors.green);
   }
   function syncControls() {
@@ -179,6 +182,7 @@
   }
   function heading(title, subtitle, action = "") { return `<div class="page-heading"><div><h2>${title}</h2><p>${subtitle}</p></div>${action}</div>`; }
   function energyCard() {
+    if (state.energyVisualMode === "water") return waterEnergyCard();
     if (!state.hasRecords) return `<section class="card empty-energy"><strong>今天尚未记录</strong><p>记下第一餐后，再查看已记录摄入与预算余量。</p></section>`;
     const status = nutritionStatus(state.totals.energy, state.hasGoal ? state.goals.energy : null, "budget", config.warningPercent);
     const circumference = 2 * Math.PI * 82;
@@ -190,6 +194,24 @@
       </div>
       <div class="energy-status" style="color:${statusTextColor(status)}">${icon(status.icon)}<span>${status.label}${/\d$/.test(status.label) ? " kcal" : ""}</span></div>
       <div class="budget-row"><span>今日预算</span><span>${state.hasGoal ? format(state.goals.energy) + " kcal" : "尚未设置"}</span></div>
+    </section>`;
+  }
+  function waterEnergyCard() {
+    const budget = state.hasGoal ? state.goals.energy : null;
+    const fill = energyVisual.waterFillState(state.totals.energy, budget, state.hasRecords);
+    const status = nutritionStatus(state.totals.energy, budget, "budget", config.warningPercent, state.hasRecords);
+    const color = fill.neutral ? "var(--track)" : config.colors[status.color];
+    const reading = state.hasRecords ? format(state.totals.energy) : "—";
+    const caption = state.hasRecords ? `${state.meals.length} 餐 · 演示` : "尚无可汇总记录";
+    const statusColor = fill.neutral ? "var(--secondary)" : statusTextColor(status);
+    return `<section class="card energy-card water-energy-card"><div class="card-label"><span>已记录热量</span><span>${caption}</span></div>
+      <div class="energy-ring energy-water" data-water-level="${fill.level}" data-water-reason="${fill.reason}" style="--water-color:${color}" role="img" aria-label="${state.hasRecords ? '已记录 ' + reading + ' 千卡' : '今天尚未记录'}，${status.label}${/\d$/.test(status.label) ? '千卡' : ''}">
+        ${energyVisual.waterSVG(fill.level)}
+        <div class="ring-number"><div class="water-number-card"><strong>${reading}</strong><span>kcal</span></div></div>
+      </div>
+      <div class="energy-status" style="color:${statusColor}">${icon(status.icon)}<span>${status.label}${/\d$/.test(status.label) ? ' kcal' : ''}</span></div>
+      <div class="budget-row"><span>今日预算</span><span>${state.hasGoal ? format(state.goals.energy) + ' kcal' : '尚未设置'}</span></div>
+      <p class="card-caption water-caption">水位代表已记录热量，不代表整天已记全。</p>
     </section>`;
   }
   function nutrientRow(key, label, kind) {
@@ -248,6 +270,7 @@
   }
   function renderPhone(resetScroll = false, transitioning = false) {
     const scroller = $("#phone-content"), previous = scroller.scrollTop;
+    const previousWaterLevel = $(".energy-water")?.dataset.waterLevel;
     clearTimeout(trendScrollTimer);
     scroller.innerHTML = ({ today: todayPage, scan: scanPage, calendar: calendarPage, settings: settingsPage })[state.page]();
     scroller.scrollTop = resetScroll ? state.pageScroll[state.page] || 0 : previous;
@@ -257,6 +280,12 @@
     }
     $(".tab-bar").style.setProperty("--tab-index", ["today", "scan", "calendar", "settings"].indexOf(state.page));
     applyAppearance();
+    const water = $(".energy-water"), waterFill = water?.querySelector(".water-fill");
+    waterAnimation?.cancel(); waterAnimation = null;
+    if (waterFill && previousWaterLevel !== undefined && !reduceMotion() && waterFill.animate) {
+      const displacement = (Number(water.dataset.waterLevel) - Number(previousWaterLevel)) * 168;
+      if (displacement !== 0) waterAnimation = waterFill.animate([{ transform: `translateY(${displacement}px)` }, { transform: "translateY(0px)" }], { duration: motion.TOKENS.duration, easing: motion.TOKENS.easing });
+    }
     localize();
     pageAnimation?.cancel();
     if (transitioning && scroller.animate) pageAnimation = scroller.animate(reduceMotion() ? [{ opacity: .4 }, { opacity: 1 }] : [{ opacity: .25, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: reduceMotion() ? motion.TOKENS.fade : motion.TOKENS.duration, easing: motion.TOKENS.easing });
@@ -451,7 +480,7 @@
     if (focus) document.querySelector(`[data-trend-date="${date}"]`)?.focus({ preventScroll: true });
   }
   function savePreferences() {
-    try { localStorage.setItem("shiheng-preview-preferences", JSON.stringify({ language: state.language, reduceMotion: state.reduceMotion, reduceTransparency: state.reduceTransparency })); } catch { /* Session settings still work. */ }
+    try { localStorage.setItem("shiheng-preview-preferences", JSON.stringify(energyVisual.normalizePreferences(state))); } catch { /* Session settings still work. */ }
   }
   function changeIntake(value) {
     if (!finite(value) || value < 0 || value > 10000) return false;
@@ -464,6 +493,7 @@
     if (currentSheet?.closing) return;
     if (button.dataset.page) { if (currentSheet || button.dataset.page === state.page) return; state.pageScroll[state.page] = $("#phone-content").scrollTop; state.page = button.dataset.page; renderPhone(true, true); }
     if (button.dataset.preset) { setPreset(button.dataset.preset); }
+    if (energyVisual.MODES.includes(button.dataset.energyMode)) { state.energyVisualMode = button.dataset.energyMode; savePreferences(); renderPhone(); }
     if (button.dataset.meal) toggleMealDetails(button.dataset.meal);
     if (button.dataset.trendDate) selectTrend(button.dataset.trendDate, true);
     if (button.dataset.date) { state.selectedDate = button.dataset.date; if (trends.buildSevenDaySeries(DEMO_DATE, calendarData).some(point => point.date === state.selectedDate)) state.trendDate = state.selectedDate; renderPhone(); }
@@ -561,7 +591,7 @@
       const response = await fetch("/api/preview-config"); if (!response.ok) throw new Error("config unavailable");
       const defaults = await response.json(); if (!validateConfig(defaults)) throw new Error("invalid config");
       initialConfig = clone(defaults); config = clone(defaults);
-      try { const prefs = JSON.parse(localStorage.getItem("shiheng-preview-preferences") || "{}"); state.language = prefs.language === "en" ? "en" : "zh"; state.reduceMotion = prefs.reduceMotion === true; state.reduceTransparency = prefs.reduceTransparency === true; } catch { /* Invalid preference cannot corrupt design or meal state. */ }
+      try { Object.assign(state, energyVisual.normalizePreferences(JSON.parse(localStorage.getItem("shiheng-preview-preferences") || "{}"))); } catch { /* Invalid preference cannot corrupt design or meal state. */ }
       document.documentElement.lang = state.language === "en" ? "en" : "zh-CN";
       try { const cached = localStorage.getItem(STORAGE_KEY); if (cached) { const parsed = JSON.parse(cached); if (validateConfig(parsed)) config = parsed; else message("浏览器内的旧方案无效，已使用初始方案。"); } } catch { message("无法读取浏览器方案，已使用初始方案。"); }
       for (const element of document.querySelectorAll("[data-icon]")) element.innerHTML = icon(element.dataset.icon);

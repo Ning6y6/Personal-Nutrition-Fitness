@@ -91,7 +91,10 @@
     "示意图": "Illustration", "记录方式": "Recording method", "示意食材": "Illustrative ingredients", "演示份量": "Demo portion",
     "图、文字和标签分阶段展开": "Illustration, details and tags appear in stages", "按你实际吃的量记录": "Log the amount you actually ate", "快速复用": "Quick reuse",
     "本地预览": "Local preview", "未保存的输入": "Unsaved changes", "图表支持左右滑动或方向键选择日期。": "Swipe sideways or use the arrow keys to select a day.",
-    "虚构预览。已记录热量不代表整天已记全。": "Fictional preview. Recorded energy does not confirm a complete day.", "断点表示没有记录。": "Gaps indicate missing records."
+    "虚构预览。已记录热量不代表整天已记全。": "Fictional preview. Recorded energy does not confirm a complete day.", "断点表示没有记录。": "Gaps indicate missing records.",
+    "热量显示方式": "Energy visualization", "圆环": "Ring", "水位圆圈": "Water fill",
+    "水位仅表示已记录热量与预算的比例，不是饮水记录；超过预算后水位封顶，实际超出量照常显示。": "Water level shows logged energy relative to the budget, not hydration. The visual caps at full; actual excess remains visible.",
+    "水位代表已记录热量，不代表整天已记全。": "Water level shows logged energy, not a confirmed complete day."
   };
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const shortMonths = monthNames.map(month => month.slice(0, 3));

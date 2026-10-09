@@ -36,6 +36,20 @@ class PreviewHostTests(unittest.TestCase):
         self.assertEqual(response.mimetype, "text/html")
         self.assertIn(b"<!doctype html", response.data.lower())
 
+    def test_optional_water_preview_controls_and_script_are_local(self):
+        response = self.client.get("/")
+        self.assertIn(b'data-energy-mode="ring"', response.data)
+        self.assertIn(b'data-energy-mode="water"', response.data)
+        self.assertIn(b'/static/energy-visual.js', response.data)
+        script = self.client.get("/static/energy-visual.js")
+        self.assertEqual(script.status_code, 200)
+        self.assertIn(b"waterFillState", script.data)
+        script.close()
+
+    def test_water_mode_does_not_extend_design_json_contract(self):
+        self.config["energyVisualMode"] = "water"
+        self.assert_invalid(self.post_config(self.config))
+
     def test_health_is_local_preview_status(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)

@@ -84,6 +84,25 @@ input[type=range] { accent-color: #249d49; width: 100%; min-height: 24px; margin
 .ring-number { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .ring-number strong { font-size: 43px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -1.5px; }
 .ring-number span { color: var(--secondary); font-size: 12px; margin-top: 2px; }
+/* Optional water study. Numbers stay on an opaque plate, never a wave/glass layer. */
+.water-mode-note { margin: -3px 0 13px; }
+.energy-ring.energy-water { width: min(224px,100%); }
+.energy-water .water-svg { transform: none; overflow: hidden; }
+.water-vessel-base { fill: var(--surface); }
+.water-vessel-outline { fill: none; stroke: var(--track); stroke-width: 3; }
+.water-body { fill: var(--water-color); opacity: .64; }
+.water-wave { fill: var(--water-color); }
+.water-wave-back { opacity: .24; animation: water-drift 3.6s ease-in-out 1; }
+.water-wave-front { opacity: .48; animation: water-drift 2.4s ease-in-out 1; }
+.water-number-card { background: var(--surface); padding: 10px 12px; border: 1px solid var(--divider); border-radius: 18px; max-width: 82%; box-shadow: 0 2px 14px #00000008; }
+.water-number-card strong { display: block; font-size: clamp(28px,3.7vw,38px); line-height: 1.14; letter-spacing: -.9px; overflow-wrap: anywhere; }
+.water-number-card span { display: block; }
+.water-caption { font-size: 11px; margin-top: 9px; }
+.energy-water[data-water-level="0"] .water-wave,
+.energy-water[data-water-level="1"] .water-wave { animation: none; }
+@keyframes water-drift { from { transform: translateX(0px); } to { transform: translateX(-168px); } }
+.phone[data-motion=reduce] .water-wave { animation: none; transform: none; }
+@media (prefers-reduced-motion: reduce) { .water-wave { animation: none; transform: none; } }
 .energy-status { display:flex; align-items:center; justify-content:center; gap:5px; font-size:14px; font-weight:600; }
 .energy-status svg { width:16px; height:16px; }
 .budget-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--secondary); border-top: 1px solid var(--divider); padding-top: 13px; margin-top: 13px; }

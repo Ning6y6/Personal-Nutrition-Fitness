@@ -1,6 +1,6 @@
 import Foundation
 
-/// Coordinates one UI scroll after the selected row has both laid out and finished expanding.
+/// Starts one UI scroll at the selected row's first expanded layout, while it is still animating.
 /// The token distinguishes separate expansions of the same meal, including A → B → A.
 struct InlineMealScrollState: Equatable, Sendable {
     struct Request: Equatable, Sendable {
@@ -10,7 +10,6 @@ struct InlineMealScrollState: Equatable, Sendable {
 
     private(set) var request: Request?
     private var hasRecordedLayout = false
-    private var hasCompletedAnimation = false
 
     @discardableResult
     mutating func begin(expandedMealID: UUID?) -> Request? {
@@ -27,11 +26,6 @@ struct InlineMealScrollState: Equatable, Sendable {
         hasRecordedLayout = true
     }
 
-    mutating func completeAnimation(for incoming: Request) {
-        guard request == incoming else { return }
-        hasCompletedAnimation = true
-    }
-
     mutating func takeReadyTarget(
         expandedMealID: UUID?,
         visibleIDs: [UUID],
@@ -39,7 +33,7 @@ struct InlineMealScrollState: Equatable, Sendable {
     ) -> UUID? {
         guard let current = request else { return nil }
 
-        // Validate context before the gates: invalid requests must not revive after a late callback.
+        // Validate context before layout: invalid requests must not revive after a late callback.
         guard isActive,
               expandedMealID == current.mealID,
               visibleIDs.contains(current.mealID)
@@ -48,7 +42,7 @@ struct InlineMealScrollState: Equatable, Sendable {
             return nil
         }
 
-        guard hasRecordedLayout, hasCompletedAnimation else { return nil }
+        guard hasRecordedLayout else { return nil }
         invalidate()
         return current.mealID
     }
@@ -56,6 +50,5 @@ struct InlineMealScrollState: Equatable, Sendable {
     mutating func invalidate() {
         request = nil
         hasRecordedLayout = false
-        hasCompletedAnimation = false
     }
 }

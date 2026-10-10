@@ -88,7 +88,7 @@ struct TodayView: View {
                             hasHistory: !mealLogs.isEmpty,
                             expandedMealID: expansion.expandedMealID,
                             scrollRequest: expansionScroll.request,
-                            toggleMeal: { toggleMeal($0, in: proxy) },
+                            toggleMeal: toggleMeal,
                             didLayoutExpansion: { request in
                                 expansionScroll.recordLayout(for: request)
                                 scrollToExpansionIfReady(in: proxy)
@@ -200,29 +200,30 @@ struct TodayView: View {
         isShowingMealStart = true
     }
 
-    private func toggleMeal(_ meal: PersistentMealLog, in proxy: ScrollViewProxy) {
-        // Capture an identity, never a SwiftData object in a deferred callback.
+    private func toggleMeal(_ meal: PersistentMealLog) {
         let mealID = meal.id
         let target = expansion.expandedMealID == mealID ? nil : mealID
-        let request = expansionScroll.begin(expandedMealID: target)
-        withAnimation(reduceMotion ? nil : .default, completionCriteria: .removed) {
+        expansionScroll.begin(expandedMealID: target)
+        // The first expanded layout starts scrolling; do not wait for the
+        // spring's completion and serialize two visible movements.
+        withAnimation(inlineExpansionAnimation) {
             expansion.toggle(mealID)
-        } completion: {
-            guard let request else { return }
-            expansionScroll.completeAnimation(for: request)
-            scrollToExpansionIfReady(in: proxy)
         }
     }
 
+    private var inlineExpansionAnimation: Animation? {
+        reduceMotion ? nil : .snappy(duration: 0.3, extraBounce: 0)
+    }
+
     private func scrollToExpansionIfReady(in proxy: ScrollViewProxy) {
-        // Layout and animation may finish in either order, especially when
-        // Reduce Motion is enabled. Consume each live request only once.
+        // A layout pass is necessary to obtain the expanded scroll bounds,
+        // not a delay: scroll during expansion, consuming the request once.
         guard let target = expansionScroll.takeReadyTarget(
             expandedMealID: expansion.expandedMealID,
             visibleIDs: visibleMealIDs,
             isActive: isSelected && scenePhase == .active && !hasPresentedSheet
         ) else { return }
-        withAnimation(reduceMotion ? nil : .default) {
+        withAnimation(inlineExpansionAnimation) {
             // A long meal or large text cannot fit in one viewport: show its
             // beginning rather than jumping straight past the food to actions.
             proxy.scrollTo(target, anchor: .top)

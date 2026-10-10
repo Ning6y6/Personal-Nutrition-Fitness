@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AFB200000000000000000001 /* InlineMealScrollState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB200000000000000000001 /* InlineMealScrollState.swift */; };
+		AFB200000000000000000002 /* InlineMealScrollStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB200000000000000000002 /* InlineMealScrollStateTests.swift */; };
 		AFB100000000000000000001 /* EmptyRecordedEnergyRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */; };
 		AFB100000000000000000002 /* EmptyRecordedEnergyValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */; };
 		AFB100000000000000000003 /* EmptyRecordedEnergyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */; };
@@ -112,6 +114,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BFB200000000000000000001 /* InlineMealScrollState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMealScrollState.swift; sourceTree = "<group>"; };
+		BFB200000000000000000002 /* InlineMealScrollStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/InlineMealScrollStateTests.swift; sourceTree = "<group>"; };
 		BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyRecordedEnergyRing.swift; sourceTree = "<group>"; };
 		BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyRecordedEnergyValue.swift; sourceTree = "<group>"; };
 		BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/EmptyRecordedEnergyTests.swift; sourceTree = "<group>"; };
@@ -258,6 +262,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BFB200000000000000000002 /* InlineMealScrollStateTests.swift */,
 				BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */,
 				BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */,
 				BH0000000000000000000003 /* InlineMealPresentationTests.swift */,
@@ -310,6 +315,7 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				BFB200000000000000000001 /* InlineMealScrollState.swift */,
 				BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */,
 				BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */,
 				BG0000000000000000000001 /* TodayMealEntryButton.swift */,
@@ -499,6 +505,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFB200000000000000000002 /* InlineMealScrollStateTests.swift in Sources */,
 				AFB100000000000000000003 /* EmptyRecordedEnergyTests.swift in Sources */,
 				AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */,
 				AH0000000000000000000003 /* InlineMealPresentationTests.swift in Sources */,
@@ -528,6 +535,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFB200000000000000000001 /* InlineMealScrollState.swift in Sources */,
 				AFB100000000000000000001 /* EmptyRecordedEnergyRing.swift in Sources */,
 				AFB100000000000000000002 /* EmptyRecordedEnergyValue.swift in Sources */,
 				AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */,

@@ -20,6 +20,7 @@ struct TodayView: View {
     @State private var editingMeal: PersistentMealLog?
     @State private var reuseDraft: MealEntryDraft?
     @State private var expansion: InlineMealExpansionState
+    @State private var expansionScroll = InlineMealScrollState()
     @State private var currentGoal: GoalProfile?
     @State private var hasGoalReadError = false
     @State private var dateContext = TodayDateContext()
@@ -45,56 +46,72 @@ struct TodayView: View {
 
     private var visibleMealIDs: [UUID] { todayMeals.prefix(3).map(\.id) }
 
+    private var hasPresentedSheet: Bool {
+        isShowingGoalSettings || isShowingMealStart || isShowingMealHistory
+            || selectedMeal != nil || editingMeal != nil || reuseDraft != nil
+    }
+
     private var dateSubtitle: String {
         dateContext.dayWindow?.start.formatted(date: .abbreviated, time: .omitted) ?? "日期暂不可用"
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                let summary = todaySummary
-                if dateContext.dayWindow != nil {
-                    TodayStatusCard(
-                        goal: currentGoal,
-                        nutrients: summary.nutrients,
-                        mealCount: summary.meals.count,
-                        fibreSummary: summary.fibreSummary,
-                        availability: summary.availability,
-                        hasGoalReadError: hasGoalReadError
-                    )
-                } else {
-                    Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
-                    Text("暂不显示今日摄入与缺口，历史记录仍保留。")
-                        .foregroundStyle(.secondary)
-                }
-                if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
-                    Label(
-                        "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
-                        systemImage: "exclamationmark.triangle"
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(.orange)
-                }
-                if dateContext.dayWindow != nil {
-                    RecentMealsCard(
-                        meals: Array(todayMeals.prefix(3)),
-                        hasHistory: !mealLogs.isEmpty,
-                        expandedMealID: expansion.expandedMealID,
-                        toggleMeal: toggleMeal,
-                        editMeal: { editingMeal = $0 },
-                        reuseMeal: { reuseDraft = MealEntryDraft(reusing: $0) },
-                        selectMeal: { selectedMeal = $0 },
-                        showHistory: { isShowingMealHistory = true }
-                    )
-                } else {
-                    Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
-                        isShowingMealHistory = true
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    let summary = todaySummary
+                    if dateContext.dayWindow != nil {
+                        TodayStatusCard(
+                            goal: currentGoal,
+                            nutrients: summary.nutrients,
+                            mealCount: summary.meals.count,
+                            fibreSummary: summary.fibreSummary,
+                            availability: summary.availability,
+                            hasGoalReadError: hasGoalReadError
+                        )
+                    } else {
+                        Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
+                        Text("暂不显示今日摄入与缺口，历史记录仍保留。")
+                            .foregroundStyle(.secondary)
+                    }
+                    if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
+                        Label(
+                            "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                    }
+                    if dateContext.dayWindow != nil {
+                        RecentMealsCard(
+                            meals: Array(todayMeals.prefix(3)),
+                            hasHistory: !mealLogs.isEmpty,
+                            expandedMealID: expansion.expandedMealID,
+                            scrollRequest: expansionScroll.request,
+                            toggleMeal: { toggleMeal($0, in: proxy) },
+                            didLayoutExpansion: { request in
+                                expansionScroll.recordLayout(for: request)
+                                scrollToExpansionIfReady(in: proxy)
+                            },
+                            editMeal: { editingMeal = $0 },
+                            reuseMeal: { reuseDraft = MealEntryDraft(reusing: $0) },
+                            selectMeal: { selectedMeal = $0 },
+                            showHistory: { isShowingMealHistory = true }
+                        )
+                    } else {
+                        Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
+                            isShowingMealHistory = true
+                        }
                     }
                 }
+                .padding()
             }
-            .padding()
+            .accessibilityIdentifier("today.content")
+            .onScrollPhaseChange { _, phase in
+                // A user's own drag takes priority over a pending automatic scroll.
+                if phase == .interacting { expansionScroll.invalidate() }
+            }
         }
-        .accessibilityIdentifier("today.content")
         .background(DesignTokens.background)
         .safeAreaInset(edge: .bottom) {
             if isSelected, mealEntryPlacement == .bottom {
@@ -136,14 +153,29 @@ struct TodayView: View {
         .sheet(item: $reuseDraft) { draft in
             MealEntryView(draft: draft)
         }
-        .onChange(of: visibleMealIDs) { expansion.prune(visibleIDs: visibleMealIDs) }
-        .onChange(of: dateContext.dayWindow) { expansion.collapse() }
+        .onChange(of: visibleMealIDs) {
+            expansion.prune(visibleIDs: visibleMealIDs)
+            if let request = expansionScroll.request, !visibleMealIDs.contains(request.mealID) {
+                expansionScroll.invalidate()
+            }
+        }
+        .onChange(of: dateContext.dayWindow) {
+            expansion.collapse()
+            expansionScroll.invalidate()
+        }
+        .onChange(of: hasPresentedSheet) {
+            if hasPresentedSheet { expansionScroll.invalidate() }
+        }
         .onChange(of: isSelected, initial: true) {
-            guard isSelected else { return }
+            guard isSelected else {
+                expansionScroll.invalidate()
+                return
+            }
             refreshGoal()
             refreshDate()
         }
         .onChange(of: scenePhase, initial: true) {
+            if scenePhase != .active { expansionScroll.invalidate() }
             if scenePhase == .active, isSelected { refreshDate() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
@@ -168,8 +200,33 @@ struct TodayView: View {
         isShowingMealStart = true
     }
 
-    private func toggleMeal(_ meal: PersistentMealLog) {
-        withAnimation(reduceMotion ? nil : .default) { expansion.toggle(meal.id) }
+    private func toggleMeal(_ meal: PersistentMealLog, in proxy: ScrollViewProxy) {
+        // Capture an identity, never a SwiftData object in a deferred callback.
+        let mealID = meal.id
+        let target = expansion.expandedMealID == mealID ? nil : mealID
+        let request = expansionScroll.begin(expandedMealID: target)
+        withAnimation(reduceMotion ? nil : .default, completionCriteria: .removed) {
+            expansion.toggle(mealID)
+        } completion: {
+            guard let request else { return }
+            expansionScroll.completeAnimation(for: request)
+            scrollToExpansionIfReady(in: proxy)
+        }
+    }
+
+    private func scrollToExpansionIfReady(in proxy: ScrollViewProxy) {
+        // Layout and animation may finish in either order, especially when
+        // Reduce Motion is enabled. Consume each live request only once.
+        guard let target = expansionScroll.takeReadyTarget(
+            expandedMealID: expansion.expandedMealID,
+            visibleIDs: visibleMealIDs,
+            isActive: isSelected && scenePhase == .active && !hasPresentedSheet
+        ) else { return }
+        withAnimation(reduceMotion ? nil : .default) {
+            // A long meal or large text cannot fit in one viewport: show its
+            // beginning rather than jumping straight past the food to actions.
+            proxy.scrollTo(target, anchor: .top)
+        }
     }
 
     private func refreshDate() {
@@ -206,7 +263,9 @@ private struct RecentMealsCard: View {
     let meals: [PersistentMealLog]
     let hasHistory: Bool
     let expandedMealID: UUID?
+    let scrollRequest: InlineMealScrollState.Request?
     let toggleMeal: (PersistentMealLog) -> Void
+    let didLayoutExpansion: (InlineMealScrollState.Request) -> Void
     let editMeal: (PersistentMealLog) -> Void
     let reuseMeal: (MealLog) -> Void
     let selectMeal: (PersistentMealLog) -> Void
@@ -223,6 +282,8 @@ private struct RecentMealsCard: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(Array(meals.enumerated()), id: \.element.id) { index, meal in
+                    let laidOutRequest = expandedMealID == meal.id && scrollRequest?.mealID == meal.id
+                        ? scrollRequest : nil
                     if index > 0 {
                         Divider()
                     }
@@ -231,6 +292,14 @@ private struct RecentMealsCard: View {
                         onToggle: { toggleMeal(meal) }, onEdit: { editMeal(meal) },
                         onReuse: reuseMeal, onDetails: { selectMeal(meal) }
                     )
+                    .id(meal.id)
+                    .onGeometryChange(for: InlineMealScrollState.Request?.self) { geometry in
+                        // The Sendable transform captures only a UI request,
+                        // not the main-actor-bound persistence model.
+                        geometry.size.height > 0 ? laidOutRequest : nil
+                    } action: { request in
+                        if let request { didLayoutExpansion(request) }
+                    }
                 }
             }
 

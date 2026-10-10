@@ -558,6 +558,196 @@ final class NativeNavigationUITests: XCTestCase {
         try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
     }
 
+    func testTodayInlineExpansionAutomaticallyRevealsDetailsAboveEntryButton() throws {
+        guard !UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory else {
+            throw XCTSkip("A complete one-screen detail is a regular-text-size acceptance case; large text prioritizes its header instead.")
+        }
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 自动定位详情-\(String(UUID().uuidString.prefix(6)))"
+        try createRiceMeal(named: name, grams: 100, in: app)
+        let row = namedRecordButton(name, in: app)
+        let id = try positionCollapsedTodayMealNearBottom(row, in: app)
+        attachScreen(app, name: "NativeInlineAutoscrollUI-collapsed-at-bottom")
+
+        // No reveal/swipe after this tap: such a helper would perform the missing
+        // scroll itself and could make the unfixed implementation pass.
+        try tap(row)
+        try waitForAutoRevealedTodayMeal(id: id, includingActions: true, in: app)
+        XCTAssertFalse(app.navigationBars["餐食详情"].exists, "Automatic positioning must preserve inline detail, not open a sheet.")
+        XCTAssertTrue(app.tabBars.buttons["今日"].isSelected)
+        attachScreen(app, name: "NativeInlineAutoscrollUI-expanded-without-manual-scroll")
+
+        // Only after the no-gesture assertions may ordinary helpers scroll for
+        // cleanup. Delete this unique synthetic meal, never another saved row.
+        try tap(app.buttons["meal.details.\(id)"])
+        try requireExists(app.navigationBars["餐食详情"])
+        try verifyRiceWeight(100, rice: "熟长粒白米饭（无盐）", in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    /// Also run at the actual system AX text size: an overlong detail must bring
+    /// its header into the reading region, not force every action onto one screen.
+    func testTodayInlineAutoscrollSurvivesCollapseReopenAndMealSwitch() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let suffix = String(UUID().uuidString.prefix(6))
+        let olderName = "[UI测试] 自动定位旧餐-\(suffix)"
+        let newerName = "[UI测试] 自动定位新餐-\(suffix)"
+        try createRiceMeal(named: olderName, grams: 100, in: app)
+        try createRiceMeal(named: newerName, grams: 125, in: app)
+        let newer = namedRecordButton(newerName, in: app)
+        let newerID = try positionCollapsedTodayMealNearBottom(newer, in: app)
+
+        try tap(newer)
+        try waitForAutoRevealedTodayMeal(id: newerID, includingActions: false, in: app)
+        try tap(newer)
+        try waitFor(NSPredicate(format: "value == %@", "已收起"), on: newer, message: "Tapping the header again must collapse its inline detail.")
+        XCTAssertTrue(app.buttons["meal.edit.\(newerID)"].waitForNonExistence(timeout: 5))
+        // Collapse does not issue a new scroll request. Reopening the same real
+        // header must nevertheless obtain a fresh request and reveal it again.
+        try tap(newer)
+        try waitForAutoRevealedTodayMeal(id: newerID, includingActions: false, in: app)
+        attachScreen(app, name: "NativeInlineAutoscrollUI-collapse-reopen-without-manual-scroll")
+
+        let older = namedRecordButton(olderName, in: app)
+        let olderID: String
+        if UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory {
+            // An AX detail is longer than a screen. Collapse it before locating
+            // another header; do not demand that an offscreen control be tappable.
+            // All positioning gestures occur before the second expansion tap.
+            try tap(newer)
+            try waitFor(NSPredicate(format: "value == %@", "已收起"), on: newer, message: "The overlong detail must be collapsible from its visible header.")
+            olderID = try positionCollapsedTodayMealNearBottom(older, in: app)
+        } else {
+            try requireExists(older)
+            try waitFor(liveHittablePredicate(), on: older, message: "The next regular-size header must remain reachable while another row is expanded.")
+            olderID = try inlineMealID(of: older, in: app)
+        }
+        // Again, no reveal/swipe until positioning is verified. The normal-size
+        // path switches directly from one expanded meal to another.
+        try tap(older)
+        try waitForAutoRevealedTodayMeal(id: olderID, includingActions: false, in: app)
+        XCTAssertEqual(newer.value as? String, "已收起", "Switching meals must not leave the previous row expanded.")
+        XCTAssertFalse(app.buttons["meal.edit.\(newerID)"].exists)
+        XCTAssertFalse(app.navigationBars["餐食详情"].exists)
+        attachScreen(app, name: "NativeInlineAutoscrollUI-second-meal-without-manual-scroll")
+
+        try openMeal(named: newerName, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        try openMeal(named: olderName, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    private func inlineMealID(of row: XCUIElement, in app: XCUIApplication) throws -> String {
+        let prefix = "meal.row."
+        guard row.identifier.hasPrefix(prefix) else {
+            attachFailureEvidence(app: app, element: row, context: "Auto-scroll acceptance requires the unique named inline meal header.")
+            XCTFail("The intended synthetic meal must resolve to its real stable header identifier.")
+            throw NavigationUIFailure.missingControl
+        }
+        return String(row.identifier.dropFirst(prefix.count))
+    }
+
+    private func todayReadableFrame(in app: XCUIApplication) throws -> CGRect {
+        let container = app.descendants(matching: .any).matching(identifier: "today.content").firstMatch
+        let navigation = app.navigationBars["今日"]
+        let entry = app.buttons["today.recordMeal"]
+        let tabs = app.tabBars.firstMatch
+        try requireExists(container)
+        try requireExists(navigation)
+        try requireExists(entry)
+        try requireExists(tabs)
+        let frame = container.frame.intersection(app.frame)
+        let top = max(frame.minY, navigation.frame.maxY)
+        let bottom = min(frame.maxY, entry.frame.minY, tabs.frame.minY)
+        guard frame.width.isFinite, top.isFinite, bottom.isFinite,
+              frame.width > 44, bottom - top > 88 else {
+            attachFailureEvidence(app: app, element: container, context: "Today must expose a finite reading region above the fixed meal-entry button and below navigation.")
+            XCTFail("The real Today reading bounds must be usable before checking auto-scroll.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        return CGRect(x: frame.minX, y: top, width: frame.width, height: bottom - top)
+    }
+
+    private func positionCollapsedTodayMealNearBottom(_ row: XCUIElement, in app: XCUIApplication) throws -> String {
+        try reveal(row, in: app)
+        let id = try inlineMealID(of: row, in: app)
+        XCTAssertEqual(row.value as? String, "已收起", "The regression setup must begin with a collapsed meal.")
+        let container = app.descendants(matching: .any).matching(identifier: "today.content").firstMatch
+        // Check once more after the last permitted drag; otherwise a valid
+        // final position is reported as a setup failure without observing it.
+        for attempt in 0...8 {
+            let visible = try todayReadableFrame(in: app)
+            let header = row.frame
+            if row.isHittable, header.minY >= visible.minY,
+               header.maxY >= visible.minY + visible.height * 0.75,
+               header.maxY <= visible.maxY - 8 {
+                return id
+            }
+            guard attempt < 8 else { break }
+            // Aim for the middle of the allowed bottom-quarter band, not its
+            // edge: a tiny corrective drag may remain below native pan slop.
+            // Use only the real scroll container's unobstructed bounds.
+            // The header must settle in the bottom quarter, leaving too little
+            // room for the nutrition rows and actions. Do not require a 40 pt
+            // placement band: native drag deceleration can overshoot it.
+            // All gestures precede the expansion tap, never its assertion.
+            let quarterStart = visible.minY + visible.height * 0.75
+            let targetBottom = (quarterStart + visible.maxY - 8) / 2
+            let desiredDelta = targetBottom - header.maxY
+            let maximumStep = visible.height * 0.35
+            let delta = max(-maximumStep, min(maximumStep, desiredDelta))
+            let bounds = container.frame
+            let startY = visible.midY - delta / 2
+            let endY = visible.midY + delta / 2
+            let start = container.coordinate(withNormalizedOffset: CGVector(
+                dx: 0.04, dy: (startY - bounds.minY) / bounds.height
+            ))
+            let end = container.coordinate(withNormalizedOffset: CGVector(
+                dx: 0.04, dy: (endY - bounds.minY) / bounds.height
+            ))
+            // A slow drag held at its endpoint avoids an inertial fling during
+            // setup, particularly when an AX header occupies half the viewport.
+            start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        attachFailureEvidence(app: app, element: row, context: "The collapsed header could not be positioned in the bottom quarter of the actual reading region.")
+        XCTFail("The auto-scroll regression must start near the bottom; an arbitrary visible header is insufficient.")
+        throw NavigationUIFailure.conditionNotMet
+    }
+
+    private func waitForAutoRevealedTodayMeal(id: String, includingActions: Bool, in app: XCUIApplication) throws {
+        let row = app.buttons["meal.row.\(id)"]
+        let visible = try todayReadableFrame(in: app)
+        let controls = includingActions
+            ? [row, app.buttons["meal.edit.\(id)"], app.buttons["meal.reuse.\(id)"], app.buttons["meal.details.\(id)"]]
+            : [row]
+        var previousFrames: [CGRect]?
+        var stableObservations = 0
+        let positioned = NSPredicate { _, _ in
+            guard row.value as? String == "已展开",
+                  controls.allSatisfy({ control in
+                      guard control.exists, control.isHittable else { return false }
+                      let frame = control.frame
+                      return frame.width.isFinite && frame.height.isFinite
+                          && frame.width > 0 && frame.height > 0
+                          && frame.minY >= visible.minY - 1 && frame.maxY <= visible.maxY + 1
+                  }), row.frame.midY < visible.midY else { return false }
+            let frames = controls.map(\.frame)
+            stableObservations = previousFrames == frames ? stableObservations + 1 : 0
+            previousFrames = frames
+            return stableObservations >= 2
+        }
+        try waitFor(
+            positioned, on: row, timeout: 10,
+            message: includingActions
+                ? "One tap must automatically reveal the settled header and every inline action above the fixed entry button, without a test scroll."
+                : "One tap must automatically bring the settled expanded header into the upper reading region, without a test scroll."
+        )
+    }
+
     func testMealWeightFirstFocusDeletesLastDigitAndSaves() throws {
         executionTimeAllowance = 360
         let app = try launchApp()

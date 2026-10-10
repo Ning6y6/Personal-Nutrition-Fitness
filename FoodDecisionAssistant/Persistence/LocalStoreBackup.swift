@@ -2,20 +2,21 @@ import Foundation
 
 /// A closed, versioned archive of stored values, rather than reconstructed domain models.
 struct LocalStoreBackupDocument: Codable, Equatable, Sendable {
-    var formatVersion = 1
-    var schemaVersion = "1.0.0"
+    var formatVersion = 2
+    var schemaVersion = "2.0.0"
     var createdAt: Date
     var records: [LocalStoreBackupRecord]
 }
 
 enum LocalStoreBackupEntityKind: String, Codable, CaseIterable, Sendable {
-    case goalProfile, foodItem, containerProfile, mealLog, mealComponent
+    case goalProfile, goalVersion, foodItem, containerProfile, mealLog, mealComponent
     case reviewQueueItem, healthKitSyncRecord, mealPhotoEstimate, mealPhotoComponent
     case portionCalibration, mealTemplate, mealTemplateComponent
 
     var displayName: String {
         switch self {
         case .goalProfile: "营养目标"
+        case .goalVersion: "目标版本"
         case .foodItem: "食物"
         case .containerProfile: "容器"
         case .mealLog: "餐食"
@@ -179,7 +180,11 @@ extension LocalStoreBackupDocument {
 
     /// Archive validation is structural only. It deliberately does not call current business rules.
     func validate() throws {
-        guard formatVersion == 1, schemaVersion == "1.0.0" else {
+        guard (formatVersion == 1 && schemaVersion == "1.0.0")
+                || (formatVersion == 2 && schemaVersion == "2.0.0") else {
+            throw LocalStoreBackupError.unsupportedVersion
+        }
+        if formatVersion == 1, records.contains(where: { $0.entity == .goalVersion }) {
             throw LocalStoreBackupError.unsupportedVersion
         }
         guard createdAt.timeIntervalSinceReferenceDate.isFinite else {
@@ -273,6 +278,12 @@ private extension LocalStoreBackupEntityKind {
             ["effectiveFrom": .date, "energyKcal": .number, "proteinGrams": .number,
              "carbohydrateGrams": .number, "fatGrams": .number,
              "saturatedFatLimitGrams": .optionalNumber, "fibreGrams": .optionalNumber]
+        case .goalVersion:
+            ["effectiveDayKey": .integer, "effectiveFrom": .date, "energyKcal": .number,
+             "proteinGrams": .number, "carbohydrateGrams": .number, "fatGrams": .number,
+             "saturatedFatLimitGrams": .optionalNumber, "fibreGrams": .optionalNumber,
+             "sourceRawValue": .string, "sourceNote": .optionalString, "confirmedAt": .date,
+             "timeZoneIdentifier": .string, "commitSequence": .integer, "policyVersion": .integer]
         case .foodItem:
             ["name": .string, "categoryRawValue": .string, "unit": .string, "source": .string,
              "energyKcalPer100Units": .number, "fatGramsPer100Units": .number,

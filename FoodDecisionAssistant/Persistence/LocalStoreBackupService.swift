@@ -7,7 +7,10 @@ enum LocalStoreBackupService {
     private static let maximumArchiveBytes = 64 * 1_024 * 1_024
     /// Exports committed records through a fresh read context; never saves the shared UI context.
     static func export(from container: ModelContainer) throws -> Data {
-        let document = LocalStoreBackupDocument(createdAt: .now, records: try records(from: container))
+        let hasHistory = includesGoalHistory(container)
+        let document = LocalStoreBackupDocument(formatVersion: hasHistory ? 2 : 1,
+            schemaVersion: hasHistory ? "2.0.0" : "1.0.0", createdAt: .now,
+            records: try records(from: container))
         try document.validate()
         let data = try LocalStoreBackupCodec.encode(document)
         try validateSize(data)
@@ -43,10 +46,41 @@ enum LocalStoreBackupService {
     /// Restores only into a newly-created UUID directory. The current app container is not an input.
     /// The returned store has been closed, reopened and compared against every archived record.
     static func stageRestore(data: Data, directory: URL) throws -> URL {
+        try stageRestore(data: data, directory: directory, legacyCandidate: false)
+    }
+
+    /// Only startup's protected upgrade uses a V1 candidate. The V1 source is never migrated.
+    static func stageLegacyUpgrade(data: Data, directory: URL) throws -> URL {
+        try stageRestore(data: data, directory: directory, legacyCandidate: true)
+    }
+
+    /// SwiftData read-only configurations can still change SQLite shared-memory sidecars.
+    /// Copy all source files before any V1 reader opens them, then prove both the source and its
+    /// snapshot match the initial fingerprints. Startup has no writer attached to this V1 source.
+    /// The temporary reader never becomes an active store and its raw values are never logged.
+    static func legacyArchive(from storeURL: URL, directory: URL) throws -> Data {
+        guard storeURL.isFileURL, directory.isFileURL else { throw LocalStoreBackupError.invalidDirectory }
+        guard try StoreSchemaCompatibility.recognizedVersion(at: storeURL) == .v1 else {
+            throw StoreSchemaCompatibilityError.unrecognizedModelHashes
+        }
+        let snapshot = try LocalStoreFileSnapshot.make(from: storeURL, in: directory)
+        defer { snapshot.remove() }
+        let data = try autoreleasepool {
+            let reader = try LocalStoreBackupRestoration.legacyContainer(at: snapshot.storeURL, allowsSave: false)
+            return try export(from: reader)
+        }
+        try snapshot.verifySource(at: storeURL)
+        return data
+    }
+
+    private static func stageRestore(data: Data, directory: URL, legacyCandidate: Bool) throws -> URL {
         try validateSize(data)
         let document = try LocalStoreBackupCodec.decode(data)
         try document.validate()
         try document.validateSQLiteRestoreValues()
+        if legacyCandidate, document.formatVersion != 1 {
+            throw LocalStoreBackupError.unsupportedVersion
+        }
         guard directory.isFileURL else { throw LocalStoreBackupError.invalidDirectory }
         let stageDirectory = directory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let storeURL = stageDirectory.appendingPathComponent("restored.store")
@@ -68,10 +102,12 @@ enum LocalStoreBackupService {
             #endif
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: sourceURL.path)
             try autoreleasepool {
-                try LocalStoreBackupRestoration.write(document: document, storeURL: storeURL)
+                try LocalStoreBackupRestoration.write(document: document, storeURL: storeURL, legacyCandidate: legacyCandidate)
             }
             let restoredRecords = try autoreleasepool {
-                let container = try LocalStoreBackupRestoration.container(at: storeURL)
+                let container = try legacyCandidate
+                    ? LocalStoreBackupRestoration.legacyContainer(at: storeURL)
+                    : LocalStoreBackupRestoration.container(at: storeURL)
                 return try records(from: container)
             }
             guard restoredRecords == document.canonicalRecords else {
@@ -111,6 +147,22 @@ enum LocalStoreBackupService {
                 "saturatedFatLimitGrams": .optionalNumber(row.saturatedFatLimitGrams),
                 "fibreGrams": .optionalNumber(row.fibreGrams),
             ]))
+        }
+        if includesGoalHistory(container) {
+            for row in try context.fetch(FetchDescriptor<PersistentGoalVersion>()) {
+                result.append(.init(entity: .goalVersion, id: row.id, fields: [
+                    "effectiveDayKey": .integer(row.effectiveDayKey),
+                    "effectiveFrom": .date(row.effectiveFrom.timeIntervalSinceReferenceDate),
+                    "energyKcal": .number(row.energyKcal), "proteinGrams": .number(row.proteinGrams),
+                    "carbohydrateGrams": .number(row.carbohydrateGrams), "fatGrams": .number(row.fatGrams),
+                    "saturatedFatLimitGrams": .optionalNumber(row.saturatedFatLimitGrams),
+                    "fibreGrams": .optionalNumber(row.fibreGrams), "sourceRawValue": .string(row.sourceRawValue),
+                    "sourceNote": .optionalString(row.sourceNote),
+                    "confirmedAt": .date(row.confirmedAt.timeIntervalSinceReferenceDate),
+                    "timeZoneIdentifier": .string(row.timeZoneIdentifier),
+                    "commitSequence": .integer(row.commitSequence), "policyVersion": .integer(row.policyVersion),
+                ]))
+            }
         }
         for row in try context.fetch(FetchDescriptor<PersistentFoodItem>()) {
             result.append(.init(entity: .foodItem, id: row.id, fields: [
@@ -214,6 +266,10 @@ enum LocalStoreBackupService {
             ], relationships: ["template": .toOne(row.template?.id)]))
         }
         return LocalStoreBackupDocument(createdAt: .now, records: result).canonicalRecords
+    }
+
+    private static func includesGoalHistory(_ container: ModelContainer) -> Bool {
+        container.schema.entities.contains { $0.name == "PersistentGoalVersion" }
     }
 }
 

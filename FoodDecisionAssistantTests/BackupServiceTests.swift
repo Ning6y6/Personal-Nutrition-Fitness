@@ -15,7 +15,7 @@ struct BackupServiceTests {
         let data = try LocalStoreBackupService.export(from: source)
         let document = try LocalStoreBackupCodec.decode(data)
 
-        #expect(Set(document.records.map(\.entity)) == Set(LocalStoreBackupEntityKind.allCases))
+        #expect(Set(document.records.map(\.entity)) == Set(LocalStoreBackupEntityKind.allCases.filter { $0 != .goalVersion }))
         let restoredURL = try LocalStoreBackupService.stageRestore(data: data, directory: directory)
         let reopened = try container(at: restoredURL)
         let restored = try LocalStoreBackupCodec.decode(LocalStoreBackupService.export(from: reopened))
@@ -273,7 +273,7 @@ struct BackupServiceTests {
         let before = try autoreleasepool {
             try LocalStoreBackupCodec.decode(LocalStoreBackupService.export(from: populatedContainer(at: sourceURL))).records
         }
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, url: sourceURL, allowsSave: false, cloudKitDatabase: .none)
         let readOnly = try ModelContainer(for: schema, configurations: configuration)
         let context = ModelContext(readOnly)
@@ -331,7 +331,7 @@ struct BackupServiceTests {
     }
 
     private func container(at url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration: ModelConfiguration
         if let url {
             configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)

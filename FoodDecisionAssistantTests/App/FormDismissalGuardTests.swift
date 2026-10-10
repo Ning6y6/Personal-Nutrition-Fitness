@@ -273,6 +273,10 @@ struct FormDismissalGuardTests {
         case var .goal(draft):
             draft.energyKcal = "2100"
             return .goal(draft)
+        case let .goalHistory(draft, date, source, note, zone):
+            var changed = draft
+            changed.energyKcal = "2100"
+            return .goalHistory(draft: changed, effectiveDate: date, source: source, sourceNote: note, timeZoneIdentifier: zone)
         case let .template(name, components):
             return .template(name: name + "修改", components: components)
         }

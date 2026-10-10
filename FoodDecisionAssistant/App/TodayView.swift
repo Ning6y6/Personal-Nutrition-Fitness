@@ -23,6 +23,7 @@ struct TodayView: View {
     @State private var expansionScroll = InlineMealScrollState()
     @State private var currentGoal: GoalProfile?
     @State private var hasGoalReadError = false
+    @State private var goalContextText: String?
     @State private var dateContext = TodayDateContext()
 
     init(
@@ -69,6 +70,13 @@ struct TodayView: View {
                             availability: summary.availability,
                             hasGoalReadError: hasGoalReadError
                         )
+                        if let goalContextText {
+                            Text(goalContextText)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityIdentifier("today.goalContext")
+                        }
                     } else {
                         Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
                         Text("暂不显示今日摄入与缺口，历史记录仍保留。")
@@ -162,6 +170,7 @@ struct TodayView: View {
         .onChange(of: dateContext.dayWindow) {
             expansion.collapse()
             expansionScroll.invalidate()
+            refreshGoal()
         }
         .onChange(of: hasPresentedSheet) {
             if hasPresentedSheet { expansionScroll.invalidate() }
@@ -171,7 +180,6 @@ struct TodayView: View {
                 expansionScroll.invalidate()
                 return
             }
-            refreshGoal()
             refreshDate()
         }
         .onChange(of: scenePhase, initial: true) {
@@ -232,6 +240,7 @@ struct TodayView: View {
 
     private func refreshDate() {
         dateContext.refresh()
+        refreshGoal()
     }
 
     private func monitorDateBoundary() async {
@@ -248,13 +257,27 @@ struct TodayView: View {
 
     private func refreshGoal() {
         do {
-            let reader = ModelContext(modelContext.container)
-            reader.autosaveEnabled = false
-            let descriptor = FetchDescriptor<PersistentGoalProfile>(sortBy: [SortDescriptor(\.effectiveFrom, order: .reverse)])
-            currentGoal = try reader.fetch(descriptor).first?.domainModel
-            hasGoalReadError = false
+            guard let window = dateContext.dayWindow else {
+                currentGoal = nil
+                goalContextText = nil
+                return
+            }
+            let day = try GoalDay(containing: window.start, timeZoneIdentifier: window.timeZoneIdentifier)
+            let read = try GoalHistoryReader.read(container: modelContext.container, day: day, allowLegacyCurrent: true)
+            currentGoal = read.currentProfile
+            if read.legacyNeedsConfirmation {
+                goalContextText = "旧目标含无效值或存在歧义，请到预算与目标页明确填写并重新确认。原记录保留。"
+            } else if read.selected == nil, read.legacyCurrent != nil {
+                goalContextText = "沿用旧安装当前目标；来源与历史生效时间未知。"
+            } else if currentGoal == nil, let scheduled = read.versions.map(\.effectiveDay).filter({ $0 > day }).min() {
+                goalContextText = "今日尚无生效目标，已预约 \(GoalVersionDetailView.dayText(scheduled)) 生效。"
+            } else {
+                goalContextText = nil
+            }
+            hasGoalReadError = read.currentProfile == nil && read.legacyNeedsConfirmation
         } catch {
             currentGoal = nil
+            goalContextText = nil
             hasGoalReadError = true
         }
     }

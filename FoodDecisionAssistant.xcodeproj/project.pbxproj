@@ -94,6 +94,15 @@
 		A00000000000000000000001 /* FoodDecisionAssistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* FoodDecisionAssistantApp.swift */; };
 		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* ContentView.swift */; };
 		A00000000000000000000003 /* FoodDecisionCore in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000002 /* FoodDecisionCore */; };
+		09B000000000000000000001 /* VersionedSchemaV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000001 /* VersionedSchemaV2.swift */; };
+		09B000000000000000000002 /* PersistentGoalVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000002 /* PersistentGoalVersion.swift */; };
+		09B000000000000000000003 /* GoalHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000003 /* GoalHistoryView.swift */; };
+		09B000000000000000000004 /* GoalVersionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000004 /* GoalVersionDetailView.swift */; };
+		09B000000000000000000005 /* GoalHistoryMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000005 /* GoalHistoryMigrationTests.swift */; };
+		09B000000000000000000006 /* GoalHistoryBackupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000006 /* GoalHistoryBackupTests.swift */; };
+		09B000000000000000000007 /* GoalHistoryReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000007 /* GoalHistoryReaderTests.swift */; };
+		09B000000000000000000008 /* GoalHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000008 /* GoalHistoryUITests.swift */; };
+		09B000000000000000000009 /* LocalStoreFileSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A000000000000000000009 /* LocalStoreFileSnapshot.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -204,6 +213,15 @@
 		B00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B00000000000000000000003 /* ShiHeng.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiHeng.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B00000000000000000000004 /* FoodDecisionAssistant.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FoodDecisionAssistant.entitlements; sourceTree = "<group>"; };
+		09A000000000000000000001 /* VersionedSchemaV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/VersionedSchemaV2.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000002 /* PersistentGoalVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/PersistentGoalVersion.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000003 /* GoalHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/GoalHistoryView.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000004 /* GoalVersionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/GoalVersionDetailView.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000005 /* GoalHistoryMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/GoalHistoryMigrationTests.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000006 /* GoalHistoryBackupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/GoalHistoryBackupTests.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000007 /* GoalHistoryReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/GoalHistoryReaderTests.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000008 /* GoalHistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantUITests/GoalHistoryUITests.swift; sourceTree = SOURCE_ROOT; };
+		09A000000000000000000009 /* LocalStoreFileSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/LocalStoreFileSnapshot.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,7 +247,10 @@
 /* Begin PBXGroup section */
 		DF0000000000000000000001 /* FoodDecisionAssistantUITests */ = {
 			isa = PBXGroup;
-			children = (BF0000000000000000000001 /* NativeNavigationUITests.swift */,);
+			children = (
+				09A000000000000000000008 /* GoalHistoryUITests.swift */,
+				BF0000000000000000000001 /* NativeNavigationUITests.swift */,
+			);
 			path = FoodDecisionAssistantUITests;
 			sourceTree = "<group>";
 		};
@@ -244,6 +265,9 @@
 		7C70F41D3070297A0089CDBC /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				09A000000000000000000009 /* LocalStoreFileSnapshot.swift */,
+				09A000000000000000000002 /* PersistentGoalVersion.swift */,
+				09A000000000000000000001 /* VersionedSchemaV2.swift */,
 				7C70F41E3070297A0089CDBC /* VersionedSchemaV1.swift */,
 				B10000000000000000000001 /* SeedFoodCatalog.swift */,
 				B10000000000000000000007 /* MealTemplatePersistence.swift */,
@@ -262,6 +286,9 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				09A000000000000000000007 /* GoalHistoryReaderTests.swift */,
+				09A000000000000000000006 /* GoalHistoryBackupTests.swift */,
+				09A000000000000000000005 /* GoalHistoryMigrationTests.swift */,
 				BFB200000000000000000002 /* InlineMealScrollStateTests.swift */,
 				BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */,
 				BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */,
@@ -315,6 +342,8 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				09A000000000000000000004 /* GoalVersionDetailView.swift */,
+				09A000000000000000000003 /* GoalHistoryView.swift */,
 				BFB200000000000000000001 /* InlineMealScrollState.swift */,
 				BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */,
 				BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */,
@@ -500,11 +529,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		CF0000000000000000000003 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		CF0000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				09B000000000000000000008 /* GoalHistoryUITests.swift in Sources */,
+				AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7C70F42630702A5B0089CDBC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09B000000000000000000007 /* GoalHistoryReaderTests.swift in Sources */,
+				09B000000000000000000006 /* GoalHistoryBackupTests.swift in Sources */,
+				09B000000000000000000005 /* GoalHistoryMigrationTests.swift in Sources */,
 				AFB200000000000000000002 /* InlineMealScrollStateTests.swift in Sources */,
 				AFB100000000000000000003 /* EmptyRecordedEnergyTests.swift in Sources */,
 				AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */,
@@ -535,6 +575,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09B000000000000000000009 /* LocalStoreFileSnapshot.swift in Sources */,
+				09B000000000000000000004 /* GoalVersionDetailView.swift in Sources */,
+				09B000000000000000000003 /* GoalHistoryView.swift in Sources */,
+				09B000000000000000000002 /* PersistentGoalVersion.swift in Sources */,
+				09B000000000000000000001 /* VersionedSchemaV2.swift in Sources */,
 				AFB200000000000000000001 /* InlineMealScrollState.swift in Sources */,
 				AFB100000000000000000001 /* EmptyRecordedEnergyRing.swift in Sources */,
 				AFB100000000000000000002 /* EmptyRecordedEnergyValue.swift in Sources */,

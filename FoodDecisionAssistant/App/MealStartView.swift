@@ -184,5 +184,5 @@ private struct MealReuseRow: View {
 
 #Preview {
     MealStartView()
-        .modelContainer(for: VersionedSchemaV1.models, inMemory: true)
+        .modelContainer(for: VersionedSchemaV2.models, inMemory: true)
 }

@@ -83,7 +83,7 @@ struct TodayMealSummaryTests {
     }
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         return try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [config])
     }

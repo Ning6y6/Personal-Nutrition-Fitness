@@ -5,14 +5,21 @@ import SwiftData
 @MainActor
 enum LocalStoreBackupRestoration {
     static func container(at storeURL: URL) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
         return try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: configuration)
     }
 
-    static func write(document: LocalStoreBackupDocument, storeURL: URL) throws {
+    static func legacyContainer(at storeURL: URL, allowsSave: Bool = true) throws -> ModelContainer {
+        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let configuration = ModelConfiguration(schema: schema, url: storeURL, allowsSave: allowsSave, cloudKitDatabase: .none)
+        // Never provide the current migration plan while reading a V1 source.
+        return try ModelContainer(for: schema, configurations: configuration)
+    }
+
+    static func write(document: LocalStoreBackupDocument, storeURL: URL, legacyCandidate: Bool = false) throws {
         try document.validate()
-        let container = try container(at: storeURL)
+        let container = try legacyCandidate ? legacyContainer(at: storeURL) : container(at: storeURL)
         let context = ModelContext(container)
         context.autosaveEnabled = false
         var meals: [UUID: PersistentMealLog] = [:]
@@ -29,6 +36,17 @@ enum LocalStoreBackupRestoration {
         for record in document.records {
             let value = LocalStoreBackupRecordReader(record: record)
             switch record.entity {
+            case .goalVersion:
+                let row = PersistentGoalVersion(archivedID: record.id,
+                    effectiveDayKey: try value.integer("effectiveDayKey"), effectiveFrom: try value.date("effectiveFrom"),
+                    energyKcal: try value.number("energyKcal"), proteinGrams: try value.number("proteinGrams"),
+                    carbohydrateGrams: try value.number("carbohydrateGrams"), fatGrams: try value.number("fatGrams"),
+                    saturatedFatLimitGrams: try value.optionalNumber("saturatedFatLimitGrams"),
+                    fibreGrams: try value.optionalNumber("fibreGrams"), sourceRawValue: try value.string("sourceRawValue"),
+                    sourceNote: try value.optionalString("sourceNote"), confirmedAt: try value.date("confirmedAt"),
+                    timeZoneIdentifier: try value.string("timeZoneIdentifier"),
+                    commitSequence: try value.integer("commitSequence"), policyVersion: try value.integer("policyVersion"))
+                context.insert(row)
             case .goalProfile:
                 let row = PersistentGoalProfile(domain: try GoalProfile(energyKcal: 1, proteinGrams: 0, carbohydrateGrams: 0, fatGrams: 0))
                 row.id = record.id

@@ -14,9 +14,12 @@ swiftc -swift-version 6 -parse-as-library -module-name FoodDecisionAssistant \
   -I "$core_products" -L "$core_products" -lFoodDecisionCore \
   -module-cache-path "$project_root/.build/ProbeModules" \
   "$project_root/FoodDecisionAssistant/Persistence/VersionedSchemaV1.swift" \
+  "$project_root/FoodDecisionAssistant/Persistence/VersionedSchemaV2.swift" \
+  "$project_root/FoodDecisionAssistant/Persistence/PersistentGoalVersion.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/MealTemplatePersistence.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/ShiHengMigrationPlan.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/StoreSchemaCompatibility.swift" \
+  "$project_root/FoodDecisionAssistant/Persistence/LocalStoreFileSnapshot.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackup.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackupService.swift" \
   "$project_root/FoodDecisionAssistant/Persistence/LocalStoreBackupRestoration.swift" \

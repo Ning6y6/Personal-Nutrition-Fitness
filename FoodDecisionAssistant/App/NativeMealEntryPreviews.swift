@@ -6,7 +6,7 @@ import SwiftUI
 // database, and their fictitious numbers are not suggested user targets.
 @MainActor
 private func mealEntryPreviewContainer(scenario: UI1PreviewScenario) throws -> ModelContainer {
-    let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+    let schema = Schema(versionedSchema: VersionedSchemaV2.self)
     let configuration = ModelConfiguration(
         schema: schema,
         isStoredInMemoryOnly: true,

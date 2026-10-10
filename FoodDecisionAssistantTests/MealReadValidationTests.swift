@@ -87,7 +87,7 @@ struct MealReadValidationTests {
     }
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         return try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [configuration])
     }

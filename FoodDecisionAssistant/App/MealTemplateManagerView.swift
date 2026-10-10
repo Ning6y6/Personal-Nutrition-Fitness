@@ -123,5 +123,5 @@ struct MealTemplateManagerView: View {
 
 #Preview {
     MealTemplateManagerView()
-        .modelContainer(for: VersionedSchemaV1.models, inMemory: true)
+        .modelContainer(for: VersionedSchemaV2.models, inMemory: true)
 }

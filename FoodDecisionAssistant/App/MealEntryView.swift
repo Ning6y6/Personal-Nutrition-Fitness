@@ -476,5 +476,5 @@ private enum FocusedField: Hashable {
 
 #Preview {
     MealEntryView()
-        .modelContainer(for: VersionedSchemaV1.models, inMemory: true)
+        .modelContainer(for: VersionedSchemaV2.models, inMemory: true)
 }

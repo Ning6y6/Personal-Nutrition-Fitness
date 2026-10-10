@@ -12,5 +12,12 @@ enum FormDraftSnapshot: Equatable {
         components: [MealFormComponentDraft]
     )
     case goal(GoalInputDraft)
+    case goalHistory(
+        draft: GoalInputDraft,
+        effectiveDate: Date,
+        source: GoalSource,
+        sourceNote: String,
+        timeZoneIdentifier: String
+    )
     case template(name: String, components: [MealFormComponentDraft])
 }

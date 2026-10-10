@@ -52,7 +52,7 @@ struct FibreSummaryIntegrationTests {
         let fibre = try #require(try daySummary(in: reopened).fibreSummary)
         #expect(fibre.knownSubtotalGrams == nil)
         #expect(fibre.unknownComponentCount == 1)
-        #expect(try StoreSchemaCompatibility.modelHashes(at: url) == StoreSchemaCompatibility.frozenModelHashes)
+        #expect(try StoreSchemaCompatibility.modelHashes(at: url) == StoreSchemaCompatibility.latestModelHashes)
     }
 
     @Test("Flattening saved components retains known fibre hidden by a mixed meal's nil total")
@@ -345,7 +345,7 @@ struct FibreSummaryIntegrationTests {
     }
 
     private func makeContainer(at url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration: ModelConfiguration
         if let url { configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none) }
         else { configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none) }

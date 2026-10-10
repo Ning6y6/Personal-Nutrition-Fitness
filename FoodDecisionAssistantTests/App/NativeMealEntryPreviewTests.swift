@@ -45,7 +45,7 @@ struct NativeMealEntryPreviewTests {
     }
 
     private func makeFixture() throws -> NativeEntryPreviewFixture {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext

@@ -23,12 +23,12 @@ struct NativeNavigationTests {
         #expect(AppTab.allCases.allSatisfy { $0.systemImage.isEmpty == false })
     }
 
-    @Test("Navigation fixtures retain the frozen twelve-entity schema and idempotent seed catalog")
+    @Test("Navigation fixtures use V2 while retaining frozen V1 definitions and an idempotent seed catalog")
     func inMemorySchemaContract() throws {
         let container = try makeContainer()
         let context = container.mainContext
         #expect(VersionedSchemaV1.models.count == 12)
-        #expect(container.schema.entities.count == 12)
+        #expect(container.schema.entities.count == 13)
         #expect(try inventory(in: context) == [1, 12, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0])
         #expect(try SeedFoodCatalog.importIfNeeded(into: context) == 0)
         #expect(try context.fetchCount(FetchDescriptor<PersistentFoodItem>()) == 12)
@@ -74,7 +74,7 @@ struct NativeNavigationTests {
     }
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext

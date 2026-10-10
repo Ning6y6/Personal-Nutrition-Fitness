@@ -67,13 +67,13 @@ struct StoreBootstrapTests {
 
     @Test("Explicit local configuration retains the legacy default store URL without opening it")
     func defaultLocationDoesNotChange() {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         #expect(ModelConfiguration(schema: schema).url == ModelConfiguration(schema: schema, cloudKitDatabase: .none).url)
     }
 
     @Test("System-provided production paths pass the same sandbox-boundary validator")
     func defaultLocationsStayInsideAppContainer() throws {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let validator = LocalStorePathValidator()
         for url in [
             ModelConfiguration(schema: schema, cloudKitDatabase: .none).url,
@@ -103,15 +103,15 @@ struct StoreBootstrapTests {
         #expect(FileManager.default.fileExists(atPath: fixture.defaultStoreURL.path) == false)
     }
 
-    @Test("A file-backed twelve-entity schema exactly matches the frozen metadata hashes")
+    @Test("The current file-backed schema retains all twelve frozen entity hashes")
     func diskSchemaHashesAreFrozen() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
         try autoreleasepool { _ = try LocalStoreBootstrap.openStore(at: fixture.defaultStoreURL) }
-        #expect(try StoreSchemaCompatibility.modelHashes(at: fixture.defaultStoreURL) == StoreSchemaCompatibility.frozenModelHashes)
+        #expect(try StoreSchemaCompatibility.modelHashes(at: fixture.defaultStoreURL) == StoreSchemaCompatibility.latestModelHashes)
         #expect(StoreSchemaCompatibility.frozenModelHashes.count == 12)
-        #expect(ShiHengMigrationPlan.schemas.count == 1)
-        #expect(ShiHengMigrationPlan.stages.isEmpty)
+        #expect(ShiHengMigrationPlan.schemas.count == 2)
+        #expect(ShiHengMigrationPlan.stages.count == 1)
     }
 
     @Test("Corrupt startup files are preserved and never replaced with an empty database")
@@ -487,7 +487,7 @@ struct StoreBootstrapTests {
     }
 
     private func makeArchive() throws -> Data {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: configuration)
         container.mainContext.insert(try meal(title: "synthetic restored meal"))

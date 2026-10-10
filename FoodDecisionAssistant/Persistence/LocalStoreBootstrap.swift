@@ -84,7 +84,7 @@ final class LocalStoreBootstrap {
         opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore
     ) {
         // Keep precisely the default location used before startup protection was introduced.
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         self.defaultStoreURL = defaultStoreURL ?? ModelConfiguration(schema: schema, cloudKitDatabase: .none).url
         self.restoreDirectory = restoreDirectory ?? URL.applicationSupportDirectory.appendingPathComponent("BackupVerification", isDirectory: true)
         self.selectionURL = selectionURL ?? URL.applicationSupportDirectory.appendingPathComponent("active-store.json")
@@ -94,7 +94,7 @@ final class LocalStoreBootstrap {
     }
 
     static func openStore(at storeURL: URL) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
         return try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: configuration)
     }
@@ -120,6 +120,13 @@ final class LocalStoreBootstrap {
                     }
                 }
             }
+            if FileManager.default.fileExists(atPath: url.path),
+               try StoreSchemaCompatibility.recognizedVersion(at: url) == .v1 {
+                // Upgrade only a newly reconstructed candidate. Even the V1 logical reader opens
+                // a protected snapshot, because a read-only SQLite reader can change sidecars.
+                try upgradeLegacyStore(at: url)
+                return
+            }
             let candidate = try openCheckedStore(at: url)
             try protectStoreFiles(at: url)
             // Mark even the default store as seen. Its later loss must not look like first install.
@@ -136,12 +143,31 @@ final class LocalStoreBootstrap {
     }
 
     func activateRestoredStore(at storeURL: URL) throws {
+        try activateVerifiedStore(at: storeURL, allowLegacyMigration: false)
+    }
+
+    /// The same verification and atomic publication protect both user-requested recovery and
+    /// automatic schema upgrades. A schema upgrade is not a user confirmation of nutrition goals.
+    private func activateVerifiedStore(at storeURL: URL, allowLegacyMigration: Bool) throws {
         do {
             try ensureNoUnsavedChanges()
             try validateRestoredPath(storeURL, requireBackup: true)
             guard FileManager.default.fileExists(atPath: storeURL.path) else { throw LocalStoreBootstrapError.missingSelectedStore }
             let backupURL = storeURL.deletingLastPathComponent().appendingPathComponent("source-backup.shihengbackup")
             let document = try readSourceBackup(at: backupURL)
+            if allowLegacyMigration, document.formatVersion != 1 {
+                throw LocalStoreBootstrapError.invalidBackup
+            }
+            if allowLegacyMigration {
+                // Migration and its first comparison use a temporary container. Release it before
+                // reopening with V2 only; no selection is published until disk reopen also agrees.
+                try autoreleasepool {
+                    let migrated = try openCheckedStore(at: storeURL, allowLegacyMigration: true)
+                    guard try LocalStoreBackupService.records(from: migrated) == document.canonicalRecords else {
+                        throw LocalStoreBootstrapError.restoredStoreMismatch
+                    }
+                }
+            }
             let candidate = try openCheckedStore(at: storeURL)
             guard try LocalStoreBackupService.records(from: candidate) == document.canonicalRecords else {
                 throw LocalStoreBootstrapError.restoredStoreMismatch
@@ -162,13 +188,32 @@ final class LocalStoreBootstrap {
         }
     }
 
+    private func upgradeLegacyStore(at sourceURL: URL) throws {
+        try protectStoreFiles(at: sourceURL)
+        try validateNoSymbolicLinks(restoreDirectory)
+        let archive: Data
+        do {
+            archive = try LocalStoreBackupService.legacyArchive(from: sourceURL, directory: restoreDirectory)
+        } catch { throw LocalStoreBootstrapError.openFailed }
+        let candidateURL: URL
+        do {
+            candidateURL = try LocalStoreBackupService.stageLegacyUpgrade(data: archive, directory: restoreDirectory)
+        } catch { throw LocalStoreBootstrapError.openFailed }
+        // Failure leaves the source and prior selection untouched. Retain this protected
+        // candidate's original archive for recovery; never clean up the selected source here.
+        try activateVerifiedStore(at: candidateURL, allowLegacyMigration: true)
+    }
+
     private func ensureNoUnsavedChanges() throws {
         guard container?.mainContext.hasChanges != true else { throw LocalStoreBootstrapError.unsavedChanges }
     }
 
-    private func openCheckedStore(at url: URL) throws -> ModelContainer {
+    private func openCheckedStore(at url: URL, allowLegacyMigration: Bool = false) throws -> ModelContainer {
         if FileManager.default.fileExists(atPath: url.path) {
-            try StoreSchemaCompatibility.validateExistingStore(at: url)
+            let version = try StoreSchemaCompatibility.recognizedVersion(at: url)
+            guard version == .v2 || allowLegacyMigration else {
+                throw StoreSchemaCompatibilityError.unrecognizedModelHashes
+            }
             try protectStoreFiles(at: url)
         } else {
             // Parent protection is set before SQLite creates any sensitive file.
@@ -181,8 +226,8 @@ final class LocalStoreBootstrap {
         let opened: ModelContainer
         do { opened = try opener(url) }
         catch { throw LocalStoreBootstrapError.openFailed }
-        // Also checks a newly created store against the frozen version before using it.
-        try StoreSchemaCompatibility.validateExistingStore(at: url)
+        // Both a newly created store and a migrated candidate must match the exact V2 manifest.
+        try StoreSchemaCompatibility.validateLatestStore(at: url)
         return opened
     }
 

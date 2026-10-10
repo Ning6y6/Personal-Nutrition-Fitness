@@ -165,7 +165,7 @@ struct MealIntakeAvailabilityTests {
         let reader = ModelContext(reopened)
         reader.autosaveEnabled = false
         #expect(try reader.fetchCount(FetchDescriptor<PersistentMealLog>()) == expected.recordCount)
-        #expect(try StoreSchemaCompatibility.modelHashes(at: url) == StoreSchemaCompatibility.frozenModelHashes)
+        #expect(try StoreSchemaCompatibility.modelHashes(at: url) == StoreSchemaCompatibility.latestModelHashes)
     }
 
     private func saveScenario(_ scenario: String, in container: ModelContainer) throws -> ScenarioExpectation {
@@ -226,7 +226,7 @@ struct MealIntakeAvailabilityTests {
     }
 
     private func makeContainer(at url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration: ModelConfiguration
         if let url {
             configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)

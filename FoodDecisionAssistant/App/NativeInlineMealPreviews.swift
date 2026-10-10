@@ -17,7 +17,7 @@ struct NativeInlineMealPreviewFixture {
     let changedSourceFood: PersistentFoodItem
 
     static func make(_ scenario: Scenario) throws -> Self {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(
             schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none
         )

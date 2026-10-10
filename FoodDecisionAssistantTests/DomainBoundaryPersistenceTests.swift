@@ -153,8 +153,8 @@ struct DomainBoundaryPersistenceTests {
         #expect(row.estimateEvidenceGradeRawValue == "d")
         #expect(row.entryMethodRawValue == "unrecognized historical method")
         #expect(throws: PersistentDomainConversionError.invalidRecord(entity: .mealLog, id: rawID, field: "energyKcal")) { _ = try row.domainModel() }
-        #expect(try StoreSchemaCompatibility.modelHashes(at: sourceURL) == StoreSchemaCompatibility.frozenModelHashes)
-        #expect(try StoreSchemaCompatibility.modelHashes(at: candidate) == StoreSchemaCompatibility.frozenModelHashes)
+        #expect(try StoreSchemaCompatibility.modelHashes(at: sourceURL) == StoreSchemaCompatibility.latestModelHashes)
+        #expect(try StoreSchemaCompatibility.modelHashes(at: candidate) == StoreSchemaCompatibility.latestModelHashes)
     }
 
     @Test("Seed validation retains unknown fibre as nil instead of manufacturing zero")
@@ -213,7 +213,7 @@ struct DomainBoundaryPersistenceTests {
     }
 
     private func makeContainer(at url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration: ModelConfiguration
         if let url { configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none) }
         else { configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none) }

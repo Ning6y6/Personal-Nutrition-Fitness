@@ -42,12 +42,11 @@ struct StoreProtectionProbe {
             try files.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
         }
         let oldURL = working.appending(path: "default.store")
-        let oldHashes = try hashes(at: oldURL)
+        let originalVersion = try StoreSchemaCompatibility.recognizedVersion(at: oldURL)
         let currentURL = output.appending(path: "current-schema.store")
         try createCurrentStore(at: currentURL)
-        let currentHashes = try hashes(at: currentURL)
-        guard oldHashes == currentHashes else { throw ProbeError.unidentifiedSchema }
-        print("Schema hashes match current V1: \(oldHashes.count) entities")
+        try StoreSchemaCompatibility.validateLatestStore(at: currentURL)
+        print("Protected sample is a recognized frozen schema; latest V2 has 13 entities")
 
         let originalData = try exportStore(at: oldURL)
         let backupURL = output.appending(path: "protected-backup.json")
@@ -68,6 +67,15 @@ struct StoreProtectionProbe {
             if let failure = bootstrap.failure { throw failure }
             guard bootstrap.failure == nil, let opened = bootstrap.container else { throw ProbeError.initialStartupFailed }
             guard try LocalStoreBackupService.records(from: opened) == original.canonicalRecords else { throw ProbeError.initialRecordsMismatch }
+            if originalVersion == .v1 {
+                guard bootstrap.activeStoreURL != oldURL,
+                      try StoreSchemaCompatibility.recognizedVersion(at: oldURL) == .v1 else {
+                    throw ProbeError.sourceWasMigrated
+                }
+                guard try opened.mainContext.fetchCount(FetchDescriptor<PersistentGoalVersion>()) == 0 else {
+                    throw ProbeError.fabricatedGoalHistory
+                }
+            }
             try bootstrap.activateRestoredStore(at: restoredURL)
         }
         try autoreleasepool {
@@ -98,22 +106,26 @@ struct StoreProtectionProbe {
     }
 
     private static func createCurrentStore(at url: URL) throws {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [configuration])
         try container.mainContext.save()
     }
 
     private static func exportStore(at url: URL) throws -> Data {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
-        let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
         try StoreSchemaCompatibility.validateExistingStore(at: url)
-        let container = try ModelContainer(for: schema, migrationPlan: ShiHengMigrationPlan.self, configurations: [configuration])
+        let container: ModelContainer
+        switch try StoreSchemaCompatibility.recognizedVersion(at: url) {
+        case .v1:
+            return try LocalStoreBackupService.legacyArchive(from: url, directory: url.deletingLastPathComponent())
+        case .v2: container = try LocalStoreBootstrap.openStore(at: url)
+        }
         return try LocalStoreBackupService.export(from: container)
     }
 
     enum ProbeError: String, Error {
         case arguments, outputExists, unidentifiedSchema, recordMismatch
         case initialStartupFailed, initialRecordsMismatch, restoredStartupFailed, restoredRecordsMismatch
+        case sourceWasMigrated, fabricatedGoalHistory
     }
 }

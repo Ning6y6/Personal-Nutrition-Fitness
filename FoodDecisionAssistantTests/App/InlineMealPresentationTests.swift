@@ -140,7 +140,7 @@ struct InlineMealPresentationTests {
         #expect(fixture.container.mainContext.hasChanges == false)
     }
 
-    @Test("Native expanded rows and real list roots render without changing all twelve entity types", arguments: [
+    @Test("Native expanded rows and real list roots render without changing any current entity records", arguments: [
         (NativeInlineMealPreviewFixture.Scenario.confirmed, "light", false, "row"),
         (.confirmed, "dark", false, "row"), (.confirmed, "light", true, "row"), (.confirmed, "dark", true, "row"),
         (.longMixed, "light", false, "row"), (.longMixed, "dark", false, "row"),
@@ -158,7 +158,7 @@ struct InlineMealPresentationTests {
         let before = try LocalStoreBackupService.records(from: fixture.container)
         let beforeInventory = inventory(before)
         try #require(VersionedSchemaV1.models.count == 12)
-        try #require(fixture.container.schema.entities.count == 12)
+        try #require(fixture.container.schema.entities.count == 13)
         try #require(beforeInventory.count == LocalStoreBackupEntityKind.allCases.count)
         try #require(context.hasChanges == false)
 

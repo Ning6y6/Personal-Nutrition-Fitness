@@ -325,5 +325,5 @@ private extension PersistentMealLog {
 
 #Preview {
     MealHistoryView()
-        .modelContainer(for: VersionedSchemaV1.models, inMemory: true)
+        .modelContainer(for: VersionedSchemaV2.models, inMemory: true)
 }

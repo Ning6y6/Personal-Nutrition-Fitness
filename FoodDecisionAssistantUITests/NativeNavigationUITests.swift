@@ -1195,6 +1195,9 @@ final class NativeNavigationUITests: XCTestCase {
         let formBar = app.navigationBars["每日预算与目标"]
         let save = formBar.buttons["保存"]
         XCTAssertFalse(save.isEnabled, "Numeric edits must not silently confirm themselves.")
+        let today = app.buttons["goal.effectiveToday"]
+        try reveal(today, in: app)
+        try tap(today)
         let confirmation = app.switches["我已核对并确认预算、目标与上限"]
         try reveal(confirmation, in: app)
         if confirmation.value as? String != "1" {

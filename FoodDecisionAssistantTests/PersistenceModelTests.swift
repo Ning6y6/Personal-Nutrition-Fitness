@@ -411,7 +411,7 @@ struct PersistenceModelTests {
     }
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(versionedSchema: VersionedSchemaV1.self)
+        let schema = Schema(versionedSchema: VersionedSchemaV2.self)
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         return ModelContext(try ModelContainer(for: schema, configurations: configuration))
     }

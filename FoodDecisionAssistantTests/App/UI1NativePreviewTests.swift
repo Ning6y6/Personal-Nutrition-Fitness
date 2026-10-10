@@ -68,6 +68,32 @@ struct UI1NativePreviewTests {
         try await recordPNG(content, named: "UI1-no-target-\(appearance).png", appearance: appearance)
     }
 
+    @Test("Empty recorded-zero ring with and without saved goals", .serialized, arguments: [
+        ("light", false, false), ("dark", false, false),
+        ("light", true, false), ("dark", true, false),
+        ("light", false, true), ("dark", false, true),
+        ("light", true, true), ("dark", true, true),
+    ])
+    func recordEmptyRing(configuration: (String, Bool, Bool)) async throws {
+        let (appearance, largestType, hasGoal) = configuration
+        let goal = hasGoal ? try UI1PreviewScenario.empty.goal() : nil
+        let content = TodayStatusCard(
+            goal: goal, nutrients: nil, mealCount: 0, fibreSummary: nil,
+            availability: .noRecords
+        )
+        .padding()
+        .background(DesignTokens.background)
+        .tint(DesignTokens.accent)
+        .environment(\.colorScheme, appearance == "dark" ? .dark : .light)
+        .environment(\.dynamicTypeSize, largestType ? .accessibility5 : .large)
+        .environment(\.locale, Locale(identifier: "zh_CN"))
+        .frame(width: 430, alignment: .topLeading)
+
+        let type = largestType ? "AX5" : "default"
+        let budget = hasGoal ? "with-goal" : "no-goal"
+        try await recordPNG(content, named: "EmptyEnergy-\(appearance)-\(type)-\(budget).png", appearance: appearance)
+    }
+
     private func recordPNG<Content: View>(
         _ content: Content,
         named name: String,

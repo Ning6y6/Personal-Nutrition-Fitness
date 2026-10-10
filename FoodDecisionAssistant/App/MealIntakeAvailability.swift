@@ -8,6 +8,10 @@ enum MealIntakeAvailability: Equatable, Sendable {
 
     var canShowNutritionProgress: Bool { self == .available }
 
+    /// A display-only zero for an empty record list, not confirmed dietary intake.
+    /// Drafts, invalid snapshots and unavailable totals must never receive a fake zero.
+    var showsRecordedZeroPlaceholder: Bool { self == .noRecords }
+
     var title: String {
         switch self {
         case .noRecords: "今日尚未记录"

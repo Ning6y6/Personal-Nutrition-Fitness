@@ -36,6 +36,19 @@ struct TodayStatusPreview: View {
     TodayStatusPreview(scenario: .empty).preferredColorScheme(.dark)
 }
 
+#Preview("空态 · 最大辅助字体") {
+    ScrollView {
+        TodayStatusPreview(scenario: .empty)
+    }
+    .dynamicTypeSize(.accessibility5)
+}
+
+#Preview("空态 · 未设置预算") {
+    TodayStatusCard(goal: nil, nutrients: nil, mealCount: 0, fibreSummary: nil, availability: .noRecords)
+        .padding()
+        .background(DesignTokens.background)
+}
+
 #Preview("达到预算") {
     TodayStatusPreview(scenario: .atBudget)
 }

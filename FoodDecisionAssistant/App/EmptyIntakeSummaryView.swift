@@ -1,8 +1,8 @@
 import FoodDecisionCore
 import SwiftUI
 
-/// Neutral unavailable-intake state. Saved targets remain readable without implying that
-/// missing meal records are zero intake, under budget, or a completed dietary target.
+/// Neutral unavailable-intake state. An empty record list keeps a zero placeholder ring,
+/// without implying actual zero intake, remaining budget or a completed dietary target.
 struct EmptyIntakeSummaryView: View {
     let availability: MealIntakeAvailability
     let goal: GoalProfile?
@@ -11,6 +11,9 @@ struct EmptyIntakeSummaryView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label(availability.title, systemImage: availability.symbol)
                 .font(.headline)
+            if availability.showsRecordedZeroPlaceholder {
+                EmptyRecordedEnergyRing()
+            }
             Text(availability.explanation)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

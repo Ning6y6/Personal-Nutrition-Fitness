@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AFB100000000000000000001 /* EmptyRecordedEnergyRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */; };
+		AFB100000000000000000002 /* EmptyRecordedEnergyValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */; };
+		AFB100000000000000000003 /* EmptyRecordedEnergyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */; };
 		AFA100000000000000000001 /* WeightTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA100000000000000000001 /* WeightTextField.swift */; };
 		AH0000000000000000000001 /* MealExpandableRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000001; };
 		AH0000000000000000000002 /* NativeInlineMealPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BH0000000000000000000002; };
@@ -109,6 +112,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyRecordedEnergyRing.swift; sourceTree = "<group>"; };
+		BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyRecordedEnergyValue.swift; sourceTree = "<group>"; };
+		BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/EmptyRecordedEnergyTests.swift; sourceTree = "<group>"; };
 		BFA100000000000000000001 /* WeightTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightTextField.swift; sourceTree = "<group>"; };
 		BH0000000000000000000001 /* MealExpandableRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealExpandableRow.swift; sourceTree = "<group>"; };
 		BH0000000000000000000002 /* NativeInlineMealPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeInlineMealPreviews.swift; sourceTree = "<group>"; };
@@ -252,6 +258,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				BFB100000000000000000003 /* EmptyRecordedEnergyTests.swift */,
 				BG0000000000000000000003 /* NativeMealEntryPreviewTests.swift */,
 				BH0000000000000000000003 /* InlineMealPresentationTests.swift */,
 				BE0000000000000000000007 /* NativeNavigationTests.swift */,
@@ -303,6 +310,8 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				BFB100000000000000000001 /* EmptyRecordedEnergyRing.swift */,
+				BFB100000000000000000002 /* EmptyRecordedEnergyValue.swift */,
 				BG0000000000000000000001 /* TodayMealEntryButton.swift */,
 				BG0000000000000000000002 /* NativeMealEntryPreviews.swift */,
 				BG0000000000000000000004 /* NativeFoodMenuRow.swift */,
@@ -490,6 +499,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFB100000000000000000003 /* EmptyRecordedEnergyTests.swift in Sources */,
 				AG0000000000000000000003 /* NativeMealEntryPreviewTests.swift in Sources */,
 				AH0000000000000000000003 /* InlineMealPresentationTests.swift in Sources */,
 				AE0000000000000000000007 /* NativeNavigationTests.swift in Sources */,
@@ -518,6 +528,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFB100000000000000000001 /* EmptyRecordedEnergyRing.swift in Sources */,
+				AFB100000000000000000002 /* EmptyRecordedEnergyValue.swift in Sources */,
 				AG0000000000000000000001 /* TodayMealEntryButton.swift in Sources */,
 				AG0000000000000000000002 /* NativeMealEntryPreviews.swift in Sources */,
 				AG0000000000000000000004 /* NativeFoodMenuRow.swift in Sources */,

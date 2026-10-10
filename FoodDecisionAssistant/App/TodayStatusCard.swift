@@ -15,7 +15,7 @@ struct TodayStatusCard: View {
             VStack(alignment: .leading) {
                 Text(availability.canShowNutritionProgress ? "今日已记录摄入" : "今日记录")
                     .font(.headline)
-                Text(availability == .unavailable ? "\(mealCount) 餐已记录，合计暂不可用" : availability.canShowNutritionProgress ? "\(mealCount) 餐计入合计" : "尚无正式摄入合计")
+                Text(recordCountText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .contentTransition(reduceMotion ? .identity : .numericText())
@@ -98,6 +98,15 @@ struct TodayStatusCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(DesignTokens.surface, in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private var recordCountText: String {
+        switch availability {
+        case .noRecords: "0 餐已记录"
+        case .noConfirmedRecords: "尚无正式摄入合计"
+        case .available: "\(mealCount) 餐计入合计"
+        case .unavailable: "\(mealCount) 餐已记录，合计暂不可用"
+        }
     }
 }
 

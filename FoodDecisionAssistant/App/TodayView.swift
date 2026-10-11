@@ -265,15 +265,7 @@ struct TodayView: View {
             let day = try GoalDay(containing: window.start, timeZoneIdentifier: window.timeZoneIdentifier)
             let read = try GoalHistoryReader.read(container: modelContext.container, day: day, allowLegacyCurrent: true)
             currentGoal = read.currentProfile
-            if read.legacyNeedsConfirmation {
-                goalContextText = "旧目标含无效值或存在歧义，请到预算与目标页明确填写并重新确认。原记录保留。"
-            } else if read.selected == nil, read.legacyCurrent != nil {
-                goalContextText = "沿用旧安装当前目标；来源与历史生效时间未知。"
-            } else if currentGoal == nil, let scheduled = read.versions.map(\.effectiveDay).filter({ $0 > day }).min() {
-                goalContextText = "今日尚无生效目标，已预约 \(GoalVersionDetailView.dayText(scheduled)) 生效。"
-            } else {
-                goalContextText = nil
-            }
+            goalContextText = GoalContextPresentation.text(for: read, day: day)
             hasGoalReadError = read.currentProfile == nil && read.legacyNeedsConfirmation
         } catch {
             currentGoal = nil

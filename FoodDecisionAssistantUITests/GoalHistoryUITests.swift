@@ -53,7 +53,7 @@ final class GoalHistoryUITests: XCTestCase {
         XCTAssertFalse(app.buttons["放弃修改"].exists, "The default tomorrow presentation itself must remain clean.")
     }
 
-    func testEffectiveDateAndSourceChangesRequireConfirmationAndProtectDraft() throws {
+    func testSourceDisclosureValidationAndCancellationProtectDraft() throws {
         executionTimeAllowance = 240
         let app = try launchApp()
         defer { app.terminate() }
@@ -63,33 +63,138 @@ final class GoalHistoryUITests: XCTestCase {
         let note = app.descendants(matching: .any).matching(identifier: "goal.sourceNote").firstMatch
         try reveal(note, container: "goal.form", app: app)
         try replaceNote(note, with: "", app: app)
-        try confirm(app)
+        try assertSaveEnabled(true, app: app)
         try reveal(app.buttons["goal.effectiveToday"], container: "goal.form", app: app)
         try tap(app.buttons["goal.effectiveToday"], app: app)
-        try assertUnconfirmed(app)
-        try confirm(app)
+        try assertSaveEnabled(true, app: app)
         try chooseSource("参考已有建议", app: app)
-        try assertUnconfirmed(app)
-        try confirm(app)
+        try assertSaveEnabled(false, app: app)
         let clearedNote = note.value as? String ?? ""
         XCTAssertTrue(clearedNote.isEmpty || clearedNote == "来源说明（必填）", "The reference-source validation case must start with an actually empty note.")
-        XCTAssertFalse(app.navigationBars["每日预算与目标"].buttons["保存"].isEnabled, "Confirmed reference goals still require their source note.")
+        try setDisclosure("goal.sourceDisclosure", expanded: false, app: app)
+        let sourceSummary = app.staticTexts["goal.sourceSummary"]
+        try reveal(sourceSummary, container: "goal.form", app: app)
+        XCTAssertTrue(sourceSummary.label.contains("参考已有建议"))
+        XCTAssertTrue(sourceSummary.label.contains("需填写说明"), "A collapsed invalid source must still explain why Save is disabled.")
+        try assertSaveEnabled(false, app: app)
+        try setDisclosure("goal.sourceDisclosure", expanded: true, app: app)
         try reveal(note, container: "goal.form", app: app)
         try replaceNote(note, with: "[UI测试] 来源草稿", app: app)
-        try assertUnconfirmed(app)
-        try confirm(app)
-        try wait(NSPredicate(format: "isEnabled == true"), on: app.navigationBars["每日预算与目标"].buttons["保存"])
+        try assertSaveEnabled(true, app: app)
+        try setDisclosure("goal.sourceDisclosure", expanded: false, app: app)
+        try reveal(sourceSummary, container: "goal.form", app: app)
+        XCTAssertTrue(sourceSummary.label.contains("参考已有建议"))
+        XCTAssertFalse(sourceSummary.label.contains("需填写说明"))
+        try setDisclosure("goal.sourceDisclosure", expanded: true, app: app)
+        try reveal(note, container: "goal.form", app: app)
+        XCTAssertEqual(note.value as? String, "[UI测试] 来源草稿", "Folding must retain the actual editable note.")
 
         let bar = app.navigationBars["每日预算与目标"]
         try tap(bar.buttons["取消"], app: app)
         try tap(app.buttons["继续编辑"], app: app)
         try reveal(note, container: "goal.form", app: app)
         XCTAssertEqual(note.value as? String, "[UI测试] 来源草稿")
-        XCTAssertTrue(bar.buttons["保存"].isEnabled, "Continue editing must retain the confirmed, valid source metadata without saving it.")
+        XCTAssertTrue(bar.buttons["保存"].isEnabled, "Continue editing retains valid source metadata without performing the explicit Save action.")
         attach(app, name: "GoalHistoryUI-date-and-source-protected-draft")
         try tap(bar.buttons["取消"], app: app)
         try tap(app.buttons["放弃修改"], app: app)
         XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+    }
+
+    func testOtherFutureDateRetainsSelectionWhenFoldedAndDoesNotApplyEarly() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        try saveGoal(energy: "3291", today: true, note: "[UI测试] 其他日期基线-\(token)", app: app)
+        try selectTab("今日", app: app)
+        try verifyTodayBudget(3_291, app: app)
+
+        try openGoal(app)
+        try fillNumericGoal(energy: "3292", app: app)
+        try chooseSource("自行选择", app: app)
+        let note = "[UI测试] 其他日期-\(token)"
+        let noteField = app.descendants(matching: .any).matching(identifier: "goal.sourceNote").firstMatch
+        try reveal(noteField, container: "goal.form", app: app)
+        try replaceNote(noteField, with: note, app: app)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let future = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: .now)))
+        try setDisclosure("goal.effectiveOther", expanded: true, app: app)
+        try chooseCalendarDate(future, app: app)
+        let summary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(summary, container: "goal.form", app: app)
+        let expectedDate = try civilDateText(future)
+        XCTAssertEqual(summary.label, "\(expectedDate)生效")
+        try setDisclosure("goal.effectiveOther", expanded: false, app: app)
+        try reveal(summary, container: "goal.form", app: app)
+        XCTAssertEqual(summary.label, "\(expectedDate)生效", "Folding Other must retain the selected absolute civil date.")
+        try assertSaveEnabled(true, app: app)
+        let bar = app.navigationBars["每日预算与目标"]
+        try tap(bar.buttons["保存"], app: app)
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+        try selectTab("今日", app: app)
+        try verifyTodayBudget(3_291, app: app)
+
+        try selectTab("设置", app: app)
+        try tap(app.buttons["settings.goalHistory"], app: app)
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "goalHistory.row.", note)).firstMatch
+        try reveal(row, container: "goalHistory.list", app: app)
+        XCTAssertTrue(row.label.contains("未来安排"))
+        XCTAssertTrue(row.label.contains(expectedDate))
+        try tap(row, app: app)
+        try require(app.navigationBars["目标版本详情"])
+        let detail = app.descendants(matching: .any).matching(identifier: "goalHistory.detail").firstMatch
+        let dateValue = detail.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", "生效日期、\(expectedDate)", expectedDate)).firstMatch
+        try require(dateValue)
+        attach(app, name: "GoalFormUI-other-date-saved-without-applying-early")
+    }
+
+    func testOtherDateCalendarChangesCivilDayAndProtectsCancellation() throws {
+        executionTimeAllowance = 180
+        let app = try launchApp()
+        defer { app.terminate() }
+        try openGoal(app)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let future = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: .now)))
+        try setDisclosure("goal.effectiveOther", expanded: true, app: app)
+        try chooseCalendarDate(future, app: app)
+        try setDisclosure("goal.effectiveOther", expanded: false, app: app)
+        let expected = "\(try civilDateText(future))生效"
+        let summary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(summary, container: "goal.form", app: app)
+        XCTAssertEqual(summary.label, expected)
+        let bar = app.navigationBars["每日预算与目标"]
+        try tap(bar.buttons["取消"], app: app)
+        try tap(app.buttons["继续编辑"], app: app)
+        XCTAssertEqual(summary.label, expected, "Continue editing must retain the actually selected calendar day.")
+        attach(app, name: "GoalFormUI-native-calendar-date-retained-without-saving")
+        try tap(bar.buttons["取消"], app: app)
+        try tap(app.buttons["放弃修改"], app: app)
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+    }
+
+    func testUntouchedDisclosuresDoNotCreateUnsavedChanges() throws {
+        executionTimeAllowance = 180
+        let app = try launchApp()
+        defer { app.terminate() }
+        try openGoal(app)
+        let summary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(summary, container: "goal.form", app: app)
+        let originalSummary = summary.label
+        try setDisclosure("goal.effectiveOther", expanded: true, app: app)
+        try reveal(app.datePickers["goal.effectiveDate"], container: "goal.form", app: app)
+        try setDisclosure("goal.effectiveOther", expanded: false, app: app)
+        try reveal(summary, container: "goal.form", app: app)
+        XCTAssertEqual(summary.label, originalSummary)
+        try setDisclosure("goal.sourceDisclosure", expanded: true, app: app)
+        try reveal(app.buttons["goal.source"], container: "goal.form", app: app)
+        try setDisclosure("goal.sourceDisclosure", expanded: false, app: app)
+        let bar = app.navigationBars["每日预算与目标"]
+        try tap(bar.buttons["取消"], app: app)
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "Presentation-only folding must not dirty the editable goal draft.")
     }
 
     /// Repeat with the simulator's actual system content size set to AX5.
@@ -98,19 +203,25 @@ final class GoalHistoryUITests: XCTestCase {
         let app = try launchApp()
         defer { app.terminate() }
         try openGoal(app)
-        for identifier in ["goal.effectiveDate", "goal.effectiveToday", "goal.effectiveTomorrow", "goal.source", "goal.sourceNote"] {
+        for identifier in ["goal.effectiveToday", "goal.effectiveTomorrow", "goal.effectiveOther", "goal.effectiveSummary", "goal.sourceDisclosure", "goal.sourceSummary"] {
             let control = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
             try reveal(control, container: "goal.form", app: app)
             XCTAssertTrue(control.isHittable, "All new native controls must be reachable at the real current text size.")
         }
-        let confirmation = app.switches["我已核对并确认预算、目标与上限"]
-        try reveal(confirmation, container: "goal.form", app: app)
+        try setDisclosure("goal.effectiveOther", expanded: true, app: app)
+        try reveal(app.datePickers["goal.effectiveDate"], container: "goal.form", app: app)
+        try setDisclosure("goal.effectiveOther", expanded: false, app: app)
+        try setDisclosure("goal.sourceDisclosure", expanded: true, app: app)
+        try reveal(app.buttons["goal.source"], container: "goal.form", app: app)
+        try reveal(app.descendants(matching: .any).matching(identifier: "goal.sourceNote").firstMatch, container: "goal.form", app: app)
+        try setDisclosure("goal.sourceDisclosure", expanded: false, app: app)
+        XCTAssertFalse(app.switches["我已核对并确认预算、目标与上限"].exists)
         attach(app, name: "GoalHistoryUI-system-text-size-form")
         try tap(app.navigationBars["每日预算与目标"].buttons["取消"], app: app)
         XCTAssertFalse(app.buttons["放弃修改"].exists)
         try tap(app.buttons["settings.goalHistory"], app: app)
         try require(app.navigationBars["目标历史"])
-        let explanation = app.staticTexts["首个已知版本之前的目标未知，不能用当前目标还原。每次修改保留原版本；同日以最后确认为准。"]
+        let explanation = app.staticTexts["开始记录目标历史之前的目标未知。之后每次修改都会保留；同一天多次修改，使用最后确认的目标。"]
         try reveal(explanation, container: "goalHistory.list", app: app)
         XCTAssertTrue(explanation.isHittable)
         attach(app, name: "GoalHistoryUI-system-text-size-history")
@@ -151,20 +262,19 @@ final class GoalHistoryUITests: XCTestCase {
             try tap(dayButton, app: app)
         } else {
             // Do not tap Tomorrow: this proves the form's untouched default is tomorrow.
-            let picker = app.datePickers["goal.effectiveDate"]
-            try require(picker)
-            let calendar = Calendar.current
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = .current
             let tomorrow = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: .now))
-            let components = calendar.dateComponents([.year, .month, .day], from: tomorrow)
-            let expected = String(format: "%04d-%02d-%02d", try XCTUnwrap(components.year), try XCTUnwrap(components.month), try XCTUnwrap(components.day))
+            let expected = try civilDateText(tomorrow)
             let summary = app.staticTexts["goal.effectiveSummary"]
             try require(summary)
-            XCTAssertEqual(summary.label, "将于 \(expected) 生效", "The selected native date must be tomorrow without tapping its shortcut.")
+            XCTAssertEqual(summary.label, "\(expected)生效", "The selected date must be tomorrow without tapping its shortcut or opening Other.")
+            XCTAssertEqual(app.buttons["goal.effectiveTomorrow"].value as? String, "已选择")
         }
         let sourceNote = app.descendants(matching: .any).matching(identifier: "goal.sourceNote").firstMatch
         try reveal(sourceNote, container: "goal.form", app: app)
         try replaceNote(sourceNote, with: note, app: app)
-        try confirm(app)
+        XCTAssertFalse(app.switches["我已核对并确认预算、目标与上限"].exists)
         let bar = app.navigationBars["每日预算与目标"]
         try wait(NSPredicate(format: "isEnabled == true"), on: bar.buttons["保存"])
         try tap(bar.buttons["保存"], app: app)
@@ -224,6 +334,7 @@ final class GoalHistoryUITests: XCTestCase {
     }
 
     private func chooseSource(_ title: String, app: XCUIApplication) throws {
+        try setDisclosure("goal.sourceDisclosure", expanded: true, app: app)
         let source = app.buttons["goal.source"]
         try reveal(source, container: "goal.form", app: app)
         try tap(source, app: app)
@@ -264,22 +375,67 @@ final class GoalHistoryUITests: XCTestCase {
         try finishKeyboard(app)
     }
 
-    private func confirm(_ app: XCUIApplication) throws {
-        let row = app.switches["我已核对并确认预算、目标与上限"]
-        try reveal(row, container: "goal.form", app: app)
-        if row.value as? String != "1" {
-            let controls = row.descendants(matching: .switch)
-            XCTAssertEqual(controls.count, 1)
-            try tap(controls.firstMatch, app: app)
-        }
-        try wait(NSPredicate(format: "value == %@", "1"), on: row)
+    private func assertSaveEnabled(_ expected: Bool, app: XCUIApplication) throws {
+        try wait(NSPredicate(format: "isEnabled == %@", NSNumber(value: expected)), on: app.navigationBars["每日预算与目标"].buttons["保存"])
     }
 
-    private func assertUnconfirmed(_ app: XCUIApplication) throws {
-        let row = app.switches["我已核对并确认预算、目标与上限"]
-        try reveal(row, container: "goal.form", app: app)
-        try wait(NSPredicate(format: "value == %@", "0"), on: row)
-        XCTAssertFalse(app.navigationBars["每日预算与目标"].buttons["保存"].isEnabled)
+    private func setDisclosure(_ identifier: String, expanded: Bool, app: XCUIApplication) throws {
+        let button = app.buttons[identifier]
+        try reveal(button, container: "goal.form", app: app)
+        let expected = expanded ? "已展开" : "已收起"
+        if button.value as? String != expected { try tap(button, app: app) }
+        try wait(NSPredicate(format: "value == %@", expected), on: button)
+    }
+
+    private func civilDateText(_ date: Date) throws -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        let year = try XCTUnwrap(parts.year)
+        let month = try XCTUnwrap(parts.month)
+        let day = try XCTUnwrap(parts.day)
+        return (year == calendar.component(.year, from: .now) ? "" : "\(year)年") + "\(month)月\(day)日"
+    }
+
+    private func chooseCalendarDate(_ date: Date, app: XCUIApplication) throws {
+        let picker = app.datePickers["goal.effectiveDate"]
+        try reveal(picker, container: "goal.form", app: app)
+        // The goal picker exposes its label separately from the selected date.
+        // Resolve the sole actual calendar button instead of assuming a label format.
+        let dateButtons = picker.descendants(matching: .button)
+        let hierarchy = XCTAttachment(string: picker.debugDescription)
+        hierarchy.name = "GoalFormUI-native-calendar-hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        try require(dateButtons.firstMatch)
+        XCTAssertEqual(dateButtons.count, 1, "The compact native date picker must expose one date button.")
+        try tap(dateButtons.firstMatch, app: app)
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "yyyy年M月"
+        let targetMonth = formatter.string(from: date)
+        let header = app.buttons["DatePicker.Show"]
+        try require(header)
+        for _ in 0..<3 {
+            let displayed = try XCTUnwrap(header.value as? String)
+            if displayed == targetMonth { break }
+            let monthDate = try XCTUnwrap(formatter.date(from: displayed))
+            try tap(app.buttons[date < monthDate ? "DatePicker.PreviousMonth" : "DatePicker.NextMonth"], app: app)
+        }
+        XCTAssertEqual(header.value as? String, targetMonth)
+        formatter.dateFormat = "M月d日"
+        let shortDate = formatter.string(from: date)
+        let days = app.buttons.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@", shortDate, "\(shortDate) ", "今天, \(shortDate) "))
+        try require(days.firstMatch)
+        XCTAssertEqual(days.count, 1, "The future date must resolve to one actual native day button.")
+        try tap(days.firstMatch, app: app)
+        let dismissPopover = app.buttons["PopoverDismissRegion"]
+        if dismissPopover.exists { try tap(dismissPopover, app: app) }
+        let summary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(summary, container: "goal.form", app: app)
+        try wait(NSPredicate(format: "label == %@", "\(try civilDateText(date))生效"), on: summary)
     }
 
     private func verifyTodayBudget(_ energy: Int, app: XCUIApplication) throws {

@@ -18,9 +18,11 @@ struct GoalSettingsView: View {
     @State private var timeZoneIdentifier = TimeZone.current.identifier
     @State private var dismissalGuard: FormDismissalGuard
     @State private var baseline: GoalHistoryBaseline?
-    @State private var pendingRequest: GoalVersionSaveRequest?
+    @State private var saveState = GoalFormSaveState()
+    @State private var isSourceExpanded = false
+    @State private var isOtherDateExpanded = false
+    @State private var savedGoalContext: String?
     @State private var hasLoaded = false
-    @State private var isUsingLegacyCurrent = false
     @State private var legacyNeedsConfirmation = false
     @State private var hasFutureVersions = false
     @State private var loadError: Error?
@@ -69,7 +71,9 @@ struct GoalSettingsView: View {
               dateIsValid, let effectiveDay,
               let start = try? effectiveDay.start(in: timeZoneIdentifier) else { return false }
         if source == .userProvidedReference && sourceNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return false }
-        return (try? draft.validGoal(id: UUID(), effectiveFrom: start, decimalSeparator: decimalSeparator)) != nil
+        var validationDraft = draft
+        validationDraft.isConfirmed = true
+        return (try? validationDraft.validGoal(id: UUID(), effectiveFrom: start, decimalSeparator: decimalSeparator)) != nil
     }
 
     var body: some View {
@@ -86,26 +90,22 @@ struct GoalSettingsView: View {
                         }
                     }
                 }
-                if isUsingLegacyCurrent {
+                if let savedGoalContext, !legacyNeedsConfirmation {
                     Section {
-                        Label("沿用旧安装当前目标", systemImage: "clock.badge.questionmark")
-                        Text("旧目标的来源与历史生效时间未知。此次重新确认会建立第一个已知版本，过去不会按当前目标补写。")
+                        Text(savedGoalContext)
                             .font(.footnote)
+                            .accessibilityIdentifier("goal.savedContext")
                     }
                 }
                 if legacyNeedsConfirmation {
                     Section {
                         Label("旧目标需重新确认", systemImage: "exclamationmark.triangle")
-                        Text("旧数据含无效值或有多个无法判定的当前目标，原记录保留。请明确填写并确认一个新版本；系统不会自行选择或改写旧数据。")
+                        Text(GoalContextPresentation.legacyNeedsConfirmationText)
                             .font(.footnote)
                     }
                 }
-                Section {
+                Section("热量预算") {
                     goalField("热量预算 (kcal)", text: $draft.energyKcal, field: .energy)
-                } header: {
-                    Text("热量预算")
-                } footer: {
-                    Text("请填写你主动选择的目标，不使用未经确认的示例值。")
                 }
                 Section("营养预算与目标") {
                     goalField("蛋白质目标 (g)", text: $draft.proteinGrams, field: .protein)
@@ -118,55 +118,71 @@ struct GoalSettingsView: View {
                 } header: {
                     Text("可选上限与目标")
                 } footer: {
-                    Text("留空表示未设置，不代表 0。系统不会自动生成医疗阈值；如依据医嘱，请使用已确认的数值。")
+                    Text("留空表示未设置，不是 0。")
                 }
                 Section {
-                    // Keep the lower bound stable while editing. A midnight must not
-                    // silently move an expired selection; save validation asks for a new day.
-                    DatePicker("生效日期", selection: $effectiveDate, in: minimumSelectableDate..., displayedComponents: .date)
-                        .accessibilityIdentifier("goal.effectiveDate")
+                    effectiveDateChoices
                     if let effectiveDay {
-                        Text("将于 \(GoalVersionDetailView.dayText(effectiveDay)) 生效")
+                        Text("\(GoalDatePresentation.text(for: effectiveDay, referenceDay: today))生效")
                             .font(.footnote)
                             .accessibilityIdentifier("goal.effectiveSummary")
                     }
-                    HStack {
-                        Button("今天生效") { selectEffectiveDate(offset: 0) }
-                            .accessibilityIdentifier("goal.effectiveToday")
-                        Spacer()
-                        Button("明天生效") { selectEffectiveDate(offset: 1) }
-                            .accessibilityIdentifier("goal.effectiveTomorrow")
+                    if isOtherDateExpanded {
+                        // A stable lower bound prevents the picker silently advancing
+                        // an expired civil date when the form stays open across midnight.
+                        DatePicker("选择日期", selection: $effectiveDate, in: minimumSelectableDate..., displayedComponents: .date)
+                            .accessibilityIdentifier("goal.effectiveDate")
                     }
-                    .buttonStyle(.borderless)
                     if !dateIsValid {
-                        Label("生效日期已早于今天，请重新选择日期并确认。", systemImage: "exclamationmark.triangle")
+                        Label("日期已早于今天，请重新选择。", systemImage: "exclamationmark.triangle")
                             .font(.footnote)
                     }
                 } header: {
-                    Text("生效安排")
+                    Text("生效日期")
                 } footer: {
-                    Text("默认明天生效。选择今天会用于今天整日；同日修改以最后确认的版本为准。日期跟随查看时的当地日期。")
-                    if hasFutureVersions { Text("已有未来安排仍然保留，到各自生效日期时应用。") }
+                    if effectiveDay == today { Text("新目标用于今天整日。") }
+                    if hasFutureVersions { Text("已有后续安排仍会按日期生效。") }
                 }
                 Section {
-                    Picker("目标来源", selection: $source) {
-                        Text("自行选择").tag(GoalSource.selfSelected)
-                        Text("参考已有建议").tag(GoalSource.userProvidedReference)
+                    Button {
+                        focusedField = nil
+                        isSourceExpanded.toggle()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("目标依据")
+                                Text(sourceSummary)
+                                    .font(.subheadline)
+                                    .foregroundStyle(sourceNeedsNote ? .primary : .secondary)
+                                    .accessibilityIdentifier("goal.sourceSummary")
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
+                            Spacer()
+                            Image(systemName: isSourceExpanded ? "chevron.up" : "chevron.down")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(.rect)
                     }
-                    .pickerStyle(.menu)
-                    .accessibilityIdentifier("goal.source")
-                    TextField(source == .userProvidedReference ? "来源说明（必填）" : "来源说明（可选）", text: $sourceNote, axis: .vertical)
-                        .focused($focusedField, equals: .sourceNote)
-                        .accessibilityIdentifier("goal.sourceNote")
-                } header: {
-                    Text("来源")
-                } footer: {
-                    Text("来源由你提供。系统不会核实或生成医疗建议。")
-                }
-                Section {
-                    Toggle("我已核对并确认预算、目标与上限", isOn: $draft.isConfirmed)
-                } footer: {
-                    Text("请同时核对生效日期与来源。修改任一内容后需要重新确认。小数分隔符为“\(decimalSeparator)”，请勿输入千分位或单位。")
+                    .buttonStyle(.plain)
+                    .accessibilityValue(isSourceExpanded ? "已展开" : "已收起")
+                    .accessibilityIdentifier("goal.sourceDisclosure")
+                    if isSourceExpanded {
+                        Picker("目标来源", selection: $source) {
+                            Text("自行选择").tag(GoalSource.selfSelected)
+                            Text("参考已有建议").tag(GoalSource.userProvidedReference)
+                        }
+                        .pickerStyle(.menu)
+                        .accessibilityIdentifier("goal.source")
+                        TextField(source == .userProvidedReference ? "来源说明（必填）" : "来源说明（可选）", text: $sourceNote, axis: .vertical)
+                            .focused($focusedField, equals: .sourceNote)
+                            .accessibilityIdentifier("goal.sourceNote")
+                        Text("仅记录依据，不影响目标计算。")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .accessibilityIdentifier("goal.form")
@@ -194,10 +210,20 @@ struct GoalSettingsView: View {
                 }
             }
             .task { loadGoalOnce() }
-            .onChange(of: [draft.energyKcal, draft.proteinGrams, draft.carbohydrateGrams, draft.fatGrams, draft.saturatedFatLimitGrams, draft.fibreGrams]) { invalidateConfirmation() }
-            .onChange(of: effectiveDate) { invalidateConfirmation() }
-            .onChange(of: source) { invalidateConfirmation() }
-            .onChange(of: sourceNote) { invalidateConfirmation() }
+            .onChange(of: [draft.energyKcal, draft.proteinGrams, draft.carbohydrateGrams, draft.fatGrams, draft.saturatedFatLimitGrams, draft.fibreGrams]) { invalidatePendingSave() }
+            .onChange(of: effectiveDate) { invalidatePendingSave() }
+            .onChange(of: source) {
+                invalidatePendingSave()
+                if sourceNeedsNote { isSourceExpanded = true }
+            }
+            .onChange(of: sourceNote) { invalidatePendingSave() }
+            .onChange(of: decimalSeparator) { invalidatePendingSave() }
+            .onChange(of: isSourceExpanded) { if !isSourceExpanded { focusedField = nil } }
+            .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification).receive(on: RunLoop.main)) { _ in
+                // Re-evaluate the parser. Only an actual separator change invalidates
+                // an otherwise unchanged retry; Save also compares it synchronously.
+                clockRevision &+= 1
+            }
             .onChange(of: scenePhase) { if scenePhase == .active { refreshClock() } }
             .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in refreshClock() }
             .onReceive(NotificationCenter.default.publisher(for: .NSSystemClockDidChange).receive(on: RunLoop.main)) { _ in refreshClock() }
@@ -214,6 +240,53 @@ struct GoalSettingsView: View {
         .presentationDetents([.large])
     }
 
+    private var sourceNeedsNote: Bool {
+        source == .userProvidedReference && sourceNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var sourceSummary: String {
+        let title = GoalVersionDetailView.sourceTitle(source)
+        return sourceNeedsNote ? "\(title) · 需填写说明" : title
+    }
+
+    private var tomorrow: GoalDay? {
+        try? today?.addingDays(1, timeZoneIdentifier: timeZoneIdentifier)
+    }
+
+    @ViewBuilder
+    private var effectiveDateChoices: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading) { effectiveDateButtons }
+        } else {
+            HStack { effectiveDateButtons }
+        }
+    }
+
+    @ViewBuilder
+    private var effectiveDateButtons: some View {
+        effectiveDayButton("今天", offset: 0, selected: !isOtherDateExpanded && effectiveDay == today, identifier: "goal.effectiveToday")
+        effectiveDayButton("明天", offset: 1, selected: !isOtherDateExpanded && effectiveDay == tomorrow, identifier: "goal.effectiveTomorrow")
+        Button("其他日期") {
+            focusedField = nil
+            isOtherDateExpanded.toggle()
+        }
+        .buttonStyle(.bordered)
+        .tint(isOtherDateExpanded || (effectiveDay != today && effectiveDay != tomorrow) ? Color.accentColor : Color.secondary)
+        .accessibilityValue(isOtherDateExpanded ? "已展开" : "已收起")
+        .accessibilityIdentifier("goal.effectiveOther")
+    }
+
+    private func effectiveDayButton(_ title: String, offset: Int, selected: Bool, identifier: String) -> some View {
+        Button(title) {
+            isOtherDateExpanded = false
+            selectEffectiveDate(offset: offset)
+        }
+        .buttonStyle(.bordered)
+        .tint(selected ? Color.accentColor : Color.secondary)
+        .accessibilityValue(selected ? "已选择" : "未选择")
+        .accessibilityIdentifier(identifier)
+    }
+
     private var minimumEffectiveDate: Date {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: timeZoneIdentifier) ?? .current
@@ -225,7 +298,7 @@ struct GoalSettingsView: View {
         if let error = saveError as? GoalInputError { return error.localizedDescription }
         if let error = saveError as? GoalVersionSaveCommandError { return error.localizedDescription }
         if let error = saveError as? GoalHistoryError { return error.localizedDescription }
-        return "此次目标未保存，输入仍保留。请检查生效日期、来源和确认状态后重试；若已保存目标发生变化，请重新打开并核对。"
+        return "此次目标未保存，输入仍保留。请检查生效日期与来源后重试；若已保存目标发生变化，请重新打开并核对。"
     }
 
     private func selectEffectiveDate(offset: Int) {
@@ -235,9 +308,8 @@ struct GoalSettingsView: View {
         if let date = calendar.date(byAdding: .day, value: offset, to: minimumEffectiveDate) { effectiveDate = date }
     }
 
-    private func invalidateConfirmation() {
-        draft.isConfirmed = false
-        pendingRequest = nil
+    private func invalidatePendingSave() {
+        saveState.invalidate()
     }
 
     private func refreshClock() {
@@ -249,10 +321,16 @@ struct GoalSettingsView: View {
                 minimumSelectableDate = min(min(minimumSelectableDate, date), minimumEffectiveDate)
                 effectiveDate = date
             }
-            invalidateConfirmation()
+            invalidatePendingSave()
         }
         clockRevision &+= 1
-        if !dateIsValid { invalidateConfirmation() }
+        if !dateIsValid { invalidatePendingSave() }
+        if hasLoaded, let today,
+           let read = try? GoalHistoryReader.read(container: modelContext.container, day: today, allowLegacyCurrent: true) {
+            savedGoalContext = GoalContextPresentation.text(for: read, day: today)
+            legacyNeedsConfirmation = read.legacyNeedsConfirmation
+            hasFutureVersions = read.versions.contains { $0.effectiveDay > today }
+        }
     }
 
     private func cancelEditing() {
@@ -296,7 +374,7 @@ struct GoalSettingsView: View {
                 sourceNote = selected.sourceNote ?? ""
             }
             baseline = read.baseline
-            isUsingLegacyCurrent = read.selected == nil && read.legacyCurrent != nil
+            savedGoalContext = GoalContextPresentation.text(for: read, day: today)
             legacyNeedsConfirmation = read.legacyNeedsConfirmation
             hasFutureVersions = read.versions.contains { $0.effectiveDay > today }
             draft.isConfirmed = false
@@ -309,21 +387,22 @@ struct GoalSettingsView: View {
     }
 
     private func saveGoal() {
+        guard TimeZone.current.identifier == timeZoneIdentifier else {
+            refreshClock()
+            saveError = GoalVersionSaveCommandError.timeZoneChanged
+            return
+        }
         guard canSave, let baseline, let effectiveDay else { return }
         focusedField = nil
         isSaving = true
         do {
-            let request: GoalVersionSaveRequest
-            if let pendingRequest {
-                request = pendingRequest
-            } else {
-                request = GoalVersionSaveRequest(
-                    draft: draft, effectiveDay: effectiveDay, source: source, sourceNote: sourceNote,
-                    timeZoneIdentifier: timeZoneIdentifier, confirmedAt: .now, operationID: UUID(),
-                    expectedBaseline: baseline, decimalSeparator: decimalSeparator
-                )
-                pendingRequest = request
-            }
+            // The Save tap supplies confirmation. Matching the current payload here
+            // also protects a tap that arrives before SwiftUI's onChange callback.
+            let request = saveState.request(
+                draft: draft, effectiveDay: effectiveDay, source: source, sourceNote: sourceNote,
+                timeZoneIdentifier: timeZoneIdentifier, expectedBaseline: baseline,
+                decimalSeparator: decimalSeparator
+            )
             _ = try GoalVersionSaveCommand.save(request: request, container: modelContext.container)
             onSaved()
             dismiss()

@@ -148,7 +148,7 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(app.buttons["继续编辑"])
         try requireExists(formBar, "Continue editing must retain the real form.")
         XCTAssertEqual(goalField("热量预算 (kcal)", in: app).value as? String, "9999")
-        XCTAssertFalse(formBar.buttons["保存"].isEnabled, "Changing a value must require renewed confirmation.")
+        XCTAssertTrue(formBar.buttons["保存"].isEnabled, "Valid edits can be saved directly; only the explicit Save action confirms a new version.")
 
         try tap(formBar.buttons["取消"])
         try tap(app.buttons["放弃修改"])
@@ -393,20 +393,17 @@ final class NativeNavigationUITests: XCTestCase {
         XCTAssertEqual(fibre.value as? String, replacement)
         XCTAssertFalse(app.keyboards.firstMatch.exists, "The real goal Done action must close the keyboard at the current system text size.")
 
-        let confirmation = app.switches["我已核对并确认预算、目标与上限"]
-        try reveal(confirmation, in: app)
-        XCTAssertEqual(confirmation.value as? String, "0", "Editing must reset confirmation, not silently confirm a new value.")
-        let actualSwitches = confirmation.descendants(matching: .switch)
-        guard actualSwitches.count == 1 else {
-            attachFailureEvidence(app: app, element: confirmation, context: "The footer must expose one actual native confirmation switch.")
-            XCTFail("The confirmation row must contain one native switch.")
-            throw NavigationUIFailure.missingControl
-        }
-        try tap(actualSwitches.firstMatch)
-        try waitFor(NSPredicate(format: "value == %@", "1"), on: confirmation, message: "The visible native switch must actually turn on.")
+        let sourceDisclosure = app.buttons["goal.sourceDisclosure"]
+        try reveal(sourceDisclosure, in: app)
+        XCTAssertTrue(sourceDisclosure.isHittable, "The collapsed source control must remain reachable at the current system text size.")
+        let effectiveSummary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(effectiveSummary, in: app)
+        XCTAssertTrue(effectiveSummary.isHittable, "The actual selected civil date must remain readable at the current system text size.")
+        XCTAssertFalse(app.switches["我已核对并确认预算、目标与上限"].exists, "Confirmation belongs to the explicit Save action, without an additional switch.")
+        XCTAssertTrue(formBar.buttons["保存"].isHittable)
         attachScreen(app, name: "NativeMealEntryUI-system-text-size-goal-footer")
 
-        // No Save action: even valid footer interactions must not write a new QA goal.
+        // No Save action: editing and navigating the footer must not create a QA version.
         try tap(formBar.buttons["取消"])
         try tap(app.buttons["放弃修改"])
         XCTAssertTrue(formBar.waitForNonExistence(timeout: 5))
@@ -1194,25 +1191,12 @@ final class NativeNavigationUITests: XCTestCase {
         }
         let formBar = app.navigationBars["每日预算与目标"]
         let save = formBar.buttons["保存"]
-        XCTAssertFalse(save.isEnabled, "Numeric edits must not silently confirm themselves.")
+        XCTAssertFalse(app.switches["我已核对并确认预算、目标与上限"].exists, "The goal form must not require a second confirmation control.")
         let today = app.buttons["goal.effectiveToday"]
         try reveal(today, in: app)
         try tap(today)
-        let confirmation = app.switches["我已核对并确认预算、目标与上限"]
-        try reveal(confirmation, in: app)
-        if confirmation.value as? String != "1" {
-            // R2's actual hierarchy exposed a full-width labelled Switch wrapping exactly one
-            // unlabelled native switch. Tap the control, not the wrapper's centre on its text.
-            let actualSwitches = confirmation.descendants(matching: .switch)
-            guard actualSwitches.count == 1 else {
-                XCTFail("The labelled confirmation row must contain one real native switch.")
-                throw NavigationUIFailure.missingControl
-            }
-            try tap(actualSwitches.firstMatch)
-        }
-        try waitFor(NSPredicate(format: "value == %@", "1"), on: confirmation, message: "The real confirmation switch must visibly turn on.")
-        try waitFor(NSPredicate(format: "isEnabled == true"), on: save, message: "Confirmed valid input must enable Save.")
-        save.tap()
+        try waitFor(NSPredicate(format: "isEnabled == true"), on: save, message: "Valid input and date must enable the explicit Save confirmation action.")
+        try tap(save)
         XCTAssertTrue(formBar.waitForNonExistence(timeout: 5), "Successful save must close the existing sheet.")
         try requireExists(app.navigationBars["设置"])
     }

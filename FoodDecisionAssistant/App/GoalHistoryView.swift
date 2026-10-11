@@ -32,15 +32,15 @@ struct GoalHistoryView: View {
                     Section {
                         if snapshot.legacyNeedsConfirmation {
                             Label("旧目标需重新确认", systemImage: "exclamationmark.triangle")
-                            Text("旧数据含无效值或存在歧义，原记录保留。请到预算与目标页明确填写并确认新版本。")
+                            Text(GoalContextPresentation.legacyNeedsConfirmationText)
                         } else if snapshot.hasLegacy {
-                            Text("旧安装只保留当前目标，其来源和过去生效时间未知。")
+                            Text("更新前只保存了当时的当前目标，过去的修改记录无法还原。")
                         }
                         if versions.isEmpty {
                             Text("尚无已确认的目标版本")
                                 .font(.headline)
                         }
-                        Text("首个已知版本之前的目标未知，不能用当前目标还原。每次修改保留原版本；同日以最后确认为准。")
+                        Text("开始记录目标历史之前的目标未知。之后每次修改都会保留；同一天多次修改，使用最后确认的目标。")
                             .font(.footnote)
                     }
                     if !versions.isEmpty {
@@ -48,7 +48,7 @@ struct GoalHistoryView: View {
                             ForEach(versions) { version in
                                 NavigationLink(value: version.id) {
                                     VStack(alignment: .leading, spacing: 5) {
-                                        Text("\(GoalVersionDetailView.dayText(version.effectiveDay)) 生效")
+                                        Text("\(GoalDatePresentation.text(for: version.effectiveDay, referenceDay: today)) 生效")
                                             .font(.headline)
                                         Text("热量预算 \(version.profile.energyKcal.formatted()) kcal")
                                         Text(status(for: version))
@@ -75,7 +75,7 @@ struct GoalHistoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: UUID.self) { id in
                 if let version = snapshot?.versions.first(where: { $0.id == id }) {
-                    GoalVersionDetailView(version: version, status: status(for: version))
+                    GoalVersionDetailView(version: version, status: status(for: version), referenceDay: today)
                 } else {
                     ContentUnavailableView("此版本暂不可用", systemImage: "exclamationmark.triangle", description: Text("请返回并重新读取目标历史。"))
                 }

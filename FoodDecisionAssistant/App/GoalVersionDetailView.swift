@@ -4,11 +4,12 @@ import SwiftUI
 struct GoalVersionDetailView: View {
     let version: GoalVersion
     let status: String
+    let referenceDay: GoalDay?
 
     var body: some View {
         Form {
             Section("生效与确认") {
-                LabeledContent("生效日期", value: Self.dayText(version.effectiveDay))
+                LabeledContent("生效日期", value: GoalDatePresentation.text(for: version.effectiveDay, referenceDay: referenceDay))
                 LabeledContent("当前状态", value: status)
                 LabeledContent("确认时间", value: version.confirmedAt.formatted(date: .abbreviated, time: .standard))
                 LabeledContent("确认时区", value: version.timeZoneIdentifier)
@@ -50,7 +51,4 @@ struct GoalVersionDetailView: View {
         }
     }
 
-    static func dayText(_ day: GoalDay) -> String {
-        String(format: "%04d-%02d-%02d", day.key / 10_000, day.key / 100 % 100, day.key % 100)
-    }
 }

@@ -4,6 +4,7 @@ import SwiftUI
 
 struct GoalSettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
@@ -46,6 +47,15 @@ struct GoalSettingsView: View {
     }
 
     private var decimalSeparator: String { Locale.current.decimalSeparator ?? "." }
+
+    private var datePickerCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = dateDisplay.locale
+        calendar.timeZone = TimeZone(identifier: timeZoneIdentifier) ?? dateDisplay.timeZone
+        calendar.firstWeekday = dateDisplay.calendar.firstWeekday
+        calendar.minimumDaysInFirstWeek = dateDisplay.calendar.minimumDaysInFirstWeek
+        return calendar
+    }
 
     private var snapshot: FormDraftSnapshot {
         .goalHistory(draft: draft, effectiveDate: effectiveDate, source: source,
@@ -123,7 +133,7 @@ struct GoalSettingsView: View {
                 Section {
                     effectiveDateChoices
                     if let effectiveDay {
-                        Text("\(GoalDatePresentation.text(for: effectiveDay, referenceDay: today))生效")
+                        Text("\(GoalDatePresentation.text(for: effectiveDay, referenceDay: today, display: dateDisplay))生效")
                             .font(.footnote)
                             .accessibilityIdentifier("goal.effectiveSummary")
                     }
@@ -131,6 +141,9 @@ struct GoalSettingsView: View {
                         // A stable lower bound prevents the picker silently advancing
                         // an expired civil date when the form stays open across midnight.
                         DatePicker("选择日期", selection: $effectiveDate, in: minimumSelectableDate..., displayedComponents: .date)
+                            .environment(\.locale, dateDisplay.locale)
+                            .environment(\.calendar, datePickerCalendar)
+                            .environment(\.timeZone, datePickerCalendar.timeZone)
                             .accessibilityIdentifier("goal.effectiveDate")
                     }
                     if !dateIsValid {
@@ -216,6 +229,7 @@ struct GoalSettingsView: View {
                 invalidatePendingSave()
                 if sourceNeedsNote { isSourceExpanded = true }
             }
+            .onChange(of: dateDisplay) { refreshSavedGoalContext() }
             .onChange(of: sourceNote) { invalidatePendingSave() }
             .onChange(of: decimalSeparator) { invalidatePendingSave() }
             .onChange(of: isSourceExpanded) { if !isSourceExpanded { focusedField = nil } }
@@ -325,9 +339,15 @@ struct GoalSettingsView: View {
         }
         clockRevision &+= 1
         if !dateIsValid { invalidatePendingSave() }
+        refreshSavedGoalContext()
+    }
+
+    private func refreshSavedGoalContext() {
+        // Display changes reformat context without resetting inputs,
+        // the persisted baseline or a matching save retry request.
         if hasLoaded, let today,
            let read = try? GoalHistoryReader.read(container: modelContext.container, day: today, allowLegacyCurrent: true) {
-            savedGoalContext = GoalContextPresentation.text(for: read, day: today)
+            savedGoalContext = GoalContextPresentation.text(for: read, day: today, display: dateDisplay)
             legacyNeedsConfirmation = read.legacyNeedsConfirmation
             hasFutureVersions = read.versions.contains { $0.effectiveDay > today }
         }
@@ -374,7 +394,7 @@ struct GoalSettingsView: View {
                 sourceNote = selected.sourceNote ?? ""
             }
             baseline = read.baseline
-            savedGoalContext = GoalContextPresentation.text(for: read, day: today)
+            savedGoalContext = GoalContextPresentation.text(for: read, day: today, display: dateDisplay)
             legacyNeedsConfirmation = read.legacyNeedsConfirmation
             hasFutureVersions = read.versions.contains { $0.effectiveDay > today }
             draft.isConfirmed = false

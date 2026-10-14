@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MealEntryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -219,10 +220,14 @@ struct MealEntryView: View {
                     .labelsHidden()
                     .accessibilityIdentifier("meal.time")
             }
-            .environment(\.locale, Locale(identifier: "zh_Hans_CN"))
+            .environment(\.locale, dateDisplay.locale)
+            .environment(\.calendar, dateDisplay.calendar)
+            .environment(\.timeZone, dateDisplay.timeZone)
         } else {
             DatePicker("时间", selection: $eatenAt)
-                .environment(\.locale, Locale(identifier: "zh_Hans_CN"))
+                .environment(\.locale, dateDisplay.locale)
+                .environment(\.calendar, dateDisplay.calendar)
+                .environment(\.timeZone, dateDisplay.timeZone)
                 .accessibilityIdentifier("meal.time")
         }
     }

@@ -5,6 +5,7 @@ import SwiftUI
 /// Read-only goal versions. No historical date editor or backfilling belongs in this slice.
 struct GoalHistoryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
 
@@ -48,12 +49,12 @@ struct GoalHistoryView: View {
                             ForEach(versions) { version in
                                 NavigationLink(value: version.id) {
                                     VStack(alignment: .leading, spacing: 5) {
-                                        Text("\(GoalDatePresentation.text(for: version.effectiveDay, referenceDay: today)) 生效")
+                                        Text("\(GoalDatePresentation.text(for: version.effectiveDay, referenceDay: today, display: dateDisplay)) 生效")
                                             .font(.headline)
                                         Text("热量预算 \(version.profile.energyKcal.formatted()) kcal")
                                         Text(status(for: version))
                                             .font(.subheadline)
-                                        Text("\(GoalVersionDetailView.sourceTitle(version.source)) · \(version.confirmedAt.formatted(date: .abbreviated, time: .shortened)) 确认")
+                                        Text("\(GoalVersionDetailView.sourceTitle(version.source)) · \(dateDisplay.dateTime(version.confirmedAt)) 确认")
                                             .font(.footnote)
                                             .foregroundStyle(.secondary)
                                         if let sourceNote = version.sourceNote {

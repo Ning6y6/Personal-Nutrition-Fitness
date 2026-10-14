@@ -2,6 +2,8 @@ import FoodDecisionCore
 import SwiftUI
 
 struct GoalVersionDetailView: View {
+    @Environment(\.appDateDisplay) private var dateDisplay
+
     let version: GoalVersion
     let status: String
     let referenceDay: GoalDay?
@@ -9,9 +11,12 @@ struct GoalVersionDetailView: View {
     var body: some View {
         Form {
             Section("生效与确认") {
-                LabeledContent("生效日期", value: GoalDatePresentation.text(for: version.effectiveDay, referenceDay: referenceDay))
+                LabeledContent("生效日期", value: GoalDatePresentation.text(for: version.effectiveDay, referenceDay: referenceDay, display: dateDisplay))
                 LabeledContent("当前状态", value: status)
-                LabeledContent("确认时间", value: version.confirmedAt.formatted(date: .abbreviated, time: .standard))
+                LabeledContent("确认时间") {
+                    Text(dateDisplay.dateTimeWithSeconds(version.confirmedAt))
+                        .accessibilityIdentifier("goalHistory.detail.confirmedAt")
+                }
                 LabeledContent("确认时区", value: version.timeZoneIdentifier)
             }
             Section("营养预算与目标") {

@@ -4,6 +4,7 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -54,7 +55,7 @@ struct TodayView: View {
     }
 
     private var dateSubtitle: String {
-        dateContext.dayWindow?.start.formatted(date: .abbreviated, time: .omitted) ?? "日期暂不可用"
+        dateContext.dayWindow.map { dateDisplay.fullDate($0.start) } ?? "日期暂不可用"
     }
 
     var body: some View {
@@ -198,6 +199,7 @@ struct TodayView: View {
         .onReceive(NotificationCenter.default.publisher(for: .NSSystemTimeZoneDidChange).receive(on: RunLoop.main)) { _ in
             refreshDate()
         }
+        .onChange(of: dateDisplay) { refreshGoal() }
         .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification).receive(on: RunLoop.main)) { _ in
             refreshDate()
         }
@@ -272,7 +274,7 @@ struct TodayView: View {
             let day = try GoalDay(containing: window.start, timeZoneIdentifier: window.timeZoneIdentifier)
             let read = try GoalHistoryReader.read(container: modelContext.container, day: day, allowLegacyCurrent: true)
             currentGoal = read.currentProfile
-            goalContextText = GoalContextPresentation.text(for: read, day: day)
+            goalContextText = GoalContextPresentation.text(for: read, day: day, display: dateDisplay)
             hasGoalReadError = read.currentProfile == nil && read.legacyNeedsConfirmation
         } catch {
             currentGoal = nil

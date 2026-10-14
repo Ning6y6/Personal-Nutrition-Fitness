@@ -11,6 +11,282 @@ final class NativeNavigationUITests: XCTestCase {
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
 
+    /// Actual UI under English process language/region, with the UK regional 24-hour default.
+    /// A region launch does not prove the separate system 24-Hour Time toggle was tested.
+    func testChineseDatesUnderEnglishUKRegionalClock() throws {
+        executionTimeAllowance = 600
+        try verifyChineseDatesUnderEnglishRegion(language: "en-GB", region: "en_GB", uses12HourClock: false)
+    }
+
+    /// Actual UI under the US regional 12-hour default; no hour-cycle force key is passed.
+    func testChineseDatesUnderEnglishUSRegionalClock() throws {
+        executionTimeAllowance = 600
+        try verifyChineseDatesUnderEnglishRegion(language: "en-US", region: "en_US", uses12HourClock: true)
+    }
+
+    private func verifyChineseDatesUnderEnglishRegion(
+        language: String, region: String, uses12HourClock: Bool
+    ) throws {
+        let app = try launchApp(language: language, region: region)
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let mealName = "[UI测试] 中文日期餐-\(token)"
+        let sourceNote = "[UI测试] 中文日期目标-\(token)"
+        let rice = "熟长粒白米饭（无盐）"
+
+        try selectTab("今日", in: app)
+        let navigationText = app.navigationBars["今日"].staticTexts.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        try assertChineseDate(in: navigationText, requiresYear: true)
+        attachScreen(app, name: "ChineseDatesUI-\(region)-today-subtitle")
+
+        // Establish this run's meal through the same real form as the user.
+        // Capture its selected clock before saving, then compare all readbacks.
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        try requireExists(app.textFields["meal.name"])
+        let pickerQuery = app.datePickers.matching(identifier: "meal.time")
+        try reveal(pickerQuery.firstMatch, in: app)
+        guard pickerQuery.count == 1 else {
+            XCTFail("The real meal form must expose one date/time picker.")
+            throw NavigationUIFailure.missingControl
+        }
+        let pickerText = displayedDatePickerText(pickerQuery.firstMatch)
+        try assertChineseDate(in: pickerText, requiresYear: true)
+        let selectedClock = try assertChineseClock(in: pickerText, uses12HourClock: uses12HourClock)
+        attachScreen(app, name: "ChineseDatesUI-\(region)-native-meal-picker")
+        try replaceText(in: app.textFields["meal.name"], with: mealName, app: app)
+        try selectFoodAtCurrentTextSize(rice, prefix: "meal.food.", in: app)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: "100", app: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try requireExists(app.navigationBars["今日"])
+
+        let todayRow = namedRecordButton(mealName, in: app)
+        try reveal(todayRow, in: app)
+        let todayClock = try assertChineseClock(in: todayRow.label, uses12HourClock: uses12HourClock)
+        XCTAssertEqual(todayClock.hour, selectedClock.hour)
+        XCTAssertEqual(todayClock.period, selectedClock.period, "Saving must preserve AM/PM as well as the numeric clock.")
+        XCTAssertEqual(todayClock.minute, selectedClock.minute, "Saving must preserve the actual picker time.")
+        try openMeal(named: mealName, in: app)
+        let detailTime = try uniqueIdentifiedControl(identifier: "meal.detail.time", in: app)
+        try reveal(detailTime, in: app)
+        try assertChineseDate(in: detailTime.label, requiresYear: true)
+        let detailClock = try assertChineseClock(in: detailTime.label, uses12HourClock: uses12HourClock)
+        XCTAssertEqual(detailClock.hour, selectedClock.hour)
+        XCTAssertEqual(detailClock.period, selectedClock.period, "Saving must preserve AM/PM as well as the numeric clock.")
+        XCTAssertEqual(detailClock.minute, selectedClock.minute)
+        try verifyRiceWeight(100, rice: rice, in: app)
+        attachScreen(app, name: "ChineseDatesUI-\(region)-meal-detail")
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+
+        let history = app.buttons["查看全部历史"]
+        try reveal(history, in: app)
+        try tap(history)
+        try requireExists(app.navigationBars["历史餐食"])
+        let historyRow = namedRecordButton(mealName, in: app)
+        try reveal(historyRow, in: app)
+        try assertChineseDate(in: historyRow.label, requiresYear: false)
+        let historyClock = try assertChineseClock(in: historyRow.label, uses12HourClock: uses12HourClock)
+        XCTAssertEqual(historyClock.hour, selectedClock.hour)
+        XCTAssertEqual(historyClock.period, selectedClock.period, "Saving must preserve AM/PM as well as the numeric clock.")
+        XCTAssertEqual(historyClock.minute, selectedClock.minute)
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(100, rice: rice, in: app)
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+        attachScreen(app, name: "ChineseDatesUI-\(region)-meal-history")
+        try tap(app.navigationBars["历史餐食"].buttons["完成"])
+
+        // The unique source note identifies one append-only QA goal version.
+        // The shared helper explicitly selects Self Selected before editing it.
+        try saveFictitiousGoal(energy: "2450", saturatedFat: "15", fibre: "30", sourceNote: sourceNote, in: app)
+        try tap(app.buttons["settings.goalHistory"])
+        try requireExists(app.navigationBars["目标历史"])
+        let versions = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "goalHistory.row.", sourceNote
+        ))
+        try reveal(versions.firstMatch, in: app)
+        guard versions.count == 1 else {
+            XCTFail("This run's unique source note must identify exactly one confirmed goal version.")
+            throw NavigationUIFailure.missingControl
+        }
+        let version = versions.firstMatch
+        try assertChineseDate(in: version.label, requiresYear: false)
+        _ = try assertChineseClock(in: version.label, uses12HourClock: uses12HourClock)
+        try tap(version)
+        try requireExists(app.navigationBars["目标版本详情"])
+        let confirmedAt = try uniqueIdentifiedControl(identifier: "goalHistory.detail.confirmedAt", in: app)
+        try reveal(confirmedAt, in: app)
+        try assertChineseDate(in: confirmedAt.label, requiresYear: true)
+        _ = try assertChineseClock(in: confirmedAt.label, uses12HourClock: uses12HourClock)
+        let confirmationText = confirmedAt.label
+        let secondsExpression = try NSRegularExpression(pattern: "[0-9]{1,2}[:：][0-9]{2}[:：]([0-9]{2})")
+        guard let secondsMatch = secondsExpression.firstMatch(
+            in: confirmationText, range: NSRange(confirmationText.startIndex..., in: confirmationText)
+        ), let secondsRange = Range(secondsMatch.range(at: 1), in: confirmationText),
+           let seconds = Int(confirmationText[secondsRange]) else {
+            XCTFail("The confirmed goal detail must retain its displayed seconds: \(confirmationText)")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        XCTAssertTrue((0...59).contains(seconds), "Confirmation seconds must be a valid 0...59 value.")
+        attachScreen(app, name: "ChineseDatesUI-\(region)-goal-confirmation")
+        let back = app.navigationBars["目标版本详情"].buttons.matching(NSPredicate(
+            format: "label IN %@", ["目标历史", "返回", "Back"]
+        ))
+        guard back.count == 1 else {
+            XCTFail("Goal detail must expose one real Back action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(back.firstMatch)
+        let unknownHistory = app.staticTexts["开始记录目标历史之前的目标未知。之后每次修改都会保留；同一天多次修改，使用最后确认的目标。"]
+        try reveal(unknownHistory, in: app)
+        XCTAssertTrue(unknownHistory.isHittable, "Chinese date formatting must keep the existing unknown-history explanation visible.")
+        try tap(app.navigationBars["目标历史"].buttons["完成"])
+
+        try openGoalFromSettings(in: app)
+        try chooseChineseGoalCalendarDateTwoDaysAhead(in: app)
+        let goalBar = app.navigationBars["每日预算与目标"]
+        try tap(goalBar.buttons["取消"])
+        try requireExists(app.buttons["继续编辑"])
+        try tap(app.buttons["继续编辑"])
+        try assertChineseDate(in: app.staticTexts["goal.effectiveSummary"].label, requiresYear: false)
+        try tap(goalBar.buttons["取消"])
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(goalBar.waitForNonExistence(timeout: 5))
+
+        // Only delete this run's uniquely named synthetic meal, after verifying it.
+        // Confirmed QA goal versions remain append-only; no store reset is used.
+        try selectTab("今日", in: app)
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(100, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    private func displayedDatePickerText(_ picker: XCUIElement) -> String {
+        ([picker.label, picker.value as? String ?? ""]
+            + picker.descendants(matching: .button).allElementsBoundByIndex.map(\.label))
+            .joined(separator: " ")
+    }
+
+    private func uniqueIdentifiedControl(identifier: String, in app: XCUIApplication) throws -> XCUIElement {
+        let controls = app.descendants(matching: .any).matching(identifier: identifier)
+        try requireExists(controls.firstMatch)
+        guard controls.count == 1 else {
+            XCTFail("The displayed control must expose exactly one \(identifier) identifier.")
+            throw NavigationUIFailure.missingControl
+        }
+        return controls.firstMatch
+    }
+
+    private func assertChineseDate(in text: String, requiresYear: Bool) throws {
+        let pattern = requiresYear
+            ? "[0-9]{4}\\s*年\\s*[0-9]{1,2}\\s*月\\s*[0-9]{1,2}\\s*日"
+            : "[0-9]{1,2}\\s*月\\s*[0-9]{1,2}\\s*日"
+        XCTAssertNotNil(text.range(of: pattern, options: .regularExpression), "The actual visible date must use Chinese year/month/day: \(text)")
+        let englishDateWords = "\\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|at)\\b"
+        XCTAssertNil(text.range(of: englishDateWords, options: [.regularExpression, .caseInsensitive]), "An English phone must not leak English month/date words into Chinese App dates.")
+    }
+
+    @discardableResult
+    private func assertChineseClock(in text: String, uses12HourClock: Bool) throws -> (hour: Int, minute: Int, period: String?) {
+        let expression = try NSRegularExpression(pattern: "([0-9]{1,2})[:：]([0-9]{2})")
+        guard let match = expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let hourRange = Range(match.range(at: 1), in: text),
+              let minuteRange = Range(match.range(at: 2), in: text),
+              let hour = Int(text[hourRange]), let minute = Int(text[minuteRange]) else {
+            XCTFail("The real displayed time must contain an hour and minute: \(text)")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        XCTAssertTrue((0...59).contains(minute))
+        let period = text.range(of: "凌晨|上午|中午|下午|晚上|午夜|早上|早晨|夜里|夜间", options: .regularExpression)
+        XCTAssertNil(text.range(of: "\\b(?:AM|PM)\\b", options: [.regularExpression, .caseInsensitive]), "Chinese time must not contain English AM/PM.")
+        if uses12HourClock {
+            XCTAssertTrue((1...12).contains(hour), "The displayed 12-hour preference must be respected.")
+            XCTAssertNotNil(period, "A 12-hour Chinese time must include its Chinese day period.")
+        } else {
+            XCTAssertTrue((0...23).contains(hour))
+            XCTAssertNil(period, "The displayed 24-hour preference must omit a day period.")
+        }
+        return (hour, minute, period.map { String(text[$0]) })
+    }
+
+    private func chooseChineseGoalCalendarDateTwoDaysAhead(in app: XCUIApplication) throws {
+        let other = app.buttons["goal.effectiveOther"]
+        try reveal(other, in: app)
+        if other.value as? String != "已展开" { try tap(other) }
+        let pickers = app.datePickers.matching(identifier: "goal.effectiveDate")
+        try reveal(pickers.firstMatch, in: app)
+        guard pickers.count == 1 else {
+            XCTFail("The goal form must expose one real date picker.")
+            throw NavigationUIFailure.missingControl
+        }
+        let dates = pickers.firstMatch.descendants(matching: .button)
+        guard dates.count == 1 else {
+            XCTFail("The compact goal date picker must expose one real calendar button.")
+            throw NavigationUIFailure.missingControl
+        }
+        // The compact native button's name is "Date Picker"; its value is the visible date.
+        let selectedDateText = [dates.firstMatch.label, dates.firstMatch.value as? String ?? ""].joined(separator: " ")
+        try assertChineseDate(in: selectedDateText, requiresYear: true)
+        try tap(dates.firstMatch)
+        let headers = app.buttons.matching(identifier: "DatePicker.Show")
+        try requireExists(headers.firstMatch)
+        guard headers.count == 1 else {
+            XCTFail("The open native calendar must expose one month header.")
+            throw NavigationUIFailure.missingControl
+        }
+        let header = headers.firstMatch
+        let monthText = [header.label, header.value as? String ?? ""].joined(separator: " ")
+        XCTAssertNotNil(monthText.range(of: "[0-9]{4}\\s*年.*[0-9]{1,2}\\s*月", options: .regularExpression), "The real calendar month must be Chinese under the English phone locale.")
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let selectedDate = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: .now)))
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.locale = Locale(identifier: "zh_Hans")
+        formatter.dateFormat = "yyyy年M月"
+        let expectedMonth = formatter.string(from: selectedDate)
+        for _ in 0..<3 {
+            let displayed = try XCTUnwrap(header.value as? String)
+            if displayed == expectedMonth { break }
+            let displayedDate = try XCTUnwrap(formatter.date(from: displayed))
+            try tap(app.buttons[selectedDate < displayedDate ? "DatePicker.PreviousMonth" : "DatePicker.NextMonth"])
+        }
+        XCTAssertEqual(header.value as? String, expectedMonth)
+        formatter.dateFormat = "M月d日"
+        let shortDate = formatter.string(from: selectedDate)
+        // Native calendar accessibility names follow the process language even
+        // when the visible month/date values use the DatePicker's Chinese locale.
+        // Accept exact independently formatted English labels for the same civil day;
+        // the Chinese header and resulting selected date remain strict assertions.
+        let englishUK = Date.FormatStyle(locale: Locale(identifier: "en_GB"), calendar: calendar, timeZone: calendar.timeZone)
+            .weekday(.wide).day().month(.wide).format(selectedDate)
+        let englishUS = Date.FormatStyle(locale: Locale(identifier: "en_US"), calendar: calendar, timeZone: calendar.timeZone)
+            .weekday(.wide).day().month(.wide).format(selectedDate)
+        attachScreen(app, name: "ChineseDatesUI-native-goal-calendar-open")
+        let days = app.buttons.matching(NSPredicate(
+            format: "label IN %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+            [shortDate, englishUK, englishUS], "\(shortDate) ", "今天, \(shortDate) "
+        ))
+        try requireExists(days.firstMatch)
+        guard days.count == 1 else {
+            XCTFail("The expected native calendar day must be unambiguous.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(days.firstMatch)
+        let dismissPopover = app.buttons["PopoverDismissRegion"]
+        if dismissPopover.exists { try tap(dismissPopover) }
+        let summary = app.staticTexts["goal.effectiveSummary"]
+        try reveal(summary, in: app)
+        let parts = calendar.dateComponents([.year, .month, .day], from: selectedDate)
+        let year = try XCTUnwrap(parts.year)
+        let month = try XCTUnwrap(parts.month)
+        let day = try XCTUnwrap(parts.day)
+        let yearPrefix = year == calendar.component(.year, from: .now) ? "" : "\(year)年"
+        XCTAssertEqual(summary.label, "\(yearPrefix)\(month)月\(day)日生效", "Date selection must retain the actual selected civil day.")
+        attachScreen(app, name: "ChineseDatesUI-native-goal-calendar")
+    }
+
     func testFourTabsAndUnreleasedPages() throws {
         executionTimeAllowance = 120
         let app = try launchApp()
@@ -414,7 +690,7 @@ final class NativeNavigationUITests: XCTestCase {
     /// The test does not set font preferences or introduce a test-only app rendering mode.
     func testMealControlsReachableAtCurrentSystemTextSize() throws {
         executionTimeAllowance = 180
-        let app = try launchApp()
+        let app = try launchApp(language: "en-GB", region: "en_GB")
         defer { app.terminate() }
         let rice = "熟长粒白米饭（无盐）"
 
@@ -427,6 +703,36 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(app.buttons["today.recordMeal"])
         try tap(app.buttons["空白记录"])
         try requireExists(app.textFields["meal.name"])
+        let datePickers = app.datePickers.matching(identifier: "meal.time")
+        try reveal(datePickers.firstMatch, in: app)
+        XCTAssertEqual(datePickers.count, 1)
+        let hierarchy = XCTAttachment(string: datePickers.firstMatch.debugDescription)
+        hierarchy.name = "ChineseDatesUI-AX-native-date-picker-hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        attachScreen(app, name: "ChineseDatesUI-AX-native-meal-picker")
+        let wheels = datePickers.firstMatch.pickerWheels
+        if wheels.count > 0 {
+            // Native AX layout uses Today + hour + minute, with no displayed year.
+            // The phone's UK regional 24-hour default has three real wheels.
+            XCTAssertEqual(wheels.count, 3)
+            XCTAssertEqual(wheels.element(boundBy: 0).value as? String, "今天")
+            let hourText = try XCTUnwrap(wheels.element(boundBy: 1).value as? String)
+            let minuteText = try XCTUnwrap(wheels.element(boundBy: 2).value as? String)
+            // Visible wheels are Chinese Today/date + numeric hour/minute. Native AX
+            // unit descriptors follow the process language, as the observed tree shows.
+            XCTAssertNotNil(hourText.range(of: "^[0-9]{1,2}(?:点| o[’']clock)$", options: .regularExpression))
+            XCTAssertNotNil(minuteText.range(of: "^[0-9]{1,2}(?:分钟| minutes?)$", options: .regularExpression))
+            let hour = try XCTUnwrap(Int(hourText.prefix(while: { $0.isNumber })))
+            let minute = try XCTUnwrap(Int(minuteText.prefix(while: { $0.isNumber })))
+            XCTAssertTrue((0...23).contains(hour))
+            XCTAssertTrue((0...59).contains(minute))
+        } else {
+            let pickerText = displayedDatePickerText(datePickers.firstMatch)
+            try assertChineseDate(in: pickerText, requiresYear: true)
+            _ = try assertChineseClock(in: pickerText, uses12HourClock: false)
+        }
+        attachScreen(app, name: "ChineseDatesUI-AX-native-meal-picker")
         try selectFoodAtCurrentTextSize(rice, prefix: "meal.food.", in: app)
         let weight = try singleField(prefix: "meal.weight.", in: app)
         try replaceText(in: weight, with: "200", app: app)
@@ -962,7 +1268,7 @@ final class NativeNavigationUITests: XCTestCase {
         try finishKeyboardEditing(identifier: doneIdentifier, in: app)
     }
 
-    private func launchApp() throws -> XCUIApplication {
+    private func launchApp(language: String = "zh-Hans", region: String = "zh_CN") throws -> XCUIApplication {
         continueAfterFailure = false
         #if !targetEnvironment(simulator)
         throw XCTSkip("These tests are authorized only for a dedicated fictitious-data simulator, never a physical device.")
@@ -970,7 +1276,7 @@ final class NativeNavigationUITests: XCTestCase {
         let app = XCUIApplication(bundleIdentifier: "com.ning6y6.ShiHeng")
         diagnosticApplication = app
         // System-supported process-local locale settings, not an app-specific data/reset mode.
-        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launchArguments = ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
         app.launch()
         guard app.wait(for: .runningForeground, timeout: 15) else {
             attachFailureEvidence(app: app, element: app, context: "Fresh launch did not reach runningForeground.")
@@ -1089,7 +1395,14 @@ final class NativeNavigationUITests: XCTestCase {
 
     private func openMeal(named name: String, in app: XCUIApplication) throws {
         let id = try expandMeal(named: name, in: app)
-        let details = app.buttons["meal.details.\(id)"]
+        // History can expose the underlying Today's identical action identifier.
+        // Query the actual frontmost page, then require its single real action.
+        let containerID = app.navigationBars["历史餐食"].exists ? "meal.history" : "today.content"
+        let container = app.descendants(matching: .any).matching(identifier: containerID).firstMatch
+        let actions = container.buttons.matching(identifier: "meal.details.\(id)")
+        try requireExists(actions.firstMatch)
+        XCTAssertEqual(actions.count, 1)
+        let details = actions.firstMatch
         try reveal(details, in: app)
         try tap(details)
         try requireExists(app.navigationBars["餐食详情"])
@@ -1264,11 +1577,16 @@ final class NativeNavigationUITests: XCTestCase {
 
     private func verifyRiceWeight(_ grams: Int, rice: String, in app: XCUIApplication) throws {
         let combined = "\(rice)、\(grams) g"
+        // English system accessibility joins LabeledContent with a comma even when
+        // its visible custom labels are Chinese. Keep the food and weight exact.
+        let englishCombined = "\(rice), \(grams) g"
         // The expanded underlying row also exposes the identical saved weight.
         // Assert the frontmost detail snapshot, not hidden content behind its sheet.
         let detail = app.descendants(matching: .any).matching(identifier: "meal.detail").firstMatch
         try requireExists(detail)
-        let row = detail.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", combined, "\(grams) g")).firstMatch
+        let row = detail.staticTexts.matching(NSPredicate(
+            format: "label == %@ OR label == %@ OR label == %@", combined, englishCombined, "\(grams) g"
+        )).firstMatch
         try reveal(row, in: app)
         try requireExists(row, "The stored rice snapshot must retain the expected \(grams) g.")
     }
@@ -1281,7 +1599,10 @@ final class NativeNavigationUITests: XCTestCase {
         start.press(forDuration: 0.05, thenDragTo: end)
     }
 
-    private func saveFictitiousGoal(energy: String, saturatedFat: String, fibre: String, in app: XCUIApplication) throws {
+    private func saveFictitiousGoal(
+        energy: String, saturatedFat: String, fibre: String, sourceNote: String? = nil,
+        in app: XCUIApplication
+    ) throws {
         try openGoalFromSettings(in: app)
         var lastEditedField: XCUIElement?
         for (label, value) in [
@@ -1322,6 +1643,35 @@ final class NativeNavigationUITests: XCTestCase {
         let formBar = app.navigationBars["每日预算与目标"]
         let save = formBar.buttons["保存"]
         XCTAssertFalse(app.switches["我已核对并确认预算、目标与上限"].exists, "The goal form must not require a second confirmation control.")
+        if let sourceNote {
+            let disclosure = app.buttons["goal.sourceDisclosure"]
+            try reveal(disclosure, in: app)
+            if disclosure.value as? String != "已展开" { try tap(disclosure) }
+            let sources = app.buttons.matching(identifier: "goal.source")
+            try reveal(sources.firstMatch, in: app)
+            guard sources.count == 1 else {
+                XCTFail("The goal form must expose one explicit source picker.")
+                throw NavigationUIFailure.missingControl
+            }
+            try tap(sources.firstMatch)
+            let selfSelected = app.buttons.matching(NSPredicate(format: "label == %@", "自行选择"))
+            try requireExists(selfSelected.firstMatch)
+            guard selfSelected.count == 1 else {
+                XCTFail("The source menu must expose one Self Selected action.")
+                throw NavigationUIFailure.missingControl
+            }
+            try tap(selfSelected.firstMatch)
+            let note = try uniqueIdentifiedControl(identifier: "goal.sourceNote", in: app)
+            try reveal(note, in: app)
+            // A unique marker is sufficient to identify this append-only QA version.
+            // Append through the real keyboard instead of replacing a long old note;
+            // repeated runs retain prior notes and never mutate confirmed versions.
+            try tap(note)
+            try requireExists(app.keyboards.firstMatch)
+            note.typeText(" · \(sourceNote)")
+            XCTAssertTrue((note.value as? String ?? "").contains(sourceNote))
+            try finishKeyboardEditing(identifier: "goal.keyboardDone", in: app)
+        }
         let today = app.buttons["goal.effectiveToday"]
         try reveal(today, in: app)
         try tap(today)
@@ -1370,7 +1720,7 @@ final class NativeNavigationUITests: XCTestCase {
     private func replaceText(in field: XCUIElement, with text: String, app: XCUIApplication, dismissKeyboard: Bool = true) throws {
         try reveal(field, in: app)
         let oldValue = field.value as? String ?? ""
-        let placeholderValues = ["请输入", "未设置", "模板名称", "重量", "默认重量", "克重"]
+        let placeholderValues = ["请输入", "未设置", "模板名称", "重量", "默认重量", "克重", "来源说明（可选）", "来源说明（必填）"]
         let hasExistingText = !oldValue.isEmpty && !placeholderValues.contains(oldValue)
         // At AX sizes the meal name is leading-aligned in a wide native field.
         // R7's real screenshot shows a centre press in blank space only offered
@@ -1410,7 +1760,8 @@ final class NativeNavigationUITests: XCTestCase {
                     XCTFail("A native input edit gesture requires finite non-empty bounds.")
                     throw NavigationUIFailure.conditionNotMet
                 }
-                let leading = UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
+                let leading = field.identifier == "goal.sourceNote"
+                    || UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
                 field.coordinate(withNormalizedOffset: CGVector(dx: leading ? 0.02 : 0.98, dy: 0.5))
                     .doubleTap()
             } else {
@@ -1546,7 +1897,7 @@ final class NativeNavigationUITests: XCTestCase {
     private func scrollCurrentContentUp(in app: XCUIApplication, towardTop: Bool = false) throws {
         // Identify the actual frontmost form/list. Swiping the app's centre can
         // change the native AX DatePicker wheel instead of scrolling the form.
-        let identifiers = ["template.form", "meal.form", "goal.form", "meal.detail", "templates.list", "meal.history", "meal.start", "today.content"]
+        let identifiers = ["template.form", "meal.form", "goal.form", "meal.detail", "goalHistory.detail", "goalHistory.list", "templates.list", "meal.history", "meal.start", "today.content"]
         guard let container = identifiers.lazy.compactMap({ identifier -> XCUIElement? in
             let matches = app.descendants(matching: .any).matching(identifier: identifier)
             guard matches.count == 1, matches.firstMatch.isHittable else { return nil }

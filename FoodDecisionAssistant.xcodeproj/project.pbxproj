@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CF08E96AB5E4ED0DE9D594A4 /* AppDateDisplayContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D3960453E7B4318E7D9DF4 /* AppDateDisplayContext.swift */; };
+		15551BBE13E6B35A712AB7FB /* AppDateDisplayEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D4ADDCBFF56A07368A3D98B /* AppDateDisplayEnvironment.swift */; };
+		EF097E90FA635146EA422008 /* AppDateDisplayModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8256961960AB9A7F610B5A18 /* AppDateDisplayModifier.swift */; };
+		477B44A634BE44B0322E328A /* AppDateDisplayContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15DEE57F6B619B2E3F506FC2 /* AppDateDisplayContextTests.swift */; };
 		53C50CF106BAD599E2B0A632 /* GoalFormSaveStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */; };
 		DE3AD2528E4C4A23ABAA003C /* GoalContextPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */; };
 		E877E41F97970E0580E90F00 /* GoalDatePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA63119AF2C181C47CE5319 /* GoalDatePresentationTests.swift */; };
@@ -129,6 +133,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A3D3960453E7B4318E7D9DF4 /* AppDateDisplayContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDateDisplayContext.swift; sourceTree = "<group>"; };
+		9D4ADDCBFF56A07368A3D98B /* AppDateDisplayEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDateDisplayEnvironment.swift; sourceTree = "<group>"; };
+		8256961960AB9A7F610B5A18 /* AppDateDisplayModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDateDisplayModifier.swift; sourceTree = "<group>"; };
+		15DEE57F6B619B2E3F506FC2 /* AppDateDisplayContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppDateDisplayContextTests.swift; sourceTree = "<group>"; };
 		6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/GoalFormSaveStateTests.swift; sourceTree = "<group>"; };
 		A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/GoalContextPresentationTests.swift; sourceTree = "<group>"; };
 		FBA63119AF2C181C47CE5319 /* GoalDatePresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/GoalDatePresentationTests.swift; sourceTree = "<group>"; };
@@ -300,6 +308,7 @@
 			children = (
 				6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */,
 				A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */,
+				15DEE57F6B619B2E3F506FC2 /* AppDateDisplayContextTests.swift */,
 				FBA63119AF2C181C47CE5319 /* GoalDatePresentationTests.swift */,
 				09A000000000000000000007 /* GoalHistoryReaderTests.swift */,
 				09A000000000000000000006 /* GoalHistoryBackupTests.swift */,
@@ -359,6 +368,9 @@
 			children = (
 				BC18515961D0F91BAE82BD19 /* GoalFormSaveState.swift */,
 				025E7E87C5BF568BE92741A7 /* GoalContextPresentation.swift */,
+				A3D3960453E7B4318E7D9DF4 /* AppDateDisplayContext.swift */,
+				9D4ADDCBFF56A07368A3D98B /* AppDateDisplayEnvironment.swift */,
+				8256961960AB9A7F610B5A18 /* AppDateDisplayModifier.swift */,
 				2397D65C1668F99FCC0FBAC9 /* GoalDatePresentation.swift */,
 				09A000000000000000000004 /* GoalVersionDetailView.swift */,
 				09A000000000000000000003 /* GoalHistoryView.swift */,
@@ -562,6 +574,7 @@
 			files = (
 				53C50CF106BAD599E2B0A632 /* GoalFormSaveStateTests.swift in Sources */,
 				DE3AD2528E4C4A23ABAA003C /* GoalContextPresentationTests.swift in Sources */,
+				477B44A634BE44B0322E328A /* AppDateDisplayContextTests.swift in Sources */,
 				E877E41F97970E0580E90F00 /* GoalDatePresentationTests.swift in Sources */,
 				09B000000000000000000007 /* GoalHistoryReaderTests.swift in Sources */,
 				09B000000000000000000006 /* GoalHistoryBackupTests.swift in Sources */,
@@ -598,6 +611,9 @@
 			files = (
 				B992644D9593649C27E4EBE4 /* GoalFormSaveState.swift in Sources */,
 				C39DD44AD94BFD795EDA0CA9 /* GoalContextPresentation.swift in Sources */,
+				CF08E96AB5E4ED0DE9D594A4 /* AppDateDisplayContext.swift in Sources */,
+				15551BBE13E6B35A712AB7FB /* AppDateDisplayEnvironment.swift in Sources */,
+				EF097E90FA635146EA422008 /* AppDateDisplayModifier.swift in Sources */,
 				DF4042E7B838BD5751C84946 /* GoalDatePresentation.swift in Sources */,
 				09B000000000000000000009 /* LocalStoreFileSnapshot.swift in Sources */,
 				09B000000000000000000004 /* GoalVersionDetailView.swift in Sources */,

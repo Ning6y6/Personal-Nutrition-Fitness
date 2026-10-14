@@ -73,6 +73,7 @@ struct MealHistoryView: View {
 }
 
 struct MealSummaryRow: View {
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let meal: PersistentMealLog
@@ -94,7 +95,8 @@ struct MealSummaryRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Group {
                     if meal.eatenAt.timeIntervalSince1970.isFinite {
-                        Text(meal.eatenAt, format: dateFormat)
+                        Text(showsDate ? dateDisplay.historyDateTime(meal.eatenAt) : dateDisplay.time(meal.eatenAt))
+                            .accessibilityIdentifier("meal.summaryTime.\(meal.id.uuidString)")
                     } else {
                         Text("时间不可用")
                     }
@@ -131,14 +133,10 @@ struct MealSummaryRow: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var dateFormat: Date.FormatStyle {
-        showsDate
-            ? .dateTime.month(.abbreviated).day().hour().minute()
-            : .dateTime.hour().minute()
-    }
 }
 
 struct MealDetailView: View {
+    @Environment(\.appDateDisplay) private var dateDisplay
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
@@ -163,7 +161,8 @@ struct MealDetailView: View {
                 Section("餐食信息") {
                     LabeledContent("名称", value: meal.title)
                     LabeledContent("时间") {
-                        Text(meal.eatenAt, format: .dateTime.year().month().day().hour().minute())
+                        Text(dateDisplay.dateTime(meal.eatenAt))
+                            .accessibilityIdentifier("meal.detail.time")
                     }
                     LabeledContent("记录方式", value: meal.entryMethodLabel)
                     LabeledContent("证据等级", value: meal.evidenceLabel)

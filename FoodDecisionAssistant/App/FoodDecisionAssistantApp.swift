@@ -18,6 +18,7 @@ struct ShiHengApp: App {
             }
             .tint(DesignTokens.accent)
             .environment(\.storeBootstrap, bootstrap)
+            .modifier(AppDateDisplayModifier())
         }
     }
 }

@@ -52,6 +52,105 @@ final class NativeNavigationUITests: XCTestCase {
         attachScreen(app, name: "NativeNavigationUI-today-return")
     }
 
+    /// Run on the synthetic QA phone at regular and actual maximum system text size.
+    func testTodayBottomControlsStayOutsideScrollingContent() throws {
+        // AX adds real form-row scrolling and longer fixture input, not App delays.
+        executionTimeAllowance = UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory ? 480 : 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        try selectTab("今日", in: app)
+        try verifyTodayEntrySeparation(in: app)
+        attachScreen(app, name: "TodayBottomUI-initial-unobstructed-viewport")
+
+        let name = "[UI测试] 底部遮挡-\(String(UUID().uuidString.prefix(6)))"
+        try createRiceMeal(named: name, grams: 180, in: app)
+        let row = namedRecordButton(name, in: app)
+        let id = try positionCollapsedTodayMealNearBottom(row, in: app)
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.row.")).count, 1,
+                       "The original 180g acceptance must run with exactly one Today meal on synthetic QA.")
+        attachScreen(app, name: "TodayBottomUI-rice180-before-expansion")
+        // No reveal or drag after expansion until the complete action group is verified.
+        try tap(row)
+        attachScreen(app, name: "TodayBottomUI-rice180-immediately-after-expansion")
+        try waitForAutoRevealedTodayMeal(id: id, in: app)
+        attachScreen(app, name: "TodayBottomUI-rice180-actions-visible-without-another-swipe")
+        for action in ["edit", "reuse", "details"] {
+            try tap(app.buttons["meal.\(action).\(id)"])
+            if action == "details" {
+                try requireExists(app.navigationBars["餐食详情"])
+                try verifyRiceWeight(180, rice: "熟长粒白米饭（无盐）", in: app)
+                try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+            } else {
+                try requireExists(app.textFields["meal.name"])
+                // The complete Today action group has already passed. This
+                // gesture belongs only to the opened form's virtualized AX row.
+                let weights = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.weight."))
+                try reveal(weights.firstMatch, in: app)
+                XCTAssertEqual(Double(try singleField(prefix: "meal.weight.", in: app).value as? String ?? ""), 180)
+                try tap(mealEntryBar(in: app).buttons["取消"])
+                XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+                XCTAssertFalse(app.buttons["放弃修改"].exists, "Opening an untouched edit or reuse draft must remain cancellable.")
+            }
+            try requireExists(app.navigationBars["今日"])
+            try waitForAutoRevealedTodayMeal(id: id, in: app)
+        }
+        let history = app.buttons["查看全部历史"]
+        try reveal(history, in: app)
+        let readable = try todayReadableFrame(in: app)
+        XCTAssertGreaterThanOrEqual(history.frame.minY, readable.minY)
+        XCTAssertLessThanOrEqual(history.frame.maxY, readable.maxY,
+                                 "The complete last content button must be above the fixed entry, not just have a hittable sliver.")
+        try verifyTodayEntrySeparation(in: app)
+        attachScreen(app, name: "TodayBottomUI-complete-history-button-above-entry")
+        try tap(history)
+        try requireExists(app.navigationBars["历史餐食"])
+        try tap(app.navigationBars["历史餐食"].buttons["完成"])
+        try requireExists(app.navigationBars["今日"])
+
+        try tap(app.buttons["today.recordMeal"])
+        try requireExists(app.buttons["空白记录"])
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+        try selectTab("设置", in: app)
+        XCTAssertFalse(app.buttons["today.recordMeal"].exists)
+        try selectTab("今日", in: app)
+        try verifyTodayEntrySeparation(in: app)
+        try reveal(history, in: app)
+        XCTAssertLessThanOrEqual(history.frame.maxY, try todayReadableFrame(in: app).maxY)
+        attachScreen(app, name: "TodayBottomUI-returned-tabs-remain-unobstructed")
+
+        // Delete only this run's uniquely named synthetic meal through the existing UI.
+        try openMeal(named: name, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+    }
+
+    private func verifyTodayEntrySeparation(in app: XCUIApplication) throws {
+        let content = app.descendants(matching: .any).matching(identifier: "today.content").firstMatch
+        let entry = app.buttons["today.recordMeal"]
+        let tabs = app.tabBars.firstMatch
+        try requireExists(content)
+        try requireExists(entry)
+        try requireExists(tabs)
+        let scrollFrame = content.frame
+        let entryFrame = entry.frame
+        let tabFrame = tabs.frame
+        guard [scrollFrame.maxY, entryFrame.minY, entryFrame.maxY, tabFrame.minY].allSatisfy(\.isFinite) else {
+            attachFailureEvidence(app: app, element: content, context: "Today requires finite native viewport, entry and tab boundaries.")
+            XCTFail("Native Today boundaries must be finite.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        if scrollFrame.maxY > entryFrame.minY || entryFrame.maxY > tabFrame.minY {
+            attachFailureEvidence(app: app, element: content,
+                                  context: "Scroll=\(scrollFrame), entry=\(entryFrame), tabs=\(tabFrame)")
+        }
+        XCTAssertLessThanOrEqual(scrollFrame.maxY, entryFrame.minY,
+                                 "Visible scrolling content must end before the fixed entry, including at intermediate scroll positions.")
+        XCTAssertLessThanOrEqual(entryFrame.maxY, tabFrame.minY,
+                                 "The complete entry must be above the native tab bar.")
+        XCTAssertGreaterThanOrEqual(entryFrame.height, 44)
+        XCTAssertTrue(entry.isHittable)
+    }
+
     func testSettingsSaveRefreshesPreviouslyDisplayedTodayBudget() throws {
         // This test isolates invalidation of Today's already displayed budget.
         // Optional zero/blank and positive-value round trips have independent
@@ -557,7 +656,7 @@ final class NativeNavigationUITests: XCTestCase {
 
     func testTodayInlineExpansionAutomaticallyRevealsDetailsAboveEntryButton() throws {
         guard !UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory else {
-            throw XCTSkip("A complete one-screen detail is a regular-text-size acceptance case; large text prioritizes its header instead.")
+            throw XCTSkip("The regular-size case also checks the summary; AX uses the full three-action acceptance case.")
         }
         executionTimeAllowance = 360
         let app = try launchApp()
@@ -571,7 +670,7 @@ final class NativeNavigationUITests: XCTestCase {
         // No reveal/swipe after this tap: such a helper would perform the missing
         // scroll itself and could make the unfixed implementation pass.
         try tap(row)
-        try waitForAutoRevealedTodayMeal(id: id, includingActions: true, in: app)
+        try waitForAutoRevealedTodayMeal(id: id, in: app)
         XCTAssertFalse(app.navigationBars["餐食详情"].exists, "Automatic positioning must preserve inline detail, not open a sheet.")
         XCTAssertTrue(app.tabBars.buttons["今日"].isSelected)
         attachScreen(app, name: "NativeInlineAutoscrollUI-expanded-without-manual-scroll")
@@ -584,8 +683,8 @@ final class NativeNavigationUITests: XCTestCase {
         try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
     }
 
-    /// Also run at the actual system AX text size: an overlong detail must bring
-    /// its header into the reading region, not force every action onto one screen.
+    /// Also run at actual system AX text size: every expansion must expose its
+    /// complete action group without a subsequent test-driven scroll.
     func testTodayInlineAutoscrollSurvivesCollapseReopenAndMealSwitch() throws {
         executionTimeAllowance = 360
         let app = try launchApp()
@@ -599,22 +698,26 @@ final class NativeNavigationUITests: XCTestCase {
         let newerID = try positionCollapsedTodayMealNearBottom(newer, in: app)
 
         try tap(newer)
-        try waitForAutoRevealedTodayMeal(id: newerID, includingActions: false, in: app)
+        try waitForAutoRevealedTodayMeal(id: newerID, in: app)
+        if UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory {
+            // Locate a tall summary only after all three actions have passed visibility checks.
+            try reveal(newer, in: app)
+        }
         try tap(newer)
         try waitFor(NSPredicate(format: "value == %@", "已收起"), on: newer, message: "Tapping the header again must collapse its inline detail.")
         XCTAssertTrue(app.buttons["meal.edit.\(newerID)"].waitForNonExistence(timeout: 5))
         // Collapse does not issue a new scroll request. Reopening the same real
         // header must nevertheless obtain a fresh request and reveal it again.
         try tap(newer)
-        try waitForAutoRevealedTodayMeal(id: newerID, includingActions: false, in: app)
+        try waitForAutoRevealedTodayMeal(id: newerID, in: app)
         attachScreen(app, name: "NativeInlineAutoscrollUI-collapse-reopen-without-manual-scroll")
 
         let older = namedRecordButton(olderName, in: app)
         let olderID: String
         if UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory {
-            // An AX detail is longer than a screen. Collapse it before locating
-            // another header; do not demand that an offscreen control be tappable.
-            // All positioning gestures occur before the second expansion tap.
+            // The action-first AX assertion has passed. Locate the summary to
+            // collapse before preparing another meal, never to help its expansion.
+            try reveal(newer, in: app)
             try tap(newer)
             try waitFor(NSPredicate(format: "value == %@", "已收起"), on: newer, message: "The overlong detail must be collapsible from its visible header.")
             olderID = try positionCollapsedTodayMealNearBottom(older, in: app)
@@ -626,7 +729,7 @@ final class NativeNavigationUITests: XCTestCase {
         // Again, no reveal/swipe until positioning is verified. The normal-size
         // path switches directly from one expanded meal to another.
         try tap(older)
-        try waitForAutoRevealedTodayMeal(id: olderID, includingActions: false, in: app)
+        try waitForAutoRevealedTodayMeal(id: olderID, in: app)
         XCTAssertEqual(newer.value as? String, "已收起", "Switching meals must not leave the previous row expanded.")
         XCTAssertFalse(app.buttons["meal.edit.\(newerID)"].exists)
         XCTAssertFalse(app.navigationBars["餐食详情"].exists)
@@ -679,7 +782,16 @@ final class NativeNavigationUITests: XCTestCase {
         for attempt in 0...8 {
             let visible = try todayReadableFrame(in: app)
             let header = row.frame
-            if row.isHittable, header.minY >= visible.minY,
+            let isAccessibilitySize = UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
+            let summaryFits = header.height <= visible.height - 8
+            let visibleHeader = header.intersection(visible)
+            // R8's actual AX5 small phone had a 576 pt summary in a 384.5 pt
+            // reading region. A real visible, hittable portion is enough to
+            // tap it; only the following expanded actions must all fit at once.
+            let summaryIsPrepared = isAccessibilitySize && !summaryFits
+                ? visibleHeader.width >= 44 && visibleHeader.height >= 44
+                : header.minY >= visible.minY
+            if row.isHittable, summaryIsPrepared,
                header.maxY >= visible.minY + visible.height * 0.75,
                header.maxY <= visible.maxY - 8 {
                 return id
@@ -693,7 +805,10 @@ final class NativeNavigationUITests: XCTestCase {
             // placement band: native drag deceleration can overshoot it.
             // All gestures precede the expansion tap, never its assertion.
             let quarterStart = visible.minY + visible.height * 0.75
-            let targetBottom = (quarterStart + visible.maxY - 8) / 2
+            let bandMiddle = (quarterStart + visible.maxY - 8) / 2
+            let targetBottom = isAccessibilitySize && summaryFits
+                ? min(visible.maxY - 8, max(bandMiddle, visible.minY + header.height))
+                : bandMiddle
             let desiredDelta = targetBottom - header.maxY
             let maximumStep = visible.height * 0.35
             let delta = max(-maximumStep, min(maximumStep, desiredDelta))
@@ -715,12 +830,12 @@ final class NativeNavigationUITests: XCTestCase {
         throw NavigationUIFailure.conditionNotMet
     }
 
-    private func waitForAutoRevealedTodayMeal(id: String, includingActions: Bool, in app: XCUIApplication) throws {
+    private func waitForAutoRevealedTodayMeal(id: String, in app: XCUIApplication) throws {
         let row = app.buttons["meal.row.\(id)"]
         let visible = try todayReadableFrame(in: app)
-        let controls = includingActions
-            ? [row, app.buttons["meal.edit.\(id)"], app.buttons["meal.reuse.\(id)"], app.buttons["meal.details.\(id)"]]
-            : [row]
+        let requiresSummary = !UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
+        let actions = [app.buttons["meal.edit.\(id)"], app.buttons["meal.reuse.\(id)"], app.buttons["meal.details.\(id)"]]
+        let controls = requiresSummary ? [row] + actions : actions
         var previousFrames: [CGRect]?
         var stableObservations = 0
         let positioned = NSPredicate { _, _ in
@@ -731,18 +846,33 @@ final class NativeNavigationUITests: XCTestCase {
                       return frame.width.isFinite && frame.height.isFinite
                           && frame.width > 0 && frame.height > 0
                           && frame.minY >= visible.minY - 1 && frame.maxY <= visible.maxY + 1
-                  }), row.frame.midY < visible.midY else { return false }
+                  }), actions.allSatisfy({ $0.frame.height + 0.001 >= 44 }) else { return false }
+            // Accessibility CGRect subtraction can produce 43.99999999999994
+            // for a 44 pt control at a fractional origin. This is below one pixel,
+            // not permission to accept a visibly smaller tap target.
             let frames = controls.map(\.frame)
             stableObservations = previousFrames == frames ? stableObservations + 1 : 0
             previousFrames = frames
             return stableObservations >= 2
         }
-        try waitFor(
-            positioned, on: row, timeout: 10,
-            message: includingActions
-                ? "One tap must automatically reveal the settled header and every inline action above the fixed entry button, without a test scroll."
-                : "One tap must automatically bring the settled expanded header into the upper reading region, without a test scroll."
-        )
+        do {
+            try waitFor(
+                positioned, on: row, timeout: 10,
+                message: requiresSummary
+                    ? "Single-tap expansion must reveal the summary and complete action group above the fixed entry without a test scroll."
+                    : "AX expansion must reveal all three complete actions above the fixed entry without a test scroll."
+            )
+        } catch {
+            attachFailureEvidence(app: app, element: row, context: "Reading region: \(visible); action frames: \(actions.map(\.frame))")
+            throw error
+        }
+        let dimensions = actions.map {
+            "\($0.identifier): \($0.frame), height=\(String(format: "%.17g", Double($0.frame.height)))"
+        }.joined(separator: "\n")
+        let evidence = XCTAttachment(string: "Reading region: \(visible)\n\(dimensions)")
+        evidence.name = "Today-actions-complete-native-bounds"
+        evidence.lifetime = .keepAlways
+        add(evidence)
     }
 
     func testMealWeightFirstFocusDeletesLastDigitAndSaves() throws {
@@ -1242,6 +1372,12 @@ final class NativeNavigationUITests: XCTestCase {
         let oldValue = field.value as? String ?? ""
         let placeholderValues = ["请输入", "未设置", "模板名称", "重量", "默认重量", "克重"]
         let hasExistingText = !oldValue.isEmpty && !placeholderValues.contains(oldValue)
+        // At AX sizes the meal name is leading-aligned in a wide native field.
+        // R7's real screenshot shows a centre press in blank space only offered
+        // Select, not Select All. Use the observed text edge, like the goal fields.
+        let selectsTextAtAlignedEdge = field.identifier.hasPrefix("goal.")
+            || (field.identifier == "meal.name"
+                && UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory)
         if field.identifier.hasPrefix("goal."), app.keyboards.firstMatch.exists {
             // With a previous input focused, the next row may sit behind the
             // floating Done toolbar despite reporting isHittable. Reveal its
@@ -1260,7 +1396,7 @@ final class NativeNavigationUITests: XCTestCase {
             // Hardware Command-A was ignored by the actual simulator in AX5 R3.
             // Use the real touch edit menu on the now-independent input frame,
             // then require its unique Select All action and exact resulting text.
-            if field.identifier.hasPrefix("goal.") {
+            if selectsTextAtAlignedEdge {
                 // R3's actual hierarchy/screenshot: this wide, trailing-aligned
                 // TextField's centre was blank. Pressing it left the caret before
                 // 30.0 and produced no menu. GoalSettingsView places text at the
@@ -1289,8 +1425,8 @@ final class NativeNavigationUITests: XCTestCase {
             if actions.count == 1, let selectAll = actions.first {
                 try tap(selectAll)
                 field.typeText(text.isEmpty ? XCUIKeyboardKey.delete.rawValue : text)
-            } else if actions.isEmpty, field.identifier.hasPrefix("goal.") {
-                // Native selection may already span the whole number, in which
+            } else if actions.isEmpty, selectsTextAtAlignedEdge {
+                // Native selection may already span the whole value, in which
                 // case Select All is omitted. Cut is only evidence of *some*
                 // selection: perform the unique real menu action and require
                 // an entirely empty value before entering new text. Any residue

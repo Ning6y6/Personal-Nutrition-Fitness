@@ -57,6 +57,9 @@ struct MealExpandableRow: View {
     let meal: PersistentMealLog
     let isExpanded: Bool
     var showsDate = false
+    var showsActionsBeforeDetails = false
+    var expansionScrollRequest: InlineMealScrollState.Request? = nil
+    var onExpansionActionsLayout: (InlineMealScrollState.Request) -> Void = { _ in }
     let onToggle: () -> Void
     let onEdit: () -> Void
     let onReuse: (MealLog) -> Void
@@ -64,20 +67,38 @@ struct MealExpandableRow: View {
 
     var body: some View {
         let presentation = InlineMealPresentation(meal: meal)
+        let laysOutLeadingActions = showsActionsBeforeDetails && isExpanded
+        let layoutRequest = laysOutLeadingActions ? expansionScrollRequest : nil
         VStack(alignment: .leading, spacing: 12) {
-            Button(action: onToggle) {
-                MealSummaryRow(
-                    meal: meal, showsDate: showsDate,
-                    isExpanded: isExpanded, presentation: presentation
-                )
-                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .contentShape(.rect)
+            VStack(alignment: .leading, spacing: 12) {
+                Button(action: onToggle) {
+                    MealSummaryRow(
+                        meal: meal, showsDate: showsDate,
+                        isExpanded: isExpanded, presentation: presentation
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("meal.row.\(meal.id.uuidString)")
+                .accessibilityValue(isExpanded ? "已展开" : "已收起")
+                .accessibilityHint(isExpanded ? "收起餐食摘要" : "展开食物分项、历史营养快照及操作")
+                .id(Self.prefixScrollID(for: meal.id))
+
+                if laysOutLeadingActions {
+                    actions(canReuse: presentation.canReuse)
+                        .font(.subheadline)
+                        .id(Self.actionsScrollID(for: meal.id))
+                        .onGeometryChange(for: InlineMealScrollState.Request?.self) { geometry in
+                            // This newly inserted group has its own real layout;
+                            // the unchanged collapsed summary cannot make it ready early.
+                            geometry.size.height >= 44 ? layoutRequest : nil
+                        } action: { request in
+                            if let request { onExpansionActionsLayout(request) }
+                        }
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("meal.row.\(meal.id.uuidString)")
-            .accessibilityValue(isExpanded ? "已展开" : "已收起")
-            .accessibilityHint(isExpanded ? "收起餐食摘要" : "展开食物分项、历史营养快照及操作")
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 12) {
@@ -120,13 +141,23 @@ struct MealExpandableRow: View {
                             } ?? "未知"
                         )
                     }
-                    actions(canReuse: presentation.canReuse)
+                    if !showsActionsBeforeDetails {
+                        actions(canReuse: presentation.canReuse)
+                    }
                 }
                 .font(.subheadline)
                 .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    static func prefixScrollID(for mealID: UUID) -> String {
+        "meal.prefix.\(mealID.uuidString)"
+    }
+
+    static func actionsScrollID(for mealID: UUID) -> String {
+        "meal.actions.\(mealID.uuidString)"
     }
 
     @ViewBuilder

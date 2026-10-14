@@ -6,6 +6,7 @@ struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(sort: \PersistentMealLog.eatenAt, order: .reverse)
     private var mealLogs: [PersistentMealLog]
@@ -57,76 +58,78 @@ struct TodayView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 16) {
-                    let summary = todaySummary
-                    if dateContext.dayWindow != nil {
-                        TodayStatusCard(
-                            goal: currentGoal,
-                            nutrients: summary.nutrients,
-                            mealCount: summary.meals.count,
-                            fibreSummary: summary.fibreSummary,
-                            availability: summary.availability,
-                            hasGoalReadError: hasGoalReadError
-                        )
-                        if let goalContextText {
-                            Text(goalContextText)
-                                .font(.footnote)
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        let summary = todaySummary
+                        if dateContext.dayWindow != nil {
+                            TodayStatusCard(
+                                goal: currentGoal,
+                                nutrients: summary.nutrients,
+                                mealCount: summary.meals.count,
+                                fibreSummary: summary.fibreSummary,
+                                availability: summary.availability,
+                                hasGoalReadError: hasGoalReadError
+                            )
+                            if let goalContextText {
+                                Text(goalContextText)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .accessibilityIdentifier("today.goalContext")
+                            }
+                        } else {
+                            Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
+                            Text("暂不显示今日摄入与缺口，历史记录仍保留。")
                                 .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .accessibilityIdentifier("today.goalContext")
                         }
-                    } else {
-                        Label("今日日期暂不可用", systemImage: "exclamationmark.triangle")
-                        Text("暂不显示今日摄入与缺口，历史记录仍保留。")
-                            .foregroundStyle(.secondary)
-                    }
-                    if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
-                        Label(
-                            "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
-                            systemImage: "exclamationmark.triangle"
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                    }
-                    if dateContext.dayWindow != nil {
-                        RecentMealsCard(
-                            meals: Array(todayMeals.prefix(3)),
-                            hasHistory: !mealLogs.isEmpty,
-                            expandedMealID: expansion.expandedMealID,
-                            scrollRequest: expansionScroll.request,
-                            toggleMeal: toggleMeal,
-                            didLayoutExpansion: { request in
-                                expansionScroll.recordLayout(for: request)
-                                scrollToExpansionIfReady(in: proxy)
-                            },
-                            editMeal: { editingMeal = $0 },
-                            reuseMeal: { reuseDraft = MealEntryDraft(reusing: $0) },
-                            selectMeal: { selectedMeal = $0 },
-                            showHistory: { isShowingMealHistory = true }
-                        )
-                    } else {
-                        Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
-                            isShowingMealHistory = true
+                        if !summary.invalidRecordIDs.isEmpty || !summary.draftRecordIDs.isEmpty {
+                            Label(
+                                "今日有\(summary.invalidRecordIDs.count)条旧记录需修复、\(summary.draftRecordIDs.count)条未确认草稿，未计入正式汇总。原记录仍在历史中。",
+                                systemImage: "exclamationmark.triangle"
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                        }
+                        if dateContext.dayWindow != nil {
+                            RecentMealsCard(
+                                meals: Array(todayMeals.prefix(3)),
+                                hasHistory: !mealLogs.isEmpty,
+                                expandedMealID: expansion.expandedMealID,
+                                scrollRequest: expansionScroll.request,
+                                toggleMeal: toggleMeal,
+                                didLayoutExpansion: { request in
+                                    expansionScroll.recordLayout(for: request)
+                                    scrollToExpansionIfReady(in: proxy)
+                                },
+                                editMeal: { editingMeal = $0 },
+                                reuseMeal: { reuseDraft = MealEntryDraft(reusing: $0) },
+                                selectMeal: { selectedMeal = $0 },
+                                showHistory: { isShowingMealHistory = true }
+                            )
+                        } else {
+                            Button("查看全部历史", systemImage: "clock.arrow.circlepath") {
+                                isShowingMealHistory = true
+                            }
                         }
                     }
+                    .padding()
                 }
-                .padding()
+                .accessibilityIdentifier("today.content")
+                .onScrollPhaseChange { _, phase in
+                    // A user's own drag takes priority over a pending automatic scroll.
+                    if phase == .interacting { expansionScroll.invalidate() }
+                }
             }
-            .accessibilityIdentifier("today.content")
-            .onScrollPhaseChange { _, phase in
-                // A user's own drag takes priority over a pending automatic scroll.
-                if phase == .interacting { expansionScroll.invalidate() }
-            }
-        }
-        .background(DesignTokens.background)
-        .safeAreaInset(edge: .bottom) {
+            // Give the scroll view a real boundary above the fixed action.
+            // A safe-area inset reserves scroll space but still draws behind it.
             if isSelected, mealEntryPlacement == .bottom {
                 TodayMealEntryButton(action: showMealStart)
                     .padding()
             }
         }
+        .background(DesignTokens.background)
         .navigationTitle(AppTab.today.title)
         .navigationSubtitle(Text(dateSubtitle))
         .toolbar {
@@ -232,9 +235,13 @@ struct TodayView: View {
             isActive: isSelected && scenePhase == .active && !hasPresentedSheet
         ) else { return }
         withAnimation(inlineExpansionAnimation) {
-            // A long meal or large text cannot fit in one viewport: show its
-            // beginning rather than jumping straight past the food to actions.
-            proxy.scrollTo(target, anchor: .top)
+            // Actions are immediately below the summary on Today. With very
+            // large text, prioritize the complete action group within the viewport.
+            if dynamicTypeSize.isAccessibilitySize {
+                proxy.scrollTo(MealExpandableRow.actionsScrollID(for: target), anchor: .bottom)
+            } else {
+                proxy.scrollTo(MealExpandableRow.prefixScrollID(for: target), anchor: .top)
+            }
         }
     }
 
@@ -305,17 +312,12 @@ private struct RecentMealsCard: View {
                     }
                     MealExpandableRow(
                         meal: meal, isExpanded: expandedMealID == meal.id,
+                        showsActionsBeforeDetails: true,
+                        expansionScrollRequest: laidOutRequest,
+                        onExpansionActionsLayout: didLayoutExpansion,
                         onToggle: { toggleMeal(meal) }, onEdit: { editMeal(meal) },
                         onReuse: reuseMeal, onDetails: { selectMeal(meal) }
                     )
-                    .id(meal.id)
-                    .onGeometryChange(for: InlineMealScrollState.Request?.self) { geometry in
-                        // The Sendable transform captures only a UI request,
-                        // not the main-actor-bound persistence model.
-                        geometry.size.height > 0 ? laidOutRequest : nil
-                    } action: { request in
-                        if let request { didLayoutExpansion(request) }
-                    }
                 }
             }
 

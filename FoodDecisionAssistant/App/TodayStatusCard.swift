@@ -39,36 +39,6 @@ struct TodayStatusCard: View {
                     targetKcal: goal.energyKcal
                 )
                 .frame(maxWidth: .infinity)
-
-                NutritionProgressRow(
-                    title: "蛋白质目标",
-                    current: nutrients.proteinGrams,
-                    target: goal.proteinGrams,
-                    unit: "g",
-                    metric: .protein
-                )
-                NutritionProgressRow(
-                    title: "碳水预算",
-                    current: nutrients.carbohydrateGrams,
-                    target: goal.carbohydrateGrams,
-                    unit: "g",
-                    metric: .carbohydrate
-                )
-                NutritionProgressRow(
-                    title: "脂肪预算",
-                    current: nutrients.fatGrams,
-                    target: goal.fatGrams,
-                    unit: "g",
-                    metric: .fat
-                )
-
-                NutritionProgressRow(
-                    title: "饱和脂肪上限",
-                    current: nutrients.saturatedFatGrams,
-                    target: goal.saturatedFatLimitGrams,
-                    unit: "g",
-                    metric: .saturatedFat
-                )
             } else if !hasGoalReadError, nutrients == nil {
                 Label("营养合计无法安全计算", systemImage: "exclamationmark.triangle")
                     .font(.headline)
@@ -83,10 +53,43 @@ struct TodayStatusCard: View {
                     .foregroundStyle(.secondary)
             }
             if availability == .available || availability == .unavailable {
-                FibreSummaryRow(
-                    summary: fibreSummary, target: goal?.fibreGrams,
-                    showsTarget: availability.canShowNutritionProgress && goal != nil && !hasGoalReadError
-                )
+                VStack(alignment: .leading, spacing: 16) {
+                    if availability.canShowNutritionProgress, !hasGoalReadError, let nutrients, let goal {
+                        NutritionProgressRow(
+                            title: "蛋白质目标",
+                            current: nutrients.proteinGrams,
+                            target: goal.proteinGrams,
+                            unit: "g",
+                            metric: .protein
+                        )
+                        NutritionProgressRow(
+                            title: "碳水预算",
+                            current: nutrients.carbohydrateGrams,
+                            target: goal.carbohydrateGrams,
+                            unit: "g",
+                            metric: .carbohydrate
+                        )
+                        NutritionProgressRow(
+                            title: "脂肪预算",
+                            current: nutrients.fatGrams,
+                            target: goal.fatGrams,
+                            unit: "g",
+                            metric: .fat
+                        )
+
+                        NutritionProgressRow(
+                            title: "饱和脂肪上限",
+                            current: nutrients.saturatedFatGrams,
+                            target: goal.saturatedFatLimitGrams,
+                            unit: "g",
+                            metric: .saturatedFat
+                        )
+                    }
+                    FibreSummaryRow(
+                        summary: fibreSummary, target: goal?.fibreGrams,
+                        showsTarget: availability.canShowNutritionProgress && goal != nil && !hasGoalReadError
+                    )
+                }
             }
             if availability == .available {
                 Text(availability.explanation)

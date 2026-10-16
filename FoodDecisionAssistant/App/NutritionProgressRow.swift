@@ -20,7 +20,7 @@ struct NutritionProgressRow: View {
 
     var body: some View {
         let display = presentation
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 4) {
             ViewThatFits(in: .horizontal) {
                 HStack {
                     Text(title).font(.subheadline)
@@ -30,7 +30,7 @@ struct NutritionProgressRow: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.subheadline)
                     Text(display.valueLabel)

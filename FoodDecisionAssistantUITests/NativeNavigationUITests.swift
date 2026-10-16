@@ -1213,6 +1213,70 @@ final class NativeNavigationUITests: XCTestCase {
         try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
     }
 
+    /// Run only on synthetic QA with an already effective goal. Never changes a goal
+    /// to satisfy the precondition; both regular and AX runs must show the real rows.
+    func testTodayNutritionSpacingKeepsInlineActionsVisible() throws {
+        executionTimeAllowance = 360
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 营养行间距-\(String(UUID().uuidString.prefix(8)))"
+        let rice = "熟长粒白米饭（无盐）"
+        try createRiceMeal(named: name, grams: 100, in: app)
+        let today = try uniqueIdentifiedControl(identifier: "today.content", in: app)
+        let rings = today.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "今日热量"))
+        try requireExists(rings.firstMatch, "This spacing acceptance requires an already effective QA goal and the real Today energy ring; no goal will be created or changed.")
+        guard rings.count == 1 else {
+            XCTFail("The current goal must produce exactly one real Today energy ring.")
+            throw NavigationUIFailure.missingControl
+        }
+        try reveal(rings.firstMatch, in: app)
+        XCTAssertTrue((rings.firstMatch.value as? String ?? "").contains("预算"))
+        attachScreen(app, name: "TodayNutritionSpacingUI-current-goal-ring")
+
+        for (title, evidenceName) in [
+            ("蛋白质目标", "protein"), ("碳水预算", "carbohydrate"),
+            ("脂肪预算", "fat"), ("饱和脂肪上限", "saturated-fat"),
+        ] {
+            // R1 matched both an aggregate AX label and its StaticText title.
+            // Choose the concrete title representation and require exact uniqueness;
+            // never hide those two different AX representations with firstMatch.
+            let titles = today.staticTexts.matching(NSPredicate(format: "label == %@", title))
+            let combinedRows = today.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", title))
+            let allRepresentations = today.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", title))
+            let diagnostic = XCTAttachment(string: "Synthetic meal: \(name)\napp.frame: \(app.frame)\n\(title): exactStaticText=\(titles.count), combinedOther=\(combinedRows.count), allPrefix=\(allRepresentations.count)\n\(app.debugDescription)")
+            diagnostic.name = "TodayNutritionSpacingUI-\(evidenceName)-actual-AX-before-assertion"
+            diagnostic.lifetime = .keepAlways
+            add(diagnostic)
+            try requireExists(titles.firstMatch, "The real Today \(title) title must exist before this test can prove the taller nutrition card was exercised.")
+            guard titles.count == 1 else {
+                XCTFail("The frontmost Today card must expose exactly one StaticText title equal to \(title).")
+                throw NavigationUIFailure.missingControl
+            }
+            try reveal(titles.firstMatch, in: app)
+            XCTAssertTrue(titles.firstMatch.isHittable, "The current nutrition title must actually be visible before recording evidence.")
+            attachScreen(app, name: "TodayNutritionSpacingUI-\(evidenceName)-row")
+        }
+
+        let row = namedRecordButton(name, in: app)
+        let id = try positionCollapsedTodayMealNearBottom(row, in: app)
+        attachScreen(app, name: "TodayNutritionSpacingUI-collapsed-at-bottom")
+        // No test scroll after expansion: the existing strict helper requires all
+        // three complete 44 pt actions above the fixed entry, with stable frames.
+        try tap(row)
+        try waitForAutoRevealedTodayMeal(id: id, in: app)
+        XCTAssertFalse(app.navigationBars["餐食详情"].exists)
+        XCTAssertTrue(app.tabBars.buttons["今日"].isSelected)
+        attachScreen(app, name: "TodayNutritionSpacingUI-actions-visible-without-another-swipe")
+
+        // The strict no-gesture check has passed. Remove only this run's uniquely
+        // named meal after its saved public food and weight have been verified.
+        try tap(app.buttons["meal.details.\(id)"])
+        try requireExists(app.navigationBars["餐食详情"])
+        try verifyRiceWeight(100, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        XCTAssertTrue(namedRecordButton(name, in: app).waitForNonExistence(timeout: 5))
+    }
+
     /// Also run at actual system AX text size: every expansion must expose its
     /// complete action group without a subsequent test-driven scroll.
     func testTodayInlineAutoscrollSurvivesCollapseReopenAndMealSwitch() throws {

@@ -11,6 +11,230 @@ final class NativeNavigationUITests: XCTestCase {
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
 
+    /// Run on the fresh, dedicated synthetic QA simulator with no existing meals.
+    /// Displayed kcal are integers; editing and readback must preserve the actual inputs.
+    func testKcalDisplayIsConsistentAndPreservesExactInputs() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let mealName = "[UI测试] 热量精度餐-\(token)"
+        let sourceNote = "[UI测试] 热量精度目标-\(token)"
+        let rice = "熟长粒白米饭（无盐）"
+        try selectTab("今日", in: app)
+        let today = try uniqueIdentifiedControl(identifier: "today.content", in: app)
+        guard today.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.row.")).count == 0 else {
+            XCTFail("This fixed-total acceptance requires the fresh synthetic QA simulator; existing meals must be preserved.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+
+        // The self-selected synthetic goal is confirmed through the real form.
+        // Its source token identifies this append-only version without editing old versions.
+        try saveFictitiousGoal(energy: "2000.25", saturatedFat: "15", fibre: "30", sourceNote: sourceNote, in: app)
+        try openGoalFromSettings(in: app)
+        let energyInput = goalField("热量预算 (kcal)", in: app)
+        try reveal(energyInput, in: app)
+        XCTAssertEqual(energyInput.value as? String, "2000.25", "Integer display must not round the saved goal input.")
+        try tap(app.navigationBars["每日预算与目标"].buttons["取消"])
+        XCTAssertTrue(app.navigationBars["每日预算与目标"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "Read-only goal inspection must not dirty the form.")
+        try tap(app.buttons["settings.goalHistory"])
+        try requireExists(app.navigationBars["目标历史"])
+        let goalList = try uniqueIdentifiedControl(identifier: "goalHistory.list", in: app)
+        let versions = goalList.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "goalHistory.row.", sourceNote
+        ))
+        try reveal(versions.firstMatch, in: app)
+        guard versions.count == 1 else {
+            XCTFail("This run's source token must identify exactly one saved synthetic goal version.")
+            throw NavigationUIFailure.missingControl
+        }
+        try assertIntegerKcal(2000, in: versions.firstMatch.label, context: "Goal history row")
+        try tap(versions.firstMatch)
+        try requireExists(app.navigationBars["目标版本详情"])
+        try assertIdentifiedKcal(2000, identifier: "goalHistory.detail.energy", containerID: "goalHistory.detail", in: app)
+        attachScreen(app, name: "KcalPrecisionUI-goal-history-integer-display")
+        let back = app.navigationBars["目标版本详情"].buttons.matching(NSPredicate(
+            format: "label IN %@", ["目标历史", "返回", "Back"]
+        ))
+        guard back.count == 1 else {
+            XCTFail("Goal detail must expose one real Back action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(back.firstMatch)
+        try tap(app.navigationBars["目标历史"].buttons["完成"])
+
+        // Public seed: 131 kcal / 100 g. The raw 180 g calculation is 235.8 kcal.
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        try requireExists(app.textFields["meal.name"])
+        try replaceText(in: app.textFields["meal.name"], with: mealName, app: app)
+        try selectFoodAtCurrentTextSize(rice, prefix: "meal.food.", in: app)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: "180", app: app)
+        try assertIdentifiedKcal(236, identifier: "meal.preview.energy", containerID: "meal.form", in: app)
+        attachScreen(app, name: "KcalPrecisionUI-rice180-preview236")
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try requireExists(app.navigationBars["今日"])
+        let todayRows = today.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.row."))
+        XCTAssertEqual(todayRows.count, 1, "Only this run's real saved meal may contribute to the fixed Today totals.")
+        let todayRow = namedRecordButton(mealName, in: app)
+        try reveal(todayRow, in: app)
+        try assertIntegerKcal(236, in: todayRow.label, context: "Today meal row")
+        try assertFixedKcalTodayRing(in: app)
+        attachScreen(app, name: "KcalPrecisionUI-today236-budget2000-remaining1764")
+
+        let mealID = try expandMeal(named: mealName, in: app)
+        // A regular-size LabeledContent exposes its title and value as one AX row.
+        // The exact pair distinguishes the expanded snapshot from the summary's 236.
+        let expandedEnergy = today.staticTexts.matching(NSPredicate(
+            format: "label IN %@", ["热量、236 kcal", "热量, 236 kcal"]
+        ))
+        try reveal(expandedEnergy.firstMatch, in: app)
+        guard expandedEnergy.count == 1 else {
+            XCTFail("The expanded synthetic meal must expose one exact 236 kcal snapshot row.")
+            throw NavigationUIFailure.missingControl
+        }
+        try assertIntegerKcal(236, in: expandedEnergy.firstMatch.label, context: "Expanded meal snapshot")
+        attachScreen(app, name: "KcalPrecisionUI-expanded-snapshot236")
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(180, rice: rice, in: app)
+        try assertIdentifiedKcal(236, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
+        attachScreen(app, name: "KcalPrecisionUI-saved-detail180g236")
+
+        try tap(app.navigationBars["餐食详情"].buttons["编辑"])
+        try requireExists(app.textFields["meal.name"])
+        let editWeight = try singleField(prefix: "meal.weight.", in: app)
+        try reveal(editWeight, in: app)
+        XCTAssertEqual(Double(editWeight.value as? String ?? ""), 180)
+        try assertIdentifiedKcal(236, identifier: "meal.preview.energy", containerID: "meal.form", in: app)
+        // 181 g calculates 237.11 kcal. Cancel must discard this real draft change.
+        try replaceText(in: editWeight, with: "181", app: app)
+        try assertIdentifiedKcal(237, identifier: "meal.preview.energy", containerID: "meal.form", in: app)
+        attachScreen(app, name: "KcalPrecisionUI-edit181g-preview237-before-discard")
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        try requireExists(app.buttons["放弃修改"])
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try requireExists(app.navigationBars["餐食详情"])
+        try verifyRiceWeight(180, rice: rice, in: app)
+        try assertIdentifiedKcal(236, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+
+        _ = try expandMeal(named: mealName, in: app)
+        let reuse = today.buttons.matching(identifier: "meal.reuse.\(mealID)")
+        try reveal(reuse.firstMatch, in: app)
+        guard reuse.count == 1 else {
+            XCTFail("Reuse must target this run's unique meal on the frontmost Today page.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(reuse.firstMatch)
+        try requireExists(app.textFields["meal.name"])
+        let reuseWeight = try singleField(prefix: "meal.weight.", in: app)
+        try reveal(reuseWeight, in: app)
+        XCTAssertEqual(Double(reuseWeight.value as? String ?? ""), 180)
+        try assertIdentifiedKcal(236, identifier: "meal.preview.energy", containerID: "meal.form", in: app)
+        attachScreen(app, name: "KcalPrecisionUI-reuse180g-preview236")
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "An untouched reuse preview must remain cancellable.")
+        XCTAssertEqual(todayRows.count, 1, "Cancelling reuse must not append a second meal.")
+        try assertFixedKcalTodayRing(in: app)
+
+        let history = app.buttons["查看全部历史"]
+        try reveal(history, in: app)
+        try tap(history)
+        try requireExists(app.navigationBars["历史餐食"])
+        let historyRow = namedRecordButton(mealName, in: app)
+        try reveal(historyRow, in: app)
+        try assertIntegerKcal(236, in: historyRow.label, context: "History meal row")
+        attachScreen(app, name: "KcalPrecisionUI-history-row236")
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(180, rice: rice, in: app)
+        try assertIdentifiedKcal(236, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+        try tap(app.navigationBars["历史餐食"].buttons["完成"])
+
+        try openMealStart(in: app)
+        let start = try uniqueIdentifiedControl(identifier: "meal.start", in: app)
+        let recent = start.buttons.containing(.staticText, identifier: mealName)
+        try reveal(recent.firstMatch, in: app)
+        guard recent.count == 1 else {
+            XCTFail("Recently Eaten must identify this run's one exact synthetic meal.")
+            throw NavigationUIFailure.missingControl
+        }
+        try assertIntegerKcal(236, in: recent.firstMatch.label, context: "Recently Eaten row")
+        attachScreen(app, name: "KcalPrecisionUI-recently-eaten236")
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+
+        // Only this verified, uniquely named synthetic meal is removed through its UI.
+        // The confirmed synthetic goal version remains append-only; no reset is used.
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(180, rice: rice, in: app)
+        try assertIdentifiedKcal(236, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        XCTAssertTrue(namedRecordButton(mealName, in: app).waitForNonExistence(timeout: 5))
+    }
+
+    private func assertIdentifiedKcal(
+        _ expected: Int, identifier: String, containerID: String, in app: XCUIApplication
+    ) throws {
+        let container = try uniqueIdentifiedControl(identifier: containerID, in: app)
+        let controls = container.descendants(matching: .any).matching(identifier: identifier)
+        try reveal(controls.firstMatch, in: app)
+        guard controls.count == 1 else {
+            XCTFail("The frontmost \(containerID) must expose one \(identifier) kcal row.")
+            throw NavigationUIFailure.missingControl
+        }
+        let control = controls.firstMatch
+        let text = [control.label, control.value as? String ?? ""].joined(separator: " ")
+        try assertIntegerKcal(expected, in: text, context: identifier)
+    }
+
+    private func assertIntegerKcal(_ expected: Int, in text: String, context: String) throws {
+        let expression = try NSRegularExpression(pattern: "([0-9][0-9,，.]*)\\s*kcal")
+        let matches = expression.matches(in: text, range: NSRange(text.startIndex..., in: text))
+        guard !matches.isEmpty else {
+            XCTFail("\(context) must expose its actual kcal amount: \(text)")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        for match in matches {
+            guard let range = Range(match.range(at: 1), in: text) else {
+                XCTFail("\(context) must expose a complete kcal number.")
+                throw NavigationUIFailure.conditionNotMet
+            }
+            let number = text[range].replacingOccurrences(of: ",", with: "").replacingOccurrences(of: "，", with: "")
+            XCTAssertEqual(number, String(expected), "\(context) must show the expected integer kcal without a decimal fraction.")
+        }
+    }
+
+    private func assertFixedKcalTodayRing(in app: XCUIApplication) throws {
+        let today = try uniqueIdentifiedControl(identifier: "today.content", in: app)
+        let rings = today.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "今日热量"))
+        try reveal(rings.firstMatch, in: app)
+        guard rings.count == 1 else {
+            XCTFail("Today must expose one real energy ring for this fixed-total synthetic scenario.")
+            throw NavigationUIFailure.missingControl
+        }
+        let value = rings.firstMatch.value as? String ?? ""
+        let expression = try NSRegularExpression(
+            pattern: "^已记录 ([0-9,，]+) 千卡，预算 ([0-9,，]+) 千卡，预算剩余 ([0-9,，]+) kcal$"
+        )
+        guard let match = expression.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)) else {
+            XCTFail("The ring must expose integer current, budget and remaining kcal: \(value)")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        // Fixed expectations from raw 235.8 and 2000.25, never a rounded baseline plus raw kcal.
+        for (capture, expected) in [(1, "236"), (2, "2000"), (3, "1764")] {
+            guard let range = Range(match.range(at: capture), in: value) else {
+                XCTFail("The ring must expose all three actual amounts.")
+                throw NavigationUIFailure.conditionNotMet
+            }
+            let number = value[range].replacingOccurrences(of: ",", with: "").replacingOccurrences(of: "，", with: "")
+            XCTAssertEqual(number, expected)
+        }
+    }
+
     /// Actual UI under English process language/region, with the UK regional 24-hour default.
     /// A region launch does not prove the separate system 24-Hour Time toggle was tested.
     func testChineseDatesUnderEnglishUKRegionalClock() throws {
@@ -1725,7 +1949,9 @@ final class NativeNavigationUITests: XCTestCase {
         // At AX sizes the meal name is leading-aligned in a wide native field.
         // R7's real screenshot shows a centre press in blank space only offered
         // Select, not Select All. Use the observed text edge, like the goal fields.
+        // Weight digits occupy this aligned text edge too; a centre press may only move the caret.
         let selectsTextAtAlignedEdge = field.identifier.hasPrefix("goal.")
+            || field.identifier.hasPrefix("meal.weight.")
             || (field.identifier == "meal.name"
                 && UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory)
         if field.identifier.hasPrefix("goal."), app.keyboards.firstMatch.exists {

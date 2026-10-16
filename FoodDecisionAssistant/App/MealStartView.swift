@@ -54,7 +54,7 @@ struct MealStartView: View {
                                 MealReuseRow(
                                     title: meal.title,
                                     subtitle: componentSummary(meal.components.map(\.foodName)),
-                                    trailing: "\(meal.nutrients.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal",
+                                    trailing: KcalDisplay.amount(meal.nutrients.energyKcal),
                                     systemImage: "clock.arrow.circlepath"
                                 )
                             }

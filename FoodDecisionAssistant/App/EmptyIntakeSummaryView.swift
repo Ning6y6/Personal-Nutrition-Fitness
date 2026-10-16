@@ -24,7 +24,7 @@ struct EmptyIntakeSummaryView: View {
                     Text("尚未计算摄入进度")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    LabeledContent("热量预算", value: "\(formatted(goal.energyKcal)) kcal")
+                    LabeledContent("热量预算", value: KcalDisplay.amount(goal.energyKcal))
                     LabeledContent("蛋白质最低目标", value: "\(formatted(goal.proteinGrams)) g")
                     LabeledContent("碳水预算", value: "\(formatted(goal.carbohydrateGrams)) g")
                     LabeledContent("脂肪预算", value: "\(formatted(goal.fatGrams)) g")

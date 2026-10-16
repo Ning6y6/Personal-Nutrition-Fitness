@@ -20,7 +20,7 @@ struct GoalVersionDetailView: View {
                 LabeledContent("确认时区", value: version.timeZoneIdentifier)
             }
             Section("营养预算与目标") {
-                LabeledContent("热量预算", value: "\(version.profile.energyKcal.formatted()) kcal")
+                LabeledContent("热量预算", value: KcalDisplay.amount(version.profile.energyKcal))
                     .accessibilityIdentifier("goalHistory.detail.energy")
                 LabeledContent("蛋白质目标", value: "\(version.profile.proteinGrams.formatted()) g")
                 LabeledContent("碳水预算", value: "\(version.profile.carbohydrateGrams.formatted()) g")

@@ -24,13 +24,13 @@ struct NutritionProgressPresentation: Equatable, Sendable {
     let tone: NutritionDisplayTone
     let progress: Double?
 
-    init(summary: NutritionProgressSummary, unit: String) {
-        currentText = summary.consumed.map(Self.formatted) ?? "—"
-        targetText = summary.target.map(Self.formatted) ?? "—"
+    init(summary: NutritionProgressSummary, unit: String, locale: Locale = .current) {
+        currentText = summary.consumed.map { Self.formatted($0, unit: unit, locale: locale) } ?? "—"
+        targetText = summary.target.map { Self.formatted($0, unit: unit, locale: locale) } ?? "—"
         valueLabel = "\(currentText) / \(targetText) \(unit)"
         progress = summary.progress
-        let remaining = summary.remaining.map(Self.formatted) ?? "—"
-        let overage = summary.overage.map(Self.formatted) ?? "—"
+        let remaining = summary.remaining.map { Self.formatted($0, unit: unit, locale: locale) } ?? "—"
+        let overage = summary.overage.map { Self.formatted($0, unit: unit, locale: locale) } ?? "—"
         // v1 remains readable, but even legacy nutrition must not use hard-constraint red.
         switch summary.displayTone {
         case .neutral: tone = .neutral
@@ -89,11 +89,12 @@ struct NutritionProgressPresentation: Equatable, Sendable {
         }
     }
 
-    private static func formatted(_ value: Double) -> String {
+    private static func formatted(_ value: Double, unit: String, locale: Locale) -> String {
+        if unit == "kcal" { return KcalDisplay.value(value, locale: locale) }
         // A small positive overage must not become the contradictory warning "超出 0".
         if value > 0, value < 0.1 {
-            return "不足 \(0.1.formatted(.number.precision(.fractionLength(1))))"
+            return "不足 \(0.1.formatted(.number.locale(locale).precision(.fractionLength(1))))"
         }
-        return value.formatted(.number.precision(.fractionLength(0...1)))
+        return value.formatted(.number.locale(locale).precision(.fractionLength(0...1)))
     }
 }

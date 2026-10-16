@@ -40,9 +40,7 @@ struct InlineMealPresentation {
             validatedMeal = try? meal.domainModel()
             status = validatedMeal == nil ? .invalid : .confirmed
         }
-        energyText = meal.energyKcal.isFinite && meal.energyKcal >= 0
-            ? "\(meal.energyKcal.formatted(.number.precision(.fractionLength(0)))) kcal"
-            : "不可用"
+        energyText = KcalDisplay.amount(meal.energyKcal)
     }
 
     static func formattedSnapshotValue(_ value: Double, unit: String) -> String {

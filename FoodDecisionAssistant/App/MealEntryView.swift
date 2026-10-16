@@ -320,6 +320,7 @@ struct MealEntryView: View {
     private func nutritionPreviewSection(_ previewNutrients: NutrientValues) -> some View {
         Section {
             nutrientRow("热量", value: previewNutrients.energyKcal, unit: "kcal")
+                .accessibilityIdentifier("meal.preview.energy")
             nutrientRow("蛋白质", value: previewNutrients.proteinGrams, unit: "g")
             nutrientRow("碳水化合物", value: previewNutrients.carbohydrateGrams, unit: "g")
             nutrientRow("脂肪", value: previewNutrients.fatGrams, unit: "g")
@@ -400,7 +401,9 @@ struct MealEntryView: View {
     private func nutrientRow(_ name: String, value: Double, unit: String) -> some View {
         LabeledContent(
             name,
-            value: "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
+            value: unit == "kcal"
+                ? KcalDisplay.amount(value)
+                : "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
         )
     }
 

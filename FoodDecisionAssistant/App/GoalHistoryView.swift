@@ -51,7 +51,7 @@ struct GoalHistoryView: View {
                                     VStack(alignment: .leading, spacing: 5) {
                                         Text("\(GoalDatePresentation.text(for: version.effectiveDay, referenceDay: today, display: dateDisplay)) 生效")
                                             .font(.headline)
-                                        Text("热量预算 \(version.profile.energyKcal.formatted()) kcal")
+                                        Text("热量预算 \(KcalDisplay.amount(version.profile.energyKcal))")
                                         Text(status(for: version))
                                             .font(.subheadline)
                                         Text("\(GoalVersionDetailView.sourceTitle(version.source)) · \(dateDisplay.dateTime(version.confirmedAt)) 确认")

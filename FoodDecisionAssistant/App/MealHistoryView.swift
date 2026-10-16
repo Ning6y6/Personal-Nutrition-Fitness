@@ -181,6 +181,7 @@ struct MealDetailView: View {
 
                 Section("营养合计") {
                     nutrientRow("热量", value: meal.energyKcal, unit: "kcal")
+                        .accessibilityIdentifier("meal.detail.energy")
                     nutrientRow("蛋白质", value: meal.proteinGrams, unit: "g")
                     nutrientRow("碳水化合物", value: meal.carbohydrateGrams, unit: "g")
                     nutrientRow("脂肪", value: meal.fatGrams, unit: "g")
@@ -269,7 +270,9 @@ struct MealDetailView: View {
     private func nutrientRow(_ name: String, value: Double, unit: String) -> some View {
         LabeledContent(
             name,
-            value: "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
+            value: unit == "kcal"
+                ? KcalDisplay.amount(value)
+                : "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
         )
     }
 

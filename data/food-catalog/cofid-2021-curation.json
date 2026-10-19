@@ -1,0 +1,4823 @@
+{
+  "curationVersion": "cofid-2021-curation-v1",
+  "source": {
+    "id": "cofid",
+    "title": "CoFID",
+    "datasetVersion": "2021",
+    "url": "https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid",
+    "downloadURL": "https://assets.publishing.service.gov.uk/media/60538b91e90e07527df82ae4/McCance_Widdowsons_Composition_of_Foods_Integrated_Dataset_2021..xlsx",
+    "guideURL": "https://assets.publishing.service.gov.uk/media/60538e66d3bf7f03249bac58/McCance_and_Widdowsons_Composition_of_Foods_integrated_dataset_2021.pdf",
+    "licenseName": "Open Government Licence v3.0",
+    "licenseURL": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "attribution": "Public Health England (2021). McCance and Widdowson’s The Composition of Foods Integrated Dataset (CoFID). Contains public sector information licensed under the Open Government Licence v3.0.",
+    "sourceFileName": "McCance_Widdowsons_Composition_of_Foods_Integrated_Dataset_2021..xlsx",
+    "sha256": "436e9445ef2adb2a75f3d7edd51302de3adad25385f9795fc94ba58bd030e97d",
+    "retrievedOn": "2026-10-18",
+    "modifications": "Selected subset; reviewed simplified Chinese names, aliases and frozen pinyin initials; trace values approximated as zero only for numeric calculation; salt calculated from sodium; original 12 installation values preserved independently of source projection."
+  },
+  "review": {
+    "method": "Each selected source name and its raw/cooked, edible-part and preparation qualifiers were checked against the frozen Chinese label and aliases during development. No nutritional values were generated.",
+    "reviewedOn": "2026-10-18",
+    "independentHumanSignoff": "Pending user catalog spot-check and acceptance; development review is not an independent human certification.",
+    "limitations": "Generic animal ingredients do not certify halal procurement. Source descriptions do not establish a specific local product recipe or species beyond what the English name states.",
+    "independentDevelopmentReview": "A second agent read all 358 initial code/name/originalName/state/alias/pinyin records, identified six wording/basis issues plus three initials, and confirmed no explicit pork/alcohol/gelatine entries. The changes were incorporated and the unresolved corn-flour candidate was removed; final total 357. This remains development review, not human certification."
+  },
+  "entries": [
+    {
+      "code": "11-862",
+      "originalName": "Rice, white, long grain, boiled in unsalted water",
+      "sourceRow": 2357,
+      "name": "熟长粒白米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [
+        "熟米饭",
+        "米饭"
+      ],
+      "pinyinInitials": [
+        "sclbmf",
+        "mf",
+        "smf"
+      ],
+      "foodState": "煮熟，无盐",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000011862",
+        "name": "熟长粒白米饭（无盐）",
+        "category": "staple_grain",
+        "nutrientsPer100Units": {
+          "energyKcal": 131.0,
+          "fatGrams": 0.4,
+          "saturatedFatGrams": 0.09,
+          "carbohydrateGrams": 31.1,
+          "sugarGrams": 0.0,
+          "proteinGrams": 2.8,
+          "saltGrams": 0.0275,
+          "fibreGrams": 0.5
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 11-862 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "13-517",
+      "originalName": "Tomatoes, standard, raw",
+      "sourceRow": 2730,
+      "name": "西红柿（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "番茄"
+      ],
+      "pinyinInitials": [
+        "xhs",
+        "fq"
+      ],
+      "foodState": "生",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000013517",
+        "name": "西红柿（生）",
+        "category": "mixed_meal",
+        "nutrientsPer100Units": {
+          "energyKcal": 14.0,
+          "fatGrams": 0.1,
+          "saturatedFatGrams": 0.03,
+          "carbohydrateGrams": 3.0,
+          "sugarGrams": 3.0,
+          "proteinGrams": 0.5,
+          "saltGrams": 0.005,
+          "fibreGrams": 1.0
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 13-517 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "12-937",
+      "originalName": "Eggs, chicken, whole, raw",
+      "sourceRow": 1096,
+      "name": "鸡蛋（全蛋，生）",
+      "category": "protein_main",
+      "aliases": [
+        "全蛋"
+      ],
+      "pinyinInitials": [
+        "jd",
+        "qd"
+      ],
+      "foodState": "生，全蛋",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000012937",
+        "name": "鸡蛋（全蛋，生）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 131.0,
+          "fatGrams": 9.0,
+          "saturatedFatGrams": 2.52,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 12.6,
+          "saltGrams": 0.385,
+          "fibreGrams": 0.0
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 12-937 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "13-318",
+      "originalName": "Peppers, capsicum, green, raw",
+      "sourceRow": 1987,
+      "name": "青椒（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "绿甜椒"
+      ],
+      "pinyinInitials": [
+        "qj"
+      ],
+      "foodState": "生",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000013318",
+        "name": "青椒（生）",
+        "category": "mixed_meal",
+        "nutrientsPer100Units": {
+          "energyKcal": 15.0,
+          "fatGrams": 0.3,
+          "saturatedFatGrams": 0.1,
+          "carbohydrateGrams": 2.6,
+          "sugarGrams": 2.4,
+          "proteinGrams": 0.8,
+          "saltGrams": 0.01,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 13-318 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "13-161",
+      "originalName": "Aubergine, raw",
+      "sourceRow": 59,
+      "name": "茄子（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qz"
+      ],
+      "foodState": "生",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000013161",
+        "name": "茄子（生）",
+        "category": "mixed_meal",
+        "nutrientsPer100Units": {
+          "energyKcal": 15.0,
+          "fatGrams": 0.4,
+          "saturatedFatGrams": 0.1,
+          "carbohydrateGrams": 2.2,
+          "sugarGrams": 2.0,
+          "proteinGrams": 0.9,
+          "saltGrams": 0.005,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 13-161 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "13-570",
+      "originalName": "Tofu, soya bean, steamed",
+      "sourceRow": 2719,
+      "name": "豆腐（原味/蒸）",
+      "category": "protein_main",
+      "aliases": [
+        "蒸豆腐"
+      ],
+      "pinyinInitials": [
+        "df"
+      ],
+      "foodState": "蒸制",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000013570",
+        "name": "豆腐（原味/蒸）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 73.0,
+          "fatGrams": 4.2,
+          "saturatedFatGrams": 0.5,
+          "carbohydrateGrams": 0.7,
+          "sugarGrams": 0.3,
+          "proteinGrams": 8.1,
+          "saltGrams": 0.01,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 13-570 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "18-006",
+      "originalName": "Beef, braising steak, raw, lean",
+      "sourceRow": 180,
+      "name": "炖煮牛肉（生瘦肉）",
+      "category": "protein_main",
+      "aliases": [
+        "炖煮用生牛瘦肉"
+      ],
+      "pinyinInitials": [
+        "dznr"
+      ],
+      "foodState": "生，炖煮用瘦肉",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000018006",
+        "name": "炖煮牛肉（生瘦肉）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 139.0,
+          "fatGrams": 5.7,
+          "saturatedFatGrams": 2.4,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 21.8,
+          "saltGrams": 0.16,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 18-006 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "18-020",
+      "originalName": "Beef, fillet steak, grilled, lean",
+      "sourceRow": 195,
+      "name": "牛排（烤熟瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "np"
+      ],
+      "foodState": "烤熟，fillet steak，仅瘦肉",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000018020",
+        "name": "牛排（烤熟瘦肉）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 188.0,
+          "fatGrams": 8.0,
+          "saturatedFatGrams": 3.6,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 29.1,
+          "saltGrams": 0.175,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 18-020 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "18-323",
+      "originalName": "Chicken, breast, grilled without skin, meat only",
+      "sourceRow": 677,
+      "name": "鸡胸肉（去皮烤熟）",
+      "category": "protein_main",
+      "aliases": [
+        "熟鸡胸肉"
+      ],
+      "pinyinInitials": [
+        "jxr"
+      ],
+      "foodState": "烤熟，去皮，仅肉",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000018323",
+        "name": "鸡胸肉（去皮烤熟）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 148.0,
+          "fatGrams": 2.2,
+          "saturatedFatGrams": 0.6,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 32.0,
+          "saltGrams": 0.1375,
+          "fibreGrams": 0.0
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 18-323 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "18-319",
+      "originalName": "Chicken, thighs, casseroled, meat only, diced",
+      "sourceRow": 717,
+      "name": "鸡腿肉（去皮炖熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jtr"
+      ],
+      "foodState": "炖熟，去皮，仅肉",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000018319",
+        "name": "鸡腿肉（去皮炖熟）",
+        "category": "protein_main",
+        "nutrientsPer100Units": {
+          "energyKcal": 180.0,
+          "fatGrams": 8.6,
+          "saturatedFatGrams": 2.4,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 25.6,
+          "saltGrams": 0.1,
+          "fibreGrams": null
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 18-319 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "17-041",
+      "originalName": "Oil, rapeseed",
+      "sourceRow": 1789,
+      "name": "菜籽油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "czy"
+      ],
+      "foodState": "油脂",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000017041",
+        "name": "菜籽油",
+        "category": "oil",
+        "nutrientsPer100Units": {
+          "energyKcal": 899.0,
+          "fatGrams": 99.9,
+          "saturatedFatGrams": 6.6,
+          "carbohydrateGrams": 0.0,
+          "sugarGrams": 0.0,
+          "proteinGrams": 0.0,
+          "saltGrams": 0.0,
+          "fibreGrams": 0.0
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 17-041 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "17-721",
+      "originalName": "Soy sauce, light and dark varieties",
+      "sourceRow": 2581,
+      "name": "酱油（生抽/老抽平均）",
+      "category": "sauce",
+      "aliases": [
+        "生抽",
+        "老抽"
+      ],
+      "pinyinInitials": [
+        "jy"
+      ],
+      "foodState": "生抽及老抽合并值，按质量计",
+      "legacyFood": {
+        "id": "20000000-0000-4000-8000-000000017721",
+        "name": "酱油（生抽/老抽平均）",
+        "category": "sauce",
+        "nutrientsPer100Units": {
+          "energyKcal": 79.0,
+          "fatGrams": 0.0,
+          "saturatedFatGrams": 0.0,
+          "carbohydrateGrams": 17.9,
+          "sugarGrams": 16.4,
+          "proteinGrams": 3.0,
+          "saltGrams": 13.75,
+          "fibreGrams": 0.0
+        },
+        "unit": "g",
+        "source": "CoFID 2021 · 17-721 · 每 100 g；Tr 按 0 计，盐=钠×2.5"
+      }
+    },
+    {
+      "code": "13-146",
+      "originalName": "Agar, dried",
+      "sourceRow": 5,
+      "name": "琼脂（干）",
+      "category": "mixed_meal",
+      "aliases": [
+        "寒天"
+      ],
+      "pinyinInitials": [
+        "qz",
+        "ht"
+      ],
+      "foodState": "干品"
+    },
+    {
+      "code": "13-147",
+      "originalName": "Agar, dried, soaked and drained",
+      "sourceRow": 6,
+      "name": "琼脂（干品泡发后沥干）",
+      "category": "mixed_meal",
+      "aliases": [
+        "泡发寒天"
+      ],
+      "pinyinInitials": [
+        "qz",
+        "pfht"
+      ],
+      "foodState": "泡发、沥干"
+    },
+    {
+      "code": "13-149",
+      "originalName": "Amaranth leaves, raw",
+      "sourceRow": 14,
+      "name": "苋菜叶（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "苋菜"
+      ],
+      "pinyinInitials": [
+        "xc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-153",
+      "originalName": "Artichoke, globe, raw",
+      "sourceRow": 47,
+      "name": "洋蓟（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "朝鲜蓟"
+      ],
+      "pinyinInitials": [
+        "yj",
+        "cxj"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-157",
+      "originalName": "Asparagus, raw",
+      "sourceRow": 51,
+      "name": "芦笋（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "ls"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-164",
+      "originalName": "Beetroot, raw",
+      "sourceRow": 278,
+      "name": "甜菜根（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "红菜头"
+      ],
+      "pinyinInitials": [
+        "tcg",
+        "hct"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-502",
+      "originalName": "Broccoli, green, raw",
+      "sourceRow": 454,
+      "name": "西兰花（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "青花菜",
+        "绿花椰菜"
+      ],
+      "pinyinInitials": [
+        "xlh",
+        "qhc",
+        "lhyc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-174",
+      "originalName": "Broccoli, purple sprouting, raw",
+      "sourceRow": 457,
+      "name": "紫芽西兰花（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "zyxlh"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-177",
+      "originalName": "Brussels sprouts, raw",
+      "sourceRow": 462,
+      "name": "抱子甘蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "孢子甘蓝"
+      ],
+      "pinyinInitials": [
+        "bzgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-582",
+      "originalName": "Cabbage, average, raw",
+      "sourceRow": 491,
+      "name": "卷心菜（平均，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "圆白菜",
+        "包菜"
+      ],
+      "pinyinInitials": [
+        "jxc",
+        "ybc",
+        "bc"
+      ],
+      "foodState": "生，平均值"
+    },
+    {
+      "code": "13-187",
+      "originalName": "Cabbage, Chinese, raw",
+      "sourceRow": 492,
+      "name": "大白菜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "结球白菜"
+      ],
+      "pinyinInitials": [
+        "dbc",
+        "jqbc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-510",
+      "originalName": "Cabbage, green, raw",
+      "sourceRow": 494,
+      "name": "绿甘蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "lgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-190",
+      "originalName": "Cabbage, red, raw",
+      "sourceRow": 497,
+      "name": "紫甘蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "红甘蓝"
+      ],
+      "pinyinInitials": [
+        "zgl",
+        "hgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-509",
+      "originalName": "Cabbage, white, raw",
+      "sourceRow": 499,
+      "name": "白甘蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "bgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-496",
+      "originalName": "Carrots, old, raw",
+      "sourceRow": 541,
+      "name": "胡萝卜（成熟，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hlb"
+      ],
+      "foodState": "生，成熟根"
+    },
+    {
+      "code": "13-448",
+      "originalName": "Carrots, young, raw",
+      "sourceRow": 544,
+      "name": "嫩胡萝卜（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "nhlb"
+      ],
+      "foodState": "生，嫩根"
+    },
+    {
+      "code": "13-208",
+      "originalName": "Cassava, raw",
+      "sourceRow": 551,
+      "name": "木薯（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "ms"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-512",
+      "originalName": "Cauliflower, raw",
+      "sourceRow": 574,
+      "name": "花椰菜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "菜花"
+      ],
+      "pinyinInitials": [
+        "hyc",
+        "ch"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-636",
+      "originalName": "Celery, raw",
+      "sourceRow": 580,
+      "name": "芹菜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "西芹"
+      ],
+      "pinyinInitials": [
+        "qc",
+        "xq"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-223",
+      "originalName": "Chard, Swiss, raw",
+      "sourceRow": 586,
+      "name": "瑞士甜菜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "牛皮菜"
+      ],
+      "pinyinInitials": [
+        "rstc",
+        "npc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-225",
+      "originalName": "Chicory, pale variety, raw",
+      "sourceRow": 736,
+      "name": "白菊苣（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "bjj"
+      ],
+      "foodState": "生，浅色品种"
+    },
+    {
+      "code": "13-227",
+      "originalName": "Cho cho, raw",
+      "sourceRow": 750,
+      "name": "佛手瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "合掌瓜"
+      ],
+      "pinyinInitials": [
+        "fsg",
+        "hzg"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-627",
+      "originalName": "Courgette, raw",
+      "sourceRow": 864,
+      "name": "西葫芦（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xhl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-234",
+      "originalName": "Curly kale, raw",
+      "sourceRow": 910,
+      "name": "羽衣甘蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yygl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-240",
+      "originalName": "Endive, raw",
+      "sourceRow": 1106,
+      "name": "苦苣（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "kj"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-241",
+      "originalName": "Fennel, Florence, raw",
+      "sourceRow": 1122,
+      "name": "球茎茴香（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qjhx"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-244",
+      "originalName": "Garlic, raw",
+      "sourceRow": 1208,
+      "name": "大蒜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "蒜瓣"
+      ],
+      "pinyinInitials": [
+        "ds"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-245",
+      "originalName": "Gherkins, raw",
+      "sourceRow": 1215,
+      "name": "小黄瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "酸黄瓜用小黄瓜"
+      ],
+      "pinyinInitials": [
+        "xhg"
+      ],
+      "foodState": "生，未腌制"
+    },
+    {
+      "code": "13-254",
+      "originalName": "Gourd, ridge, raw",
+      "sourceRow": 1234,
+      "name": "丝瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "棱角丝瓜"
+      ],
+      "pinyinInitials": [
+        "sg"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-261",
+      "originalName": "Kohl rabi, raw",
+      "sourceRow": 1394,
+      "name": "苤蓝（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "球茎甘蓝"
+      ],
+      "pinyinInitials": [
+        "pl",
+        "qjgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-624",
+      "originalName": "Leeks, raw",
+      "sourceRow": 1525,
+      "name": "韭葱（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "jc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-520",
+      "originalName": "Lettuce, average, raw",
+      "sourceRow": 1556,
+      "name": "生菜（平均，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "sc"
+      ],
+      "foodState": "生，平均值"
+    },
+    {
+      "code": "13-271",
+      "originalName": "Lotus tubers, raw",
+      "sourceRow": 1592,
+      "name": "莲藕（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "藕"
+      ],
+      "pinyinInitials": [
+        "lo"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-274",
+      "originalName": "Marrow, raw",
+      "sourceRow": 1616,
+      "name": "大西葫芦（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "dxhl"
+      ],
+      "foodState": "生，marrow"
+    },
+    {
+      "code": "13-293",
+      "originalName": "Mushrooms, oyster, raw",
+      "sourceRow": 1732,
+      "name": "平菇（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "蚝菇"
+      ],
+      "pinyinInitials": [
+        "pg",
+        "hg"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-505",
+      "originalName": "Mushrooms, white, raw",
+      "sourceRow": 1738,
+      "name": "白蘑菇（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "双孢蘑菇"
+      ],
+      "pinyinInitials": [
+        "bmg",
+        "sbmg"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-297",
+      "originalName": "Mustard and cress, raw",
+      "sourceRow": 1743,
+      "name": "芥菜苗与cress菜苗（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "jcm"
+      ],
+      "foodState": "生，混合苗菜；cress未细分植物种"
+    },
+    {
+      "code": "13-298",
+      "originalName": "Mustard leaves, raw",
+      "sourceRow": 1745,
+      "name": "芥菜叶（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "jcy"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-300",
+      "originalName": "Okra, raw",
+      "sourceRow": 1800,
+      "name": "秋葵（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qk"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-499",
+      "originalName": "Onions, raw",
+      "sourceRow": 1820,
+      "name": "洋葱（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-312",
+      "originalName": "Parsnip, raw",
+      "sourceRow": 1873,
+      "name": "欧洲防风根（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "欧防风"
+      ],
+      "pinyinInitials": [
+        "ozffg"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-524",
+      "originalName": "Pepper, capsicum, red, raw",
+      "sourceRow": 1977,
+      "name": "红甜椒（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "红彩椒"
+      ],
+      "pinyinInitials": [
+        "htj"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-526",
+      "originalName": "Pepper, capsicum, yellow, raw",
+      "sourceRow": 1979,
+      "name": "黄甜椒（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "黄彩椒"
+      ],
+      "pinyinInitials": [
+        "htj"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-317",
+      "originalName": "Peppers, capsicum, chilli, red, raw",
+      "sourceRow": 1985,
+      "name": "红辣椒（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hlj"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-618",
+      "originalName": "Potatoes, new and salad, flesh only, raw",
+      "sourceRow": 2224,
+      "name": "新土豆（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xtd"
+      ],
+      "foodState": "生，仅薯肉"
+    },
+    {
+      "code": "13-489",
+      "originalName": "Potatoes, old, raw, flesh only",
+      "sourceRow": 2235,
+      "name": "土豆（成熟，去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "马铃薯"
+      ],
+      "pinyinInitials": [
+        "td"
+      ],
+      "foodState": "生，仅薯肉"
+    },
+    {
+      "code": "13-326",
+      "originalName": "Pumpkin, flesh only, raw",
+      "sourceRow": 2281,
+      "name": "南瓜（仅瓜肉，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "ng"
+      ],
+      "foodState": "生，仅瓜肉"
+    },
+    {
+      "code": "13-656",
+      "originalName": "Radish, red, flesh and skin, raw",
+      "sourceRow": 2300,
+      "name": "红皮小萝卜（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "樱桃萝卜"
+      ],
+      "pinyinInitials": [
+        "hpxlb"
+      ],
+      "foodState": "生，肉及皮"
+    },
+    {
+      "code": "13-331",
+      "originalName": "Radish, white/mooli, raw",
+      "sourceRow": 2301,
+      "name": "白萝卜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "大根"
+      ],
+      "pinyinInitials": [
+        "blb"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-522",
+      "originalName": "Rocket, raw",
+      "sourceRow": 2386,
+      "name": "芝麻菜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "火箭菜"
+      ],
+      "pinyinInitials": [
+        "zmc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-339",
+      "originalName": "Seaweed, kombu, dried, raw",
+      "sourceRow": 2518,
+      "name": "昆布（干）",
+      "category": "mixed_meal",
+      "aliases": [
+        "海带"
+      ],
+      "pinyinInitials": [
+        "kb",
+        "hd"
+      ],
+      "foodState": "干品，未泡发"
+    },
+    {
+      "code": "13-340",
+      "originalName": "Seaweed, nori, dried, raw",
+      "sourceRow": 2519,
+      "name": "紫菜（干）",
+      "category": "mixed_meal",
+      "aliases": [
+        "海苔原料"
+      ],
+      "pinyinInitials": [
+        "zc"
+      ],
+      "foodState": "干品，未泡发"
+    },
+    {
+      "code": "13-341",
+      "originalName": "Seaweed, wakame, dried, raw",
+      "sourceRow": 2520,
+      "name": "裙带菜（干）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qdc"
+      ],
+      "foodState": "干品，未泡发"
+    },
+    {
+      "code": "13-342",
+      "originalName": "Shallots, raw",
+      "sourceRow": 2526,
+      "name": "红葱头（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "干葱"
+      ],
+      "pinyinInitials": [
+        "hct"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-521",
+      "originalName": "Spinach, baby, raw",
+      "sourceRow": 2586,
+      "name": "嫩菠菜（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "nbc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-572",
+      "originalName": "Spinach, mature, raw",
+      "sourceRow": 2590,
+      "name": "菠菜（成熟叶，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "bc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-348",
+      "originalName": "Spring greens, raw",
+      "sourceRow": 2596,
+      "name": "春甘蓝叶（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "cgl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-352",
+      "originalName": "Spring onions, bulbs and tops, raw",
+      "sourceRow": 2597,
+      "name": "小葱（葱白及葱叶，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "青葱",
+        "香葱"
+      ],
+      "pinyinInitials": [
+        "xc",
+        "qc"
+      ],
+      "foodState": "生，葱白及葱叶"
+    },
+    {
+      "code": "13-351",
+      "originalName": "Spring onions, bulbs only, raw",
+      "sourceRow": 2598,
+      "name": "小葱（仅葱白，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xc"
+      ],
+      "foodState": "生，仅葱白"
+    },
+    {
+      "code": "13-353",
+      "originalName": "Squash, acorn, raw",
+      "sourceRow": 2601,
+      "name": "橡果南瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xgng"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-355",
+      "originalName": "Squash, butternut, raw",
+      "sourceRow": 2604,
+      "name": "奶油南瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "胡桃南瓜"
+      ],
+      "pinyinInitials": [
+        "nyng"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-357",
+      "originalName": "Squash, spaghetti, raw",
+      "sourceRow": 2606,
+      "name": "金丝南瓜（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "意面南瓜"
+      ],
+      "pinyinInitials": [
+        "jsng"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-359",
+      "originalName": "Swede, flesh only, raw",
+      "sourceRow": 2643,
+      "name": "芜菁甘蓝（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "瑞典萝卜"
+      ],
+      "pinyinInitials": [
+        "wjgl"
+      ],
+      "foodState": "生，仅根肉"
+    },
+    {
+      "code": "13-463",
+      "originalName": "Sweet potato, raw, flesh only",
+      "sourceRow": 2650,
+      "name": "红薯（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "甘薯",
+        "番薯",
+        "地瓜"
+      ],
+      "pinyinInitials": [
+        "hs",
+        "gs",
+        "fs",
+        "dg"
+      ],
+      "foodState": "生，仅薯肉"
+    },
+    {
+      "code": "13-622",
+      "originalName": "Sweetcorn, kernels, raw",
+      "sourceRow": 2662,
+      "name": "甜玉米粒（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "tyml"
+      ],
+      "foodState": "生，仅籽粒"
+    },
+    {
+      "code": "13-519",
+      "originalName": "Tomatoes, cherry, raw",
+      "sourceRow": 2726,
+      "name": "圣女果（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "樱桃番茄",
+        "小番茄"
+      ],
+      "pinyinInitials": [
+        "sng",
+        "ytfq",
+        "xfq"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-389",
+      "originalName": "Turnip, flesh only, raw",
+      "sourceRow": 2797,
+      "name": "芜菁（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "蔓菁"
+      ],
+      "pinyinInitials": [
+        "wj"
+      ],
+      "foodState": "生，仅根肉"
+    },
+    {
+      "code": "13-397",
+      "originalName": "Yam, flesh only, raw",
+      "sourceRow": 2869,
+      "name": "薯蓣（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "sy"
+      ],
+      "foodState": "生，yam，仅薯肉"
+    },
+    {
+      "code": "13-062",
+      "originalName": "Beans, blackeye, whole, dried, raw",
+      "sourceRow": 128,
+      "name": "眉豆（整粒干豆，生）",
+      "category": "protein_main",
+      "aliases": [
+        "黑眼豆"
+      ],
+      "pinyinInitials": [
+        "md",
+        "hyd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-067",
+      "originalName": "Beans, broad, dried, raw",
+      "sourceRow": 129,
+      "name": "蚕豆（干，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "cd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-064",
+      "originalName": "Beans, broad, whole, raw",
+      "sourceRow": 131,
+      "name": "蚕豆（鲜整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "cd"
+      ],
+      "foodState": "鲜豆，生"
+    },
+    {
+      "code": "13-070",
+      "originalName": "Beans, butter, dried, raw",
+      "sourceRow": 134,
+      "name": "利马豆（干，生）",
+      "category": "protein_main",
+      "aliases": [
+        "奶油豆"
+      ],
+      "pinyinInitials": [
+        "lmd",
+        "nyd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-076",
+      "originalName": "Beans, chick peas, Kabuli, split, dried, raw",
+      "sourceRow": 138,
+      "name": "鹰嘴豆（Kabuli，干分瓣，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzd"
+      ],
+      "foodState": "干豆，分瓣，未煮"
+    },
+    {
+      "code": "13-074",
+      "originalName": "Beans, chick peas, Kabuli, whole, dried, raw",
+      "sourceRow": 140,
+      "name": "鹰嘴豆（Kabuli，干整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzd"
+      ],
+      "foodState": "干豆，整粒，未煮"
+    },
+    {
+      "code": "13-514",
+      "originalName": "Beans, green, raw",
+      "sourceRow": 144,
+      "name": "四季豆（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "菜豆",
+        "芸豆荚"
+      ],
+      "pinyinInitials": [
+        "sjd"
+      ],
+      "foodState": "鲜豆荚，生"
+    },
+    {
+      "code": "13-086",
+      "originalName": "Beans, haricot, whole, dried, raw",
+      "sourceRow": 147,
+      "name": "白芸豆（干整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "byd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-098",
+      "originalName": "Beans, mung, dahl, dried, raw",
+      "sourceRow": 149,
+      "name": "去皮绿豆瓣（干，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "qpldb"
+      ],
+      "foodState": "干豆瓣，未煮"
+    },
+    {
+      "code": "13-096",
+      "originalName": "Beans, mung, whole, dried, raw",
+      "sourceRow": 151,
+      "name": "绿豆（干整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ld"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-104",
+      "originalName": "Beans, pigeon peas, dahl, dried, raw",
+      "sourceRow": 154,
+      "name": "木豆瓣（干，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "mdb"
+      ],
+      "foodState": "干豆瓣，未煮"
+    },
+    {
+      "code": "13-102",
+      "originalName": "Beans, pigeon peas, whole, dried, raw",
+      "sourceRow": 156,
+      "name": "木豆（干整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "md"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-109",
+      "originalName": "Beans, red kidney, dried, raw",
+      "sourceRow": 162,
+      "name": "红腰豆（干，生）",
+      "category": "protein_main",
+      "aliases": [
+        "红芸豆"
+      ],
+      "pinyinInitials": [
+        "hyd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-112",
+      "originalName": "Beans, runner, raw",
+      "sourceRow": 164,
+      "name": "红花菜豆荚（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hhcdj"
+      ],
+      "foodState": "鲜豆荚，生"
+    },
+    {
+      "code": "13-115",
+      "originalName": "Beans, soya, dried, raw",
+      "sourceRow": 166,
+      "name": "黄豆（干，生）",
+      "category": "protein_main",
+      "aliases": [
+        "大豆"
+      ],
+      "pinyinInitials": [
+        "hd",
+        "dd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-426",
+      "originalName": "Beansprouts, mung, raw",
+      "sourceRow": 169,
+      "name": "绿豆芽（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "豆芽菜"
+      ],
+      "pinyinInitials": [
+        "ldy",
+        "dyc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "13-056",
+      "originalName": "Black gram, urad gram, whole, dried, raw",
+      "sourceRow": 352,
+      "name": "黑绿豆（整粒干豆，生）",
+      "category": "protein_main",
+      "aliases": [
+        "乌拉德豆"
+      ],
+      "pinyinInitials": [
+        "hld",
+        "wldd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-089",
+      "originalName": "Lentils, green and brown, whole, dried, raw",
+      "sourceRow": 1553,
+      "name": "绿扁豆与棕扁豆（干整粒，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "lbd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-657",
+      "originalName": "Lentils, red, split, dried, raw",
+      "sourceRow": 1555,
+      "name": "红扁豆（干分瓣，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hbd"
+      ],
+      "foodState": "干豆瓣，未煮"
+    },
+    {
+      "code": "13-130",
+      "originalName": "Peas, dried, raw",
+      "sourceRow": 1958,
+      "name": "豌豆（干，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "wd"
+      ],
+      "foodState": "干豆，未煮"
+    },
+    {
+      "code": "13-438",
+      "originalName": "Peas, raw",
+      "sourceRow": 1967,
+      "name": "豌豆（鲜，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "青豌豆"
+      ],
+      "pinyinInitials": [
+        "wd",
+        "qwd"
+      ],
+      "foodState": "鲜豆，生"
+    },
+    {
+      "code": "13-141",
+      "originalName": "Peas, split, dried, raw",
+      "sourceRow": 1969,
+      "name": "豌豆瓣（干，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "wdb"
+      ],
+      "foodState": "干豆瓣，未煮"
+    },
+    {
+      "code": "13-063",
+      "originalName": "Beans, blackeye, whole, dried, boiled in unsalted water",
+      "sourceRow": 127,
+      "name": "眉豆（干豆无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [
+        "黑眼豆（熟）"
+      ],
+      "pinyinInitials": [
+        "md"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-663",
+      "originalName": "Beans, butter, dried, boiled in unsalted water",
+      "sourceRow": 133,
+      "name": "利马豆（干豆无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [
+        "奶油豆（熟）"
+      ],
+      "pinyinInitials": [
+        "lmd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-662",
+      "originalName": "Beans, chick peas, Kabuli, whole, dried, boiled in unsalted water",
+      "sourceRow": 139,
+      "name": "鹰嘴豆（Kabuli，干整粒无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-664",
+      "originalName": "Beans, mung, whole, dried, boiled in unsalted water",
+      "sourceRow": 150,
+      "name": "绿豆（干整粒无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ld"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-659",
+      "originalName": "Beans, red kidney, dried, boiled in unsalted water",
+      "sourceRow": 161,
+      "name": "红腰豆（干豆无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hyd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-116",
+      "originalName": "Beans, soya, dried, boiled in unsalted water",
+      "sourceRow": 165,
+      "name": "黄豆（干豆无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-661",
+      "originalName": "Lentils, green and brown, whole, dried, boiled in unsalted water",
+      "sourceRow": 1552,
+      "name": "绿扁豆与棕扁豆（干豆无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "lbd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "13-658",
+      "originalName": "Lentils, red, split, dried, boiled in unsalted water",
+      "sourceRow": 1554,
+      "name": "红扁豆（干分瓣无盐煮熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hbd"
+      ],
+      "foodState": "干豆煮熟，无盐"
+    },
+    {
+      "code": "14-362",
+      "originalName": "Apples, cooking, raw, flesh only, peeled",
+      "sourceRow": 25,
+      "name": "烹调用苹果（去皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "pg"
+      ],
+      "foodState": "生，仅果肉；烹调用品种"
+    },
+    {
+      "code": "14-319",
+      "originalName": "Apples, eating, raw, flesh and skin",
+      "sourceRow": 30,
+      "name": "苹果（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "pg"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-016",
+      "originalName": "Apples, eating, dried",
+      "sourceRow": 29,
+      "name": "苹果干",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "pgg"
+      ],
+      "foodState": "干果"
+    },
+    {
+      "code": "14-025",
+      "originalName": "Apricots, raw, flesh and skin",
+      "sourceRow": 35,
+      "name": "杏（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "杏子"
+      ],
+      "pinyinInitials": [
+        "xz"
+      ],
+      "foodState": "生，果肉及皮，去核"
+    },
+    {
+      "code": "14-392",
+      "originalName": "Apricots, ready-to-eat, semi-dried",
+      "sourceRow": 37,
+      "name": "杏干（半干，即食）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "xg"
+      ],
+      "foodState": "半干果，即食"
+    },
+    {
+      "code": "14-039",
+      "originalName": "Avocado, Fuerte, flesh only",
+      "sourceRow": 63,
+      "name": "牛油果（Fuerte，仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "鳄梨"
+      ],
+      "pinyinInitials": [
+        "nyg",
+        "el"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-386",
+      "originalName": "Avocado, Hass, flesh only",
+      "sourceRow": 65,
+      "name": "牛油果（Hass，仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "哈斯鳄梨"
+      ],
+      "pinyinInitials": [
+        "nyg",
+        "hsel"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-318",
+      "originalName": "Bananas, flesh only",
+      "sourceRow": 100,
+      "name": "香蕉（去皮）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xj"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-388",
+      "originalName": "Blackberries, raw",
+      "sourceRow": 355,
+      "name": "黑莓（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hm"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-053",
+      "originalName": "Blackcurrants, raw",
+      "sourceRow": 362,
+      "name": "黑加仑（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "黑醋栗"
+      ],
+      "pinyinInitials": [
+        "hjl",
+        "hcl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-325",
+      "originalName": "Blueberries",
+      "sourceRow": 368,
+      "name": "蓝莓",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "lm"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-382",
+      "originalName": "Cherries, flesh and skin, raw",
+      "sourceRow": 646,
+      "name": "樱桃（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yt"
+      ],
+      "foodState": "生，果肉及皮，去核"
+    },
+    {
+      "code": "14-326",
+      "originalName": "Citrus fruit, soft/easy peelers, flesh only",
+      "sourceRow": 776,
+      "name": "易剥皮柑橘（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "橘子",
+        "柑橘"
+      ],
+      "pinyinInitials": [
+        "ybpgj",
+        "jz",
+        "gj"
+      ],
+      "foodState": "仅果肉，原表soft/easy peelers组"
+    },
+    {
+      "code": "14-816",
+      "originalName": "Coconut, flesh only, fresh",
+      "sourceRow": 791,
+      "name": "椰子肉（鲜）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzr"
+      ],
+      "foodState": "鲜果肉"
+    },
+    {
+      "code": "14-873",
+      "originalName": "Coconut, desiccated",
+      "sourceRow": 790,
+      "name": "椰蓉（干）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "yr"
+      ],
+      "foodState": "干品"
+    },
+    {
+      "code": "14-073",
+      "originalName": "Cranberries",
+      "sourceRow": 875,
+      "name": "蔓越莓",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "mym"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-394",
+      "originalName": "Dates, dried, flesh and skin",
+      "sourceRow": 1033,
+      "name": "椰枣（干，去核）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "yz"
+      ],
+      "foodState": "干果，果肉及皮"
+    },
+    {
+      "code": "14-083",
+      "originalName": "Dates, raw, flesh and skin",
+      "sourceRow": 1035,
+      "name": "椰枣（鲜，生，去核）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yz"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-091",
+      "originalName": "Figs, whole green fruit, raw",
+      "sourceRow": 1130,
+      "name": "无花果（绿果，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "whg"
+      ],
+      "foodState": "生，整颗绿果"
+    },
+    {
+      "code": "14-395",
+      "originalName": "Figs, ready-to-eat, semi-dried",
+      "sourceRow": 1128,
+      "name": "无花果干（半干，即食）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "whgg"
+      ],
+      "foodState": "半干果，即食"
+    },
+    {
+      "code": "14-103",
+      "originalName": "Gooseberries, dessert, raw",
+      "sourceRow": 1228,
+      "name": "甜味醋栗（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "twcl"
+      ],
+      "foodState": "生，甜食品种"
+    },
+    {
+      "code": "14-384",
+      "originalName": "Grapefruit, flesh only, raw",
+      "sourceRow": 1240,
+      "name": "西柚（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "葡萄柚"
+      ],
+      "pinyinInitials": [
+        "xy",
+        "pty"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-350",
+      "originalName": "Grapes, average",
+      "sourceRow": 1242,
+      "name": "葡萄（平均）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "pt"
+      ],
+      "foodState": "平均值"
+    },
+    {
+      "code": "14-322",
+      "originalName": "Grapes, green",
+      "sourceRow": 1244,
+      "name": "青葡萄",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qpt"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-323",
+      "originalName": "Grapes, red",
+      "sourceRow": 1245,
+      "name": "红葡萄",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hpt"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-111",
+      "originalName": "Greengages, raw",
+      "sourceRow": 1249,
+      "name": "青李（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "ql"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-874",
+      "originalName": "Hazelnuts, kernel only",
+      "sourceRow": 1304,
+      "name": "榛子仁",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "zzr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-122",
+      "originalName": "Jujube, flesh only",
+      "sourceRow": 1366,
+      "name": "枣（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "z"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-371",
+      "originalName": "Kiwi fruit, flesh only, raw",
+      "sourceRow": 1388,
+      "name": "猕猴桃（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "奇异果"
+      ],
+      "pinyinInitials": [
+        "mht",
+        "qyg"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-129",
+      "originalName": "Lemons, peeled, flesh only",
+      "sourceRow": 1541,
+      "name": "柠檬（去皮，仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "nm"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-131",
+      "originalName": "Limes, flesh only",
+      "sourceRow": 1560,
+      "name": "青柠（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "qn"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-137",
+      "originalName": "Longans, flesh only, dried",
+      "sourceRow": 1590,
+      "name": "桂圆（干，仅果肉）",
+      "category": "snack_dessert",
+      "aliases": [
+        "龙眼干"
+      ],
+      "pinyinInitials": [
+        "gy",
+        "lyg"
+      ],
+      "foodState": "干果，仅果肉"
+    },
+    {
+      "code": "14-140",
+      "originalName": "Loquats, flesh only, raw",
+      "sourceRow": 1591,
+      "name": "枇杷（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "pp"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-142",
+      "originalName": "Lychees, raw, flesh only",
+      "sourceRow": 1596,
+      "name": "荔枝（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "lz"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-378",
+      "originalName": "Mangoes, ripe, flesh only, raw",
+      "sourceRow": 1609,
+      "name": "芒果（成熟，仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "mg"
+      ],
+      "foodState": "成熟，生，仅果肉"
+    },
+    {
+      "code": "14-339",
+      "originalName": "Melon, Canteloupe-type, flesh only",
+      "sourceRow": 1633,
+      "name": "橙肉甜瓜（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "哈密瓜类"
+      ],
+      "pinyinInitials": [
+        "crtg"
+      ],
+      "foodState": "仅果肉，Canteloupe-type"
+    },
+    {
+      "code": "14-354",
+      "originalName": "Melon, flesh only, average",
+      "sourceRow": 1636,
+      "name": "甜瓜（平均，仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "tg"
+      ],
+      "foodState": "仅果肉，平均值"
+    },
+    {
+      "code": "14-159",
+      "originalName": "Melon, Galia, flesh only",
+      "sourceRow": 1639,
+      "name": "嘉丽亚甜瓜（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "Galia甜瓜"
+      ],
+      "pinyinInitials": [
+        "jlytg",
+        "tg"
+      ],
+      "foodState": "仅果肉，Galia品种"
+    },
+    {
+      "code": "14-296",
+      "originalName": "Melon, watermelon, flesh only",
+      "sourceRow": 1644,
+      "name": "西瓜（仅瓜瓤）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xg"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-328",
+      "originalName": "Melon, yellow flesh, flesh only",
+      "sourceRow": 1646,
+      "name": "黄肉甜瓜（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "hrtg"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-380",
+      "originalName": "Nectarines, flesh and skin, raw",
+      "sourceRow": 1751,
+      "name": "油桃（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yt"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-327",
+      "originalName": "Oranges, flesh only",
+      "sourceRow": 1826,
+      "name": "橙（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "橙子"
+      ],
+      "pinyinInitials": [
+        "cz"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-390",
+      "originalName": "Papaya, flesh only, raw",
+      "sourceRow": 1864,
+      "name": "木瓜（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "番木瓜"
+      ],
+      "pinyinInitials": [
+        "mg",
+        "fmg"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-178",
+      "originalName": "Passion fruit, flesh and pips",
+      "sourceRow": 1878,
+      "name": "百香果（果肉及籽）",
+      "category": "mixed_meal",
+      "aliases": [
+        "西番莲果"
+      ],
+      "pinyinInitials": [
+        "bxg",
+        "xflg"
+      ],
+      "foodState": "果肉及籽"
+    },
+    {
+      "code": "14-299",
+      "originalName": "Peaches, raw, flesh and skin",
+      "sourceRow": 1936,
+      "name": "桃（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "桃子"
+      ],
+      "pinyinInitials": [
+        "tz"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-365",
+      "originalName": "Pears, average, raw, flesh only",
+      "sourceRow": 1946,
+      "name": "梨（平均，仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "l"
+      ],
+      "foodState": "生，仅果肉，平均值"
+    },
+    {
+      "code": "14-205",
+      "originalName": "Pears, Nashi, flesh and skin, raw",
+      "sourceRow": 1951,
+      "name": "亚洲梨（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "水梨"
+      ],
+      "pinyinInitials": [
+        "yzl",
+        "sl"
+      ],
+      "foodState": "生，果肉及皮，Nashi"
+    },
+    {
+      "code": "14-321",
+      "originalName": "Pears, raw, flesh and skin",
+      "sourceRow": 1953,
+      "name": "梨（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "l"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-207",
+      "originalName": "Physalis, fruit only",
+      "sourceRow": 1996,
+      "name": "酸浆果（仅果实）",
+      "category": "mixed_meal",
+      "aliases": [
+        "食用灯笼果"
+      ],
+      "pinyinInitials": [
+        "sjg",
+        "sydlg"
+      ],
+      "foodState": "仅果实"
+    },
+    {
+      "code": "14-376",
+      "originalName": "Pineapple, flesh only, raw",
+      "sourceRow": 2048,
+      "name": "菠萝（仅果肉，生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "凤梨"
+      ],
+      "pinyinInitials": [
+        "bl",
+        "fl"
+      ],
+      "foodState": "生，仅果肉"
+    },
+    {
+      "code": "14-396",
+      "originalName": "Pineapple, dried",
+      "sourceRow": 2047,
+      "name": "菠萝干",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "blg"
+      ],
+      "foodState": "干果"
+    },
+    {
+      "code": "14-372",
+      "originalName": "Plums, dessert, flesh and skin, raw",
+      "sourceRow": 2076,
+      "name": "鲜食李子（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "lz"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-220",
+      "originalName": "Plums, Victoria, flesh and skin, raw",
+      "sourceRow": 2078,
+      "name": "维多利亚李子（带皮，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "wdlylz"
+      ],
+      "foodState": "生，果肉及皮"
+    },
+    {
+      "code": "14-226",
+      "originalName": "Pomegranate, flesh and pips",
+      "sourceRow": 2089,
+      "name": "石榴（果肉及籽）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "sl"
+      ],
+      "foodState": "果肉及籽"
+    },
+    {
+      "code": "14-228",
+      "originalName": "Pomelo, flesh only",
+      "sourceRow": 2091,
+      "name": "柚子（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yz"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-230",
+      "originalName": "Prickly pears, flesh and seeds",
+      "sourceRow": 2251,
+      "name": "仙人掌果（果肉及籽）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "xrzg"
+      ],
+      "foodState": "果肉及籽"
+    },
+    {
+      "code": "14-391",
+      "originalName": "Prunes, ready-to-eat, semi-dried",
+      "sourceRow": 2261,
+      "name": "西梅干（半干，即食）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "xmg"
+      ],
+      "foodState": "半干果，即食"
+    },
+    {
+      "code": "14-393",
+      "originalName": "Raisins, dried",
+      "sourceRow": 2302,
+      "name": "葡萄干",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "ptg"
+      ],
+      "foodState": "干果"
+    },
+    {
+      "code": "14-375",
+      "originalName": "Raspberries, raw",
+      "sourceRow": 2307,
+      "name": "覆盆子（生）",
+      "category": "mixed_meal",
+      "aliases": [
+        "树莓"
+      ],
+      "pinyinInitials": [
+        "fpz",
+        "sm"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-252",
+      "originalName": "Rhubarb, stems only, raw",
+      "sourceRow": 2325,
+      "name": "大黄（仅茎，生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "dh"
+      ],
+      "foodState": "生，仅茎"
+    },
+    {
+      "code": "14-259",
+      "originalName": "Sharon fruit, flesh only",
+      "sourceRow": 2530,
+      "name": "沙龙柿（仅果肉）",
+      "category": "mixed_meal",
+      "aliases": [
+        "Sharon柿"
+      ],
+      "pinyinInitials": [
+        "sls"
+      ],
+      "foodState": "仅果肉"
+    },
+    {
+      "code": "14-059",
+      "originalName": "Star fruit",
+      "sourceRow": 2609,
+      "name": "杨桃",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "yt"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-324",
+      "originalName": "Strawberries, raw",
+      "sourceRow": 2624,
+      "name": "草莓（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "cm"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-264",
+      "originalName": "Tamarillos, flesh and seeds",
+      "sourceRow": 2674,
+      "name": "树番茄（果肉及籽）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "sfq"
+      ],
+      "foodState": "果肉及籽"
+    },
+    {
+      "code": "14-268",
+      "originalName": "Whitecurrants, raw",
+      "sourceRow": 2844,
+      "name": "白醋栗（生）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "bcl"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "14-896",
+      "originalName": "Almonds, whole kernels",
+      "sourceRow": 12,
+      "name": "巴旦木仁（整粒）",
+      "category": "snack_dessert",
+      "aliases": [
+        "扁桃仁"
+      ],
+      "pinyinInitials": [
+        "bdmr",
+        "btr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-870",
+      "originalName": "Almonds, flaked and ground",
+      "sourceRow": 9,
+      "name": "巴旦木片与粉",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "bdm"
+      ],
+      "foodState": "切片及研磨，合并值"
+    },
+    {
+      "code": "14-897",
+      "originalName": "Almonds, toasted",
+      "sourceRow": 10,
+      "name": "巴旦木仁（烘烤）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "bdmr"
+      ],
+      "foodState": "烘烤"
+    },
+    {
+      "code": "14-871",
+      "originalName": "Brazil nuts, kernel only",
+      "sourceRow": 380,
+      "name": "巴西坚果仁",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "bxjgr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-811",
+      "originalName": "Cashew nuts, kernel only, plain",
+      "sourceRow": 546,
+      "name": "腰果仁（原味）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "ygr"
+      ],
+      "foodState": "仅果仁，原味"
+    },
+    {
+      "code": "14-813",
+      "originalName": "Chestnuts, kernel only, raw",
+      "sourceRow": 656,
+      "name": "栗子仁（生）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "lzr"
+      ],
+      "foodState": "生，仅果仁"
+    },
+    {
+      "code": "14-815",
+      "originalName": "Chestnuts, dried",
+      "sourceRow": 655,
+      "name": "栗子（干）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "lz"
+      ],
+      "foodState": "干品"
+    },
+    {
+      "code": "14-877",
+      "originalName": "Peanuts, kernel only, plain, unsalted",
+      "sourceRow": 1941,
+      "name": "花生仁（原味，无盐）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "hsr"
+      ],
+      "foodState": "仅果仁，未加盐"
+    },
+    {
+      "code": "14-878",
+      "originalName": "Peanuts, dry roasted",
+      "sourceRow": 1940,
+      "name": "花生仁（干烤）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "hsr"
+      ],
+      "foodState": "干烤"
+    },
+    {
+      "code": "14-837",
+      "originalName": "Pecan nuts, kernel only",
+      "sourceRow": 1972,
+      "name": "碧根果仁",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "bggr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-839",
+      "originalName": "Pine nuts, kernel only",
+      "sourceRow": 2043,
+      "name": "松子仁",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "szr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-840",
+      "originalName": "Pistachio nuts, kernel only, roasted and salted",
+      "sourceRow": 2051,
+      "name": "开心果仁（烘烤，加盐）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "kxgr"
+      ],
+      "foodState": "烘烤，加盐"
+    },
+    {
+      "code": "14-842",
+      "originalName": "Pumpkin seeds",
+      "sourceRow": 2279,
+      "name": "南瓜子",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "ngz"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-844",
+      "originalName": "Sesame seeds",
+      "sourceRow": 2523,
+      "name": "芝麻",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "zm"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-845",
+      "originalName": "Sunflower seeds",
+      "sourceRow": 2637,
+      "name": "葵花籽",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "khz"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-846",
+      "originalName": "Sunflower seeds, toasted",
+      "sourceRow": 2638,
+      "name": "葵花籽（烘烤）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "khz"
+      ],
+      "foodState": "烘烤"
+    },
+    {
+      "code": "14-879",
+      "originalName": "Walnuts, kernel only",
+      "sourceRow": 2823,
+      "name": "核桃仁",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "htr"
+      ],
+      "foodState": "仅果仁"
+    },
+    {
+      "code": "14-892",
+      "originalName": "Peanut butter, smooth",
+      "sourceRow": 1938,
+      "name": "花生酱（顺滑型）",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "hsj"
+      ],
+      "foodState": "原表顺滑型"
+    },
+    {
+      "code": "14-847",
+      "originalName": "Tahini paste",
+      "sourceRow": 2673,
+      "name": "芝麻酱",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "zmj"
+      ],
+      "foodState": "研磨酱"
+    },
+    {
+      "code": "11-895",
+      "originalName": "Flour, chapati, brown",
+      "sourceRow": 1162,
+      "name": "印度薄饼用棕色面粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "ydbb"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-894",
+      "originalName": "Flour, chapati, white",
+      "sourceRow": 1163,
+      "name": "印度薄饼用白面粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "ydbb"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-896",
+      "originalName": "Flour, gram",
+      "sourceRow": 1166,
+      "name": "鹰嘴豆粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzdf"
+      ],
+      "foodState": "干豆粉"
+    },
+    {
+      "code": "11-897",
+      "originalName": "Flour, rye",
+      "sourceRow": 1169,
+      "name": "黑麦粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "hmf"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-898",
+      "originalName": "Flour, soya",
+      "sourceRow": 1170,
+      "name": "大豆粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "ddf"
+      ],
+      "foodState": "干豆粉"
+    },
+    {
+      "code": "11-887",
+      "originalName": "Flour, wheat, bread/strong, white",
+      "sourceRow": 1171,
+      "name": "高筋白面粉",
+      "category": "staple_grain",
+      "aliases": [
+        "面包粉"
+      ],
+      "pinyinInitials": [
+        "gjbmf",
+        "mbf"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-892",
+      "originalName": "Flour, wheat, brown",
+      "sourceRow": 1172,
+      "name": "棕色小麦粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "zsxmf"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-886",
+      "originalName": "Flour, wheat, white, plain, soft",
+      "sourceRow": 1174,
+      "name": "低筋普通白面粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "djbmf"
+      ],
+      "foodState": "干面粉，非自发粉"
+    },
+    {
+      "code": "11-888",
+      "originalName": "Flour, wheat, white, self raising",
+      "sourceRow": 1175,
+      "name": "白色自发粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bszff"
+      ],
+      "foodState": "干面粉，含膨松成分"
+    },
+    {
+      "code": "11-889",
+      "originalName": "Flour, wheat, wholemeal",
+      "sourceRow": 1176,
+      "name": "全麦面粉",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "qmmf"
+      ],
+      "foodState": "干面粉"
+    },
+    {
+      "code": "11-901",
+      "originalName": "Couscous, plain, raw",
+      "sourceRow": 868,
+      "name": "库斯库斯（干）",
+      "category": "staple_grain",
+      "aliases": [
+        "北非小米"
+      ],
+      "pinyinInitials": [
+        "ksks"
+      ],
+      "foodState": "干品，未煮"
+    },
+    {
+      "code": "11-719",
+      "originalName": "Noodles, egg, dried, raw",
+      "sourceRow": 1753,
+      "name": "鸡蛋面（干，未煮）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "jdm"
+      ],
+      "foodState": "干面，未煮"
+    },
+    {
+      "code": "11-941",
+      "originalName": "Noodles, egg, fine, dried, boiled in unsalted water",
+      "sourceRow": 1754,
+      "name": "细鸡蛋面（干面无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "xjdm"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-724",
+      "originalName": "Noodles, egg, medium, dried, boiled in unsalted water",
+      "sourceRow": 1756,
+      "name": "中粗鸡蛋面（干面无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "zcjdm"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-942",
+      "originalName": "Noodles, egg, thick, dried, boiled in unsalted water",
+      "sourceRow": 1757,
+      "name": "粗鸡蛋面（干面无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "cjdm"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-725",
+      "originalName": "Noodles, rice, fine, dried, boiled in unsalted water",
+      "sourceRow": 1758,
+      "name": "细米粉（干米粉无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "xmf"
+      ],
+      "foodState": "干米粉煮熟，无盐"
+    },
+    {
+      "code": "11-726",
+      "originalName": "Pasta, egg, fresh, raw",
+      "sourceRow": 1889,
+      "name": "鲜鸡蛋意面（未煮）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "xjdym"
+      ],
+      "foodState": "鲜面，未煮"
+    },
+    {
+      "code": "11-715",
+      "originalName": "Pasta, egg, white, dried, raw",
+      "sourceRow": 1890,
+      "name": "白色鸡蛋意面（干，未煮）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsjdym"
+      ],
+      "foodState": "干面，未煮"
+    },
+    {
+      "code": "11-716",
+      "originalName": "Pasta, white, dried, raw",
+      "sourceRow": 1897,
+      "name": "白色意面（干，未煮）",
+      "category": "staple_grain",
+      "aliases": [
+        "意大利面"
+      ],
+      "pinyinInitials": [
+        "bsym",
+        "ydlm"
+      ],
+      "foodState": "干面，未煮"
+    },
+    {
+      "code": "11-1129",
+      "originalName": "Pasta, white, dried, boiled in unsalted water",
+      "sourceRow": 1896,
+      "name": "白色意面（干面无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsym"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-722",
+      "originalName": "Pasta, white, spaghetti, dried, boiled in unsalted water",
+      "sourceRow": 1898,
+      "name": "白色意大利细面（无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [
+        "熟意面"
+      ],
+      "pinyinInitials": [
+        "bsydlxm",
+        "sym"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-718",
+      "originalName": "Pasta, wholewheat, spaghetti, dried, raw",
+      "sourceRow": 1901,
+      "name": "全麦意大利细面（干，未煮）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "qmydlxm"
+      ],
+      "foodState": "干面，未煮"
+    },
+    {
+      "code": "11-723",
+      "originalName": "Pasta, wholewheat, spaghetti, dried, boiled in unsalted water",
+      "sourceRow": 1900,
+      "name": "全麦意大利细面（无盐煮熟）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "qmydlxm"
+      ],
+      "foodState": "干面煮熟，无盐"
+    },
+    {
+      "code": "11-788",
+      "originalName": "Porridge oats, unfortified",
+      "sourceRow": 2178,
+      "name": "燕麦片（未强化）",
+      "category": "staple_grain",
+      "aliases": [
+        "粥用燕麦"
+      ],
+      "pinyinInitials": [
+        "ymp",
+        "zyym"
+      ],
+      "foodState": "干品，未强化"
+    },
+    {
+      "code": "11-866",
+      "originalName": "Rice, brown, basmati, raw",
+      "sourceRow": 2337,
+      "name": "巴斯马蒂糙米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsmdcm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-867",
+      "originalName": "Rice, brown, basmati, boiled in unsalted water",
+      "sourceRow": 2336,
+      "name": "巴斯马蒂糙米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsmdcmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-868",
+      "originalName": "Rice, brown, wholegrain, raw",
+      "sourceRow": 2341,
+      "name": "全粒糙米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "qlcm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-869",
+      "originalName": "Rice, brown, wholegrain, boiled in unsalted water",
+      "sourceRow": 2340,
+      "name": "全粒糙米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "qlcmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-876",
+      "originalName": "Rice, red, raw",
+      "sourceRow": 2346,
+      "name": "红米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "hm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-877",
+      "originalName": "Red rice, boiled in unsalted water",
+      "sourceRow": 2312,
+      "name": "红米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "hmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-874",
+      "originalName": "Rice, Thai fragrant, raw",
+      "sourceRow": 2350,
+      "name": "泰国香米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "tgxm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-875",
+      "originalName": "Rice, Thai fragrant, boiled in unsalted water",
+      "sourceRow": 2349,
+      "name": "泰国香米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "tgxmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-857",
+      "originalName": "Rice, white, basmati, raw",
+      "sourceRow": 2354,
+      "name": "巴斯马蒂白米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsmdbm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-858",
+      "originalName": "Rice, white, basmati, boiled in unsalted water",
+      "sourceRow": 2351,
+      "name": "巴斯马蒂白米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bsmdbmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-878",
+      "originalName": "Rice, white, Italian Arborio risotto, raw",
+      "sourceRow": 2356,
+      "name": "阿博里奥意式烩饭米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "ablayshfm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-879",
+      "originalName": "Rice, white, Italian \"Arborio\" risotto, boiled in unsalted water",
+      "sourceRow": 2355,
+      "name": "阿博里奥米饭（无盐水煮）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "ablamf"
+      ],
+      "foodState": "煮熟，无盐；仅米饭"
+    },
+    {
+      "code": "11-861",
+      "originalName": "Rice, white, long grain, raw",
+      "sourceRow": 2360,
+      "name": "长粒白米（生）",
+      "category": "staple_grain",
+      "aliases": [
+        "生米"
+      ],
+      "pinyinInitials": [
+        "clbm",
+        "sm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-865",
+      "originalName": "Rice, white, pudding, raw",
+      "sourceRow": 2361,
+      "name": "布丁用白米（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "bdybm"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-872",
+      "originalName": "Rice, wild, raw",
+      "sourceRow": 2363,
+      "name": "菰米（生）",
+      "category": "staple_grain",
+      "aliases": [
+        "野米"
+      ],
+      "pinyinInitials": [
+        "gm",
+        "ym"
+      ],
+      "foodState": "生米，未煮"
+    },
+    {
+      "code": "11-873",
+      "originalName": "Rice, wild, boiled in unsalted water",
+      "sourceRow": 2362,
+      "name": "菰米饭（无盐）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "gmf"
+      ],
+      "foodState": "煮熟，无盐"
+    },
+    {
+      "code": "11-023",
+      "originalName": "Sago, raw",
+      "sourceRow": 2400,
+      "name": "西米（生）",
+      "category": "staple_grain",
+      "aliases": [
+        "沙谷米"
+      ],
+      "pinyinInitials": [
+        "xm",
+        "sgm"
+      ],
+      "foodState": "干品，未煮"
+    },
+    {
+      "code": "11-903",
+      "originalName": "Semolina, raw",
+      "sourceRow": 2521,
+      "name": "粗粒小麦粉（生）",
+      "category": "staple_grain",
+      "aliases": [
+        "杜兰粗面粉"
+      ],
+      "pinyinInitials": [
+        "clxmf",
+        "dlcmf"
+      ],
+      "foodState": "干品，未煮"
+    },
+    {
+      "code": "11-027",
+      "originalName": "Tapioca, raw",
+      "sourceRow": 2679,
+      "name": "木薯淀粉（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "msdf"
+      ],
+      "foodState": "干品，未煮"
+    },
+    {
+      "code": "11-904",
+      "originalName": "Wheat, bulgur, raw",
+      "sourceRow": 2832,
+      "name": "布格麦（生）",
+      "category": "staple_grain",
+      "aliases": [
+        "碎粒小麦"
+      ],
+      "pinyinInitials": [
+        "bgm",
+        "slxm"
+      ],
+      "foodState": "干品，未煮"
+    },
+    {
+      "code": "11-907",
+      "originalName": "Wheatgerm",
+      "sourceRow": 2833,
+      "name": "小麦胚芽",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "xmpy"
+      ],
+      "foodState": "未另标烹调状态"
+    },
+    {
+      "code": "14-843",
+      "originalName": "Quinoa, raw",
+      "sourceRow": 2292,
+      "name": "藜麦（生）",
+      "category": "staple_grain",
+      "aliases": [],
+      "pinyinInitials": [
+        "lm"
+      ],
+      "foodState": "干籽，未煮"
+    },
+    {
+      "code": "18-007",
+      "originalName": "Beef, braising steak, raw, lean and fat",
+      "sourceRow": 181,
+      "name": "炖煮牛肉（生，瘦肉及脂肪）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "dznr"
+      ],
+      "foodState": "生，braising steak，瘦肉及脂肪"
+    },
+    {
+      "code": "18-012",
+      "originalName": "Beef, brisket, raw, lean",
+      "sourceRow": 186,
+      "name": "牛胸肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nxr"
+      ],
+      "foodState": "生，brisket，仅瘦肉"
+    },
+    {
+      "code": "18-013",
+      "originalName": "Beef, brisket, raw, lean and fat",
+      "sourceRow": 187,
+      "name": "牛胸肉（生，瘦肉及脂肪）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nxr"
+      ],
+      "foodState": "生，brisket，瘦肉及脂肪"
+    },
+    {
+      "code": "18-016",
+      "originalName": "Beef, fillet steak, raw, lean",
+      "sourceRow": 197,
+      "name": "牛里脊（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [
+        "菲力牛排"
+      ],
+      "pinyinInitials": [
+        "nlj",
+        "flnp"
+      ],
+      "foodState": "生，fillet，仅瘦肉"
+    },
+    {
+      "code": "18-024",
+      "originalName": "Beef, flank, raw, lean",
+      "sourceRow": 201,
+      "name": "牛腹胁肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nfxr"
+      ],
+      "foodState": "生，flank，仅瘦肉"
+    },
+    {
+      "code": "18-468",
+      "originalName": "Beef, lean, average, raw",
+      "sourceRow": 211,
+      "name": "牛瘦肉（平均，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nsr"
+      ],
+      "foodState": "生，仅瘦肉，平均值"
+    },
+    {
+      "code": "18-469",
+      "originalName": "Beef, mince, raw",
+      "sourceRow": 217,
+      "name": "牛肉糜（生）",
+      "category": "protein_main",
+      "aliases": [
+        "牛肉末"
+      ],
+      "pinyinInitials": [
+        "nrm"
+      ],
+      "foodState": "生，原表普通肉糜"
+    },
+    {
+      "code": "18-508",
+      "originalName": "Beef, mince, raw, extra lean",
+      "sourceRow": 218,
+      "name": "牛肉糜（特瘦，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nrm"
+      ],
+      "foodState": "生，extra lean"
+    },
+    {
+      "code": "18-043",
+      "originalName": "Beef, rump steak, raw, lean",
+      "sourceRow": 230,
+      "name": "牛臀肉牛排（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ntrnp"
+      ],
+      "foodState": "生，rump，仅瘦肉"
+    },
+    {
+      "code": "18-054",
+      "originalName": "Beef, silverside, raw, lean",
+      "sourceRow": 236,
+      "name": "牛后腿外侧肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nhtwcr"
+      ],
+      "foodState": "生，silverside，仅瘦肉"
+    },
+    {
+      "code": "18-064",
+      "originalName": "Beef, sirloin steak, raw, lean",
+      "sourceRow": 254,
+      "name": "西冷牛排（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [
+        "沙朗牛排"
+      ],
+      "pinyinInitials": [
+        "xlnp",
+        "slnp"
+      ],
+      "foodState": "生，sirloin，仅瘦肉"
+    },
+    {
+      "code": "18-076",
+      "originalName": "Beef, stewing steak, raw, lean",
+      "sourceRow": 260,
+      "name": "慢炖牛肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "mdnr"
+      ],
+      "foodState": "生，stewing steak，仅瘦肉"
+    },
+    {
+      "code": "18-084",
+      "originalName": "Beef, topside, raw, lean",
+      "sourceRow": 267,
+      "name": "牛后腿内侧肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "nhtncr"
+      ],
+      "foodState": "生，topside，仅瘦肉"
+    },
+    {
+      "code": "18-289",
+      "originalName": "Chicken, dark meat, raw",
+      "sourceRow": 687,
+      "name": "鸡深色肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jssr"
+      ],
+      "foodState": "生，dark meat"
+    },
+    {
+      "code": "18-290",
+      "originalName": "Chicken, light meat, raw",
+      "sourceRow": 702,
+      "name": "鸡浅色肉（生）",
+      "category": "protein_main",
+      "aliases": [
+        "鸡白肉"
+      ],
+      "pinyinInitials": [
+        "jqsr",
+        "jbr"
+      ],
+      "foodState": "生，light meat；不把整项强称鸡胸"
+    },
+    {
+      "code": "18-488",
+      "originalName": "Chicken, meat, average, raw",
+      "sourceRow": 704,
+      "name": "鸡肉（平均，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jr"
+      ],
+      "foodState": "生，平均肉"
+    },
+    {
+      "code": "18-293",
+      "originalName": "Chicken, leg quarter, raw, meat and skin",
+      "sourceRow": 698,
+      "name": "鸡腿四分体肉及皮（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jtsft"
+      ],
+      "foodState": "生，leg quarter，仅可食肉及皮，不计骨重"
+    },
+    {
+      "code": "18-295",
+      "originalName": "Chicken, wing quarter, raw, meat and skin",
+      "sourceRow": 729,
+      "name": "鸡翅四分体肉及皮（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jcsft"
+      ],
+      "foodState": "生，wing quarter，仅可食肉及皮，不计骨重"
+    },
+    {
+      "code": "18-297",
+      "originalName": "Chicken, whole, raw, meat and skin",
+      "sourceRow": 722,
+      "name": "全鸡（生，肉及皮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "qj"
+      ],
+      "foodState": "生，肉及皮"
+    },
+    {
+      "code": "18-489",
+      "originalName": "Duck, meat only, raw",
+      "sourceRow": 1072,
+      "name": "鸭肉（生，去皮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yr"
+      ],
+      "foodState": "生，仅肉"
+    },
+    {
+      "code": "18-371",
+      "originalName": "Duck, raw, meat, fat and skin",
+      "sourceRow": 1074,
+      "name": "鸭（生，肉、脂肪及皮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "y"
+      ],
+      "foodState": "生，肉、脂肪及皮"
+    },
+    {
+      "code": "18-375",
+      "originalName": "Goose, meat, raw, fat and skin",
+      "sourceRow": 1223,
+      "name": "鹅（生，肉、脂肪及皮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "e"
+      ],
+      "foodState": "生，肉、脂肪及皮"
+    },
+    {
+      "code": "18-475",
+      "originalName": "Lamb, lean only, raw, average",
+      "sourceRow": 1429,
+      "name": "羊瘦肉（平均，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ysr"
+      ],
+      "foodState": "生，仅瘦肉，平均值"
+    },
+    {
+      "code": "18-478",
+      "originalName": "Lamb, average, raw, lean and fat",
+      "sourceRow": 1403,
+      "name": "羊肉（平均，生，瘦肉及脂肪）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yr"
+      ],
+      "foodState": "生，瘦肉及脂肪，平均值"
+    },
+    {
+      "code": "18-481",
+      "originalName": "Lamb, mince, raw",
+      "sourceRow": 1465,
+      "name": "羊肉糜（生）",
+      "category": "protein_main",
+      "aliases": [
+        "羊肉末"
+      ],
+      "pinyinInitials": [
+        "yrm"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "18-160",
+      "originalName": "Lamb, neck fillet, raw, lean",
+      "sourceRow": 1468,
+      "name": "羊颈肉（生，瘦肉）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yjr"
+      ],
+      "foodState": "生，neck fillet，仅瘦肉"
+    },
+    {
+      "code": "18-170",
+      "originalName": "Lamb, shoulder, raw, lean and fat",
+      "sourceRow": 1498,
+      "name": "羊肩肉（生，瘦肉及脂肪）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yjr"
+      ],
+      "foodState": "生，shoulder，瘦肉及脂肪"
+    },
+    {
+      "code": "18-182",
+      "originalName": "Lamb, stewing, raw, lean and fat",
+      "sourceRow": 1505,
+      "name": "炖煮羊肉（生，瘦肉及脂肪）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "dzyr"
+      ],
+      "foodState": "生，stewing，瘦肉及脂肪"
+    },
+    {
+      "code": "18-348",
+      "originalName": "Turkey, dark meat, raw",
+      "sourceRow": 2771,
+      "name": "火鸡深色肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hjssr"
+      ],
+      "foodState": "生，dark meat"
+    },
+    {
+      "code": "18-349",
+      "originalName": "Turkey, light meat, raw",
+      "sourceRow": 2776,
+      "name": "火鸡浅色肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hjqsr"
+      ],
+      "foodState": "生，light meat"
+    },
+    {
+      "code": "18-350",
+      "originalName": "Turkey, meat, average, raw",
+      "sourceRow": 2778,
+      "name": "火鸡肉（平均，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hjr"
+      ],
+      "foodState": "生，平均肉"
+    },
+    {
+      "code": "18-387",
+      "originalName": "Rabbit, raw, meat only",
+      "sourceRow": 2295,
+      "name": "兔肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "tr"
+      ],
+      "foodState": "生，仅肉"
+    },
+    {
+      "code": "18-390",
+      "originalName": "Venison, meat only, raw",
+      "sourceRow": 2816,
+      "name": "鹿肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "lr"
+      ],
+      "foodState": "生，仅肉"
+    },
+    {
+      "code": "16-385",
+      "originalName": "Bass, sea, flesh only, raw",
+      "sourceRow": 116,
+      "name": "海鲈鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hlyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-172",
+      "originalName": "Carp, raw",
+      "sourceRow": 537,
+      "name": "鲤鱼（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ly"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-007",
+      "originalName": "Catfish, raw",
+      "sourceRow": 564,
+      "name": "鲶鱼（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ny"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-372",
+      "originalName": "Cod, flesh only, raw",
+      "sourceRow": 799,
+      "name": "鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "xyr"
+      ],
+      "foodState": "生，cod，仅鱼肉"
+    },
+    {
+      "code": "16-383",
+      "originalName": "Coley, flesh only, raw",
+      "sourceRow": 831,
+      "name": "绿青鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "lqxyr"
+      ],
+      "foodState": "生，coley，仅鱼肉"
+    },
+    {
+      "code": "16-040",
+      "originalName": "Flounder, raw",
+      "sourceRow": 1161,
+      "name": "川鲽（生）",
+      "category": "protein_main",
+      "aliases": [
+        "flounder"
+      ],
+      "pinyinInitials": [
+        "cd"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-375",
+      "originalName": "Haddock, flesh only, raw",
+      "sourceRow": 1275,
+      "name": "黑线鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hxxyr"
+      ],
+      "foodState": "生，haddock，仅鱼肉"
+    },
+    {
+      "code": "16-070",
+      "originalName": "Hake, flesh only, raw",
+      "sourceRow": 1290,
+      "name": "无须鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "wxxyr"
+      ],
+      "foodState": "生，hake，仅鱼肉"
+    },
+    {
+      "code": "16-073",
+      "originalName": "Halibut, flesh only, raw",
+      "sourceRow": 1294,
+      "name": "大比目鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "dbmyr"
+      ],
+      "foodState": "生，halibut，仅鱼肉"
+    },
+    {
+      "code": "16-175",
+      "originalName": "Herring, flesh only, raw",
+      "sourceRow": 1314,
+      "name": "鲱鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "fyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-078",
+      "originalName": "Hoki, raw",
+      "sourceRow": 1321,
+      "name": "蓝尖尾无须鳕（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ljwwxx"
+      ],
+      "foodState": "生，hoki"
+    },
+    {
+      "code": "16-080",
+      "originalName": "John Dory, raw",
+      "sourceRow": 1365,
+      "name": "海鲂（生）",
+      "category": "protein_main",
+      "aliases": [
+        "John Dory"
+      ],
+      "pinyinInitials": [
+        "hf"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-393",
+      "originalName": "Mackerel, flesh only, raw",
+      "sourceRow": 1603,
+      "name": "鲭鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "qyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-092",
+      "originalName": "Monkfish, flesh only, raw",
+      "sourceRow": 1701,
+      "name": "鮟鱇鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "akyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-095",
+      "originalName": "Mullet, Grey, flesh only, raw",
+      "sourceRow": 1721,
+      "name": "鲻鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "zyr"
+      ],
+      "foodState": "生，grey mullet，仅鱼肉"
+    },
+    {
+      "code": "16-497",
+      "originalName": "Mussels, raw",
+      "sourceRow": 1742,
+      "name": "贻贝（生）",
+      "category": "protein_main",
+      "aliases": [
+        "淡菜",
+        "青口贝"
+      ],
+      "pinyinInitials": [
+        "yb",
+        "dc",
+        "qkb"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-260",
+      "originalName": "Oysters, raw",
+      "sourceRow": 1838,
+      "name": "牡蛎（生）",
+      "category": "protein_main",
+      "aliases": [
+        "生蚝"
+      ],
+      "pinyinInitials": [
+        "ml",
+        "sh"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-382",
+      "originalName": "Pangasius, flesh only, raw",
+      "sourceRow": 1862,
+      "name": "芒鱼属鲶鱼肉（Pangasius，生）",
+      "category": "protein_main",
+      "aliases": [
+        "Pangasius鱼肉"
+      ],
+      "pinyinInitials": [
+        "nyr"
+      ],
+      "foodState": "生，Pangasius，仅鱼肉"
+    },
+    {
+      "code": "16-381",
+      "originalName": "Plaice, flesh only, raw",
+      "sourceRow": 2062,
+      "name": "欧洲鲽鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ozdyr"
+      ],
+      "foodState": "生，plaice，仅鱼肉"
+    },
+    {
+      "code": "16-378",
+      "originalName": "Pollock, Alaskan, flesh only, raw",
+      "sourceRow": 2086,
+      "name": "阿拉斯加狭鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "alsjxxyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-124",
+      "originalName": "Pomfret, black, raw",
+      "sourceRow": 2093,
+      "name": "黑鲳（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-125",
+      "originalName": "Pomfret, white, raw",
+      "sourceRow": 2094,
+      "name": "白鲳（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "bc"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-387",
+      "originalName": "Prawns, king, raw",
+      "sourceRow": 2247,
+      "name": "大虾（生）",
+      "category": "protein_main",
+      "aliases": [
+        "对虾"
+      ],
+      "pinyinInitials": [
+        "dx"
+      ],
+      "foodState": "生，king prawns"
+    },
+    {
+      "code": "16-384",
+      "originalName": "Prawns, standard, purchased cooked",
+      "sourceRow": 2249,
+      "name": "普通虾（购入时已熟）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ptx"
+      ],
+      "foodState": "购入熟制，原表standard prawns"
+    },
+    {
+      "code": "16-356",
+      "originalName": "Salmon, farmed, flesh only, raw",
+      "sourceRow": 2422,
+      "name": "养殖三文鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yzswyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-360",
+      "originalName": "Salmon, wild, flesh only, raw",
+      "sourceRow": 2431,
+      "name": "野生三文鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "ysswyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-401",
+      "originalName": "Sardines, flesh only, raw",
+      "sourceRow": 2455,
+      "name": "沙丁鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "sdyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-263",
+      "originalName": "Squid, raw",
+      "sourceRow": 2608,
+      "name": "鱿鱼（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yy"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-254",
+      "originalName": "Cuttlefish, raw",
+      "sourceRow": 1023,
+      "name": "墨鱼（生）",
+      "category": "protein_main",
+      "aliases": [
+        "乌贼"
+      ],
+      "pinyinInitials": [
+        "my",
+        "wz"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-395",
+      "originalName": "Trout, rainbow, flesh only, raw",
+      "sourceRow": 2758,
+      "name": "虹鳟鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "hzyr"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-399",
+      "originalName": "Tuna, flesh only, raw",
+      "sourceRow": 2764,
+      "name": "金枪鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [
+        "吞拿鱼"
+      ],
+      "pinyinInitials": [
+        "jqyr",
+        "tny"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-154",
+      "originalName": "Tilapia, raw",
+      "sourceRow": 2711,
+      "name": "罗非鱼（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "lfy"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "16-155",
+      "originalName": "Turbot, flesh only, raw",
+      "sourceRow": 2767,
+      "name": "多宝鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [
+        "大菱鲆"
+      ],
+      "pinyinInitials": [
+        "dbyr",
+        "dlp"
+      ],
+      "foodState": "生，仅鱼肉"
+    },
+    {
+      "code": "16-159",
+      "originalName": "Whiting, flesh only, raw",
+      "sourceRow": 2847,
+      "name": "牙鳕鱼肉（生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yxyr"
+      ],
+      "foodState": "生，whiting，仅鱼肉"
+    },
+    {
+      "code": "12-938",
+      "originalName": "Eggs, chicken, white, raw",
+      "sourceRow": 1090,
+      "name": "鸡蛋白（生）",
+      "category": "protein_main",
+      "aliases": [
+        "蛋清"
+      ],
+      "pinyinInitials": [
+        "jdb",
+        "dq"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "12-939",
+      "originalName": "Eggs, chicken, yolk, raw",
+      "sourceRow": 1099,
+      "name": "鸡蛋黄（生）",
+      "category": "protein_main",
+      "aliases": [
+        "蛋黄"
+      ],
+      "pinyinInitials": [
+        "jdh",
+        "dh"
+      ],
+      "foodState": "生"
+    },
+    {
+      "code": "12-940",
+      "originalName": "Eggs, chicken, whole, boiled",
+      "sourceRow": 1091,
+      "name": "鸡蛋（全蛋，水煮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jd"
+      ],
+      "foodState": "水煮，全蛋"
+    },
+    {
+      "code": "12-941",
+      "originalName": "Eggs, chicken, white, boiled",
+      "sourceRow": 1088,
+      "name": "鸡蛋白（水煮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jdb"
+      ],
+      "foodState": "水煮，仅蛋白"
+    },
+    {
+      "code": "12-942",
+      "originalName": "Eggs, chicken, yolk, boiled",
+      "sourceRow": 1098,
+      "name": "鸡蛋黄（水煮）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jdh"
+      ],
+      "foodState": "水煮，仅蛋黄"
+    },
+    {
+      "code": "12-943",
+      "originalName": "Eggs, chicken, whole, poached",
+      "sourceRow": 1095,
+      "name": "鸡蛋（全蛋，水波蛋）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jd"
+      ],
+      "foodState": "水中汆熟，全蛋"
+    },
+    {
+      "code": "12-962",
+      "originalName": "Eggs, chicken, whole, fried, without fat",
+      "sourceRow": 1094,
+      "name": "鸡蛋（全蛋，无油煎）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jd"
+      ],
+      "foodState": "煎制，无外加脂肪"
+    },
+    {
+      "code": "12-963",
+      "originalName": "Eggs, chicken, whole, scrambled, without milk",
+      "sourceRow": 1097,
+      "name": "鸡蛋（全蛋，炒制，不加奶）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "jd"
+      ],
+      "foodState": "炒制，不加奶"
+    },
+    {
+      "code": "12-920",
+      "originalName": "Eggs, duck, whole, raw",
+      "sourceRow": 1101,
+      "name": "鸭蛋（全蛋，生）",
+      "category": "protein_main",
+      "aliases": [],
+      "pinyinInitials": [
+        "yd"
+      ],
+      "foodState": "生，全蛋"
+    },
+    {
+      "code": "12-512",
+      "originalName": "Milk, 1% fat, pasteurised",
+      "sourceRow": 1656,
+      "name": "牛奶（1%脂肪，巴氏杀菌）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "nn"
+      ],
+      "foodState": "巴氏杀菌，按质量计"
+    },
+    {
+      "code": "12-313",
+      "originalName": "Milk, semi-skimmed, pasteurised, average",
+      "sourceRow": 1669,
+      "name": "半脱脂牛奶（巴氏杀菌，平均）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "btznn"
+      ],
+      "foodState": "巴氏杀菌，平均值，按质量计"
+    },
+    {
+      "code": "12-314",
+      "originalName": "Milk, semi-skimmed, UHT",
+      "sourceRow": 1672,
+      "name": "半脱脂牛奶（UHT）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "btznn"
+      ],
+      "foodState": "UHT，按质量计"
+    },
+    {
+      "code": "12-307",
+      "originalName": "Milk, skimmed, pasteurised, average",
+      "sourceRow": 1675,
+      "name": "脱脂牛奶（巴氏杀菌，平均）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "tznn"
+      ],
+      "foodState": "巴氏杀菌，平均值，按质量计"
+    },
+    {
+      "code": "12-596",
+      "originalName": "Milk, whole, pasteurised, average",
+      "sourceRow": 1681,
+      "name": "全脂牛奶（巴氏杀菌，平均）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "qznn"
+      ],
+      "foodState": "巴氏杀菌，平均值，按质量计"
+    },
+    {
+      "code": "12-320",
+      "originalName": "Milk, whole, UHT",
+      "sourceRow": 1684,
+      "name": "全脂牛奶（UHT）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "qznn"
+      ],
+      "foodState": "UHT，按质量计"
+    },
+    {
+      "code": "12-328",
+      "originalName": "Milk, goats, pasteurised",
+      "sourceRow": 1665,
+      "name": "山羊奶（巴氏杀菌）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "syn"
+      ],
+      "foodState": "巴氏杀菌，按质量计"
+    },
+    {
+      "code": "12-329",
+      "originalName": "Milk, sheeps, raw",
+      "sourceRow": 1673,
+      "name": "绵羊奶（生）",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "myn"
+      ],
+      "foodState": "生乳，按质量计"
+    },
+    {
+      "code": "12-520",
+      "originalName": "Milk, condensed, whole, sweetened",
+      "sourceRow": 1660,
+      "name": "全脂甜炼乳",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "qztlr"
+      ],
+      "foodState": "浓缩，加糖，按质量计"
+    },
+    {
+      "code": "12-522",
+      "originalName": "Milk, evaporated, whole",
+      "sourceRow": 1662,
+      "name": "全脂淡奶",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "qzdn"
+      ],
+      "foodState": "蒸发浓缩，按质量计"
+    },
+    {
+      "code": "12-324",
+      "originalName": "Milk, evaporated, light",
+      "sourceRow": 1661,
+      "name": "低脂淡奶",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "dzdn"
+      ],
+      "foodState": "蒸发浓缩，按质量计"
+    },
+    {
+      "code": "12-521",
+      "originalName": "Milk, skimmed, dried, fortified",
+      "sourceRow": 1674,
+      "name": "强化脱脂奶粉",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "qhtznf"
+      ],
+      "foodState": "干奶粉，未冲调，按质量计"
+    },
+    {
+      "code": "12-524",
+      "originalName": "Milk, soya, non-dairy alternative to milk, unsweetened, fortified",
+      "sourceRow": 1680,
+      "name": "未加糖强化豆奶",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "wjtqhdn"
+      ],
+      "foodState": "未加糖，强化型，按质量计"
+    },
+    {
+      "code": "12-523",
+      "originalName": "Milk, soya, non-dairy alternative to milk, sweetened, fortified",
+      "sourceRow": 1679,
+      "name": "加糖强化豆奶",
+      "category": "beverage",
+      "aliases": [],
+      "pinyinInitials": [
+        "jtqhdn"
+      ],
+      "foodState": "加糖，强化型，按质量计"
+    },
+    {
+      "code": "12-555",
+      "originalName": "Yogurt, Greek style, plain",
+      "sourceRow": 2875,
+      "name": "希腊式酸奶（原味）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "xlssn"
+      ],
+      "foodState": "发酵乳，原味"
+    },
+    {
+      "code": "12-379",
+      "originalName": "Yogurt, low fat, plain",
+      "sourceRow": 2878,
+      "name": "低脂酸奶（原味）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "dzsn"
+      ],
+      "foodState": "发酵乳，原味"
+    },
+    {
+      "code": "12-533",
+      "originalName": "Yogurt, virtually fat free/diet, plain",
+      "sourceRow": 2882,
+      "name": "近乎无脂酸奶（原味）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "jhwzsn"
+      ],
+      "foodState": "发酵乳，原味"
+    },
+    {
+      "code": "12-184",
+      "originalName": "Yogurt, whole milk, plain",
+      "sourceRow": 2885,
+      "name": "全脂酸奶（原味）",
+      "category": "snack_dessert",
+      "aliases": [],
+      "pinyinInitials": [
+        "qzsn"
+      ],
+      "foodState": "发酵乳，原味"
+    },
+    {
+      "code": "17-033",
+      "originalName": "Oil, corn",
+      "sourceRow": 1781,
+      "name": "玉米油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "ymy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-036",
+      "originalName": "Oil, grapeseed",
+      "sourceRow": 1784,
+      "name": "葡萄籽油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "ptzy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-037",
+      "originalName": "Oil, hazelnut",
+      "sourceRow": 1785,
+      "name": "榛子油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "zzy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-038",
+      "originalName": "Oil, olive",
+      "sourceRow": 1786,
+      "name": "橄榄油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "gly"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-039",
+      "originalName": "Oil, palm",
+      "sourceRow": 1787,
+      "name": "棕榈油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "zly"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-040",
+      "originalName": "Oil, peanut (groundnut)",
+      "sourceRow": 1788,
+      "name": "花生油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "hsy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-042",
+      "originalName": "Oil, safflower",
+      "sourceRow": 1790,
+      "name": "红花籽油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "hhzy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-043",
+      "originalName": "Oil, sesame",
+      "sourceRow": 1791,
+      "name": "芝麻油",
+      "category": "oil",
+      "aliases": [
+        "香油"
+      ],
+      "pinyinInitials": [
+        "zmy",
+        "xy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-044",
+      "originalName": "Oil, soya",
+      "sourceRow": 1792,
+      "name": "大豆油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "ddy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-045",
+      "originalName": "Oil, sunflower",
+      "sourceRow": 1793,
+      "name": "葵花籽油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "khzy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-686",
+      "originalName": "Oil, vegetable, average",
+      "sourceRow": 1794,
+      "name": "植物油（平均）",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "zwy"
+      ],
+      "foodState": "油脂，平均值"
+    },
+    {
+      "code": "17-047",
+      "originalName": "Oil, walnut",
+      "sourceRow": 1795,
+      "name": "核桃油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "hty"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "17-048",
+      "originalName": "Oil, wheatgerm",
+      "sourceRow": 1796,
+      "name": "小麦胚芽油",
+      "category": "oil",
+      "aliases": [],
+      "pinyinInitials": [
+        "xmpyy"
+      ],
+      "foodState": "油脂"
+    },
+    {
+      "code": "13-887",
+      "originalName": "Chives, fresh",
+      "sourceRow": 747,
+      "name": "细香葱（鲜）",
+      "category": "mixed_meal",
+      "aliases": [
+        "西式香葱"
+      ],
+      "pinyinInitials": [
+        "xxc",
+        "xsxc"
+      ],
+      "foodState": "鲜"
+    },
+    {
+      "code": "13-830",
+      "originalName": "Garlic powder",
+      "sourceRow": 1207,
+      "name": "大蒜粉",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "dsf"
+      ],
+      "foodState": "干粉"
+    },
+    {
+      "code": "13-890",
+      "originalName": "Ginger, fresh",
+      "sourceRow": 1219,
+      "name": "姜（鲜）",
+      "category": "mixed_meal",
+      "aliases": [
+        "生姜"
+      ],
+      "pinyinInitials": [
+        "j",
+        "sj"
+      ],
+      "foodState": "鲜"
+    },
+    {
+      "code": "13-832",
+      "originalName": "Ginger, ground",
+      "sourceRow": 1220,
+      "name": "姜粉",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "jf"
+      ],
+      "foodState": "干粉"
+    },
+    {
+      "code": "13-883",
+      "originalName": "Thyme, dried, ground",
+      "sourceRow": 2708,
+      "name": "百里香（干，研磨）",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "blx"
+      ],
+      "foodState": "干香草，研磨"
+    },
+    {
+      "code": "13-893",
+      "originalName": "Thyme, fresh",
+      "sourceRow": 2709,
+      "name": "百里香（鲜）",
+      "category": "mixed_meal",
+      "aliases": [],
+      "pinyinInitials": [
+        "blx"
+      ],
+      "foodState": "鲜"
+    },
+    {
+      "code": "17-367",
+      "originalName": "Salt",
+      "sourceRow": 2436,
+      "name": "食盐",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "sy"
+      ],
+      "foodState": "盐，按质量计"
+    },
+    {
+      "code": "17-355",
+      "originalName": "Baking powder",
+      "sourceRow": 97,
+      "name": "泡打粉",
+      "category": "sauce",
+      "aliases": [],
+      "pinyinInitials": [
+        "pdf"
+      ],
+      "foodState": "膨松剂，干粉"
+    },
+    {
+      "code": "17-356",
+      "originalName": "Bicarbonate of soda",
+      "sourceRow": 323,
+      "name": "小苏打",
+      "category": "sauce",
+      "aliases": [
+        "碳酸氢钠"
+      ],
+      "pinyinInitials": [
+        "xsd",
+        "tsqn"
+      ],
+      "foodState": "膨松剂，干粉"
+    },
+    {
+      "code": "17-358",
+      "originalName": "Cream of tartar",
+      "sourceRow": 879,
+      "name": "塔塔粉",
+      "category": "sauce",
+      "aliases": [
+        "酒石酸氢钾"
+      ],
+      "pinyinInitials": [
+        "ttf",
+        "jssqj"
+      ],
+      "foodState": "膨松剂，干粉"
+    }
+  ],
+  "excludedCandidates": [
+    {
+      "code": "11-1045",
+      "sourceRow": 1164,
+      "originalName": "Flour, corn",
+      "reason": "The source says Flour, corn, description 6 samples, 5 products, without resolving cornmeal versus UK cornflour/starch. Do not infer food identity from nutrient values. Not selectable in v1."
+    }
+  ]
+}

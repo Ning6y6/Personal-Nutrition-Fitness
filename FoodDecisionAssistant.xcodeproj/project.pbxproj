@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */; };
+		6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */; };
+		4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */; };
+		651020FEF19A7334155EA586 /* FoodSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */; };
+		E775EBAEBB4ADFDBC121D4F9 /* FoodSourcesRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */; };
+		C2751DF87010758996476509 /* FoodSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC7EB2E0D1D58132E2BCBB1 /* FoodSelectionView.swift */; };
+		8021ED143F918B8822B4E7D0 /* FoodSelectionRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14790832CC08402E15C2DBC /* FoodSelectionRoute.swift */; };
+		969388AEBA66632685CDE8A1 /* FoodSelectionDraftUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ABCE27FECDF852877814D /* FoodSelectionDraftUpdate.swift */; };
+		4B81A2C3C40F360C09AF7626 /* FoodInformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03A1E67C3066AF5F8F8A1EAC /* FoodInformationView.swift */; };
+		B5A7116EFDA6502561623AFF /* FoodInformationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A48D4F13328409248AE595F8 /* FoodInformationRow.swift */; };
+		A5081E4EBB2B0B0040B3123C /* FoodDetailRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E13C2BC544BEE2C3483AF /* FoodDetailRoute.swift */; };
+		06BB350448FA6555181EB667 /* FoodCatalogStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3872197E867F3E611495D0B9 /* FoodCatalogStatusView.swift */; };
 		A24DB6BD74DAFBC0428E447B /* KcalDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBF1C29107C5FC8E91B54FA /* KcalDisplayTests.swift */; };
 		AFF44D4F9479AC10C6BE8790 /* KcalDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69B590542104F2EC6EC7DA0A /* KcalDisplay.swift */; };
 		CF08E96AB5E4ED0DE9D594A4 /* AppDateDisplayContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D3960453E7B4318E7D9DF4 /* AppDateDisplayContext.swift */; };
@@ -135,6 +147,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/FoodSelectionDraftUpdateTests.swift"; sourceTree = "<group>"; };
+		97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogImportCommandTests.swift"; sourceTree = "<group>"; };
+		86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogImportCommand.swift"; sourceTree = "<group>"; };
+		14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodSourcesView.swift"; sourceTree = "<group>"; };
+		6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodSourcesRoute.swift"; sourceTree = "<group>"; };
+		4AC7EB2E0D1D58132E2BCBB1 /* FoodSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodSelectionView.swift"; sourceTree = "<group>"; };
+		A14790832CC08402E15C2DBC /* FoodSelectionRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodSelectionRoute.swift"; sourceTree = "<group>"; };
+		4B0ABCE27FECDF852877814D /* FoodSelectionDraftUpdate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodSelectionDraftUpdate.swift"; sourceTree = "<group>"; };
+		03A1E67C3066AF5F8F8A1EAC /* FoodInformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodInformationView.swift"; sourceTree = "<group>"; };
+		A48D4F13328409248AE595F8 /* FoodInformationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodInformationRow.swift"; sourceTree = "<group>"; };
+		D65E13C2BC544BEE2C3483AF /* FoodDetailRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodDetailRoute.swift"; sourceTree = "<group>"; };
+		3872197E867F3E611495D0B9 /* FoodCatalogStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogStatusView.swift"; sourceTree = "<group>"; };
 		BFBF1C29107C5FC8E91B54FA /* KcalDisplayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/KcalDisplayTests.swift; sourceTree = "<group>"; };
 		69B590542104F2EC6EC7DA0A /* KcalDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KcalDisplay.swift; sourceTree = "<group>"; };
 		A3D3960453E7B4318E7D9DF4 /* AppDateDisplayContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDateDisplayContext.swift; sourceTree = "<group>"; };
@@ -281,6 +305,7 @@
 		C80000000000000000000001 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */,
 				B80000000000000000000002 /* LocalStorePathValidatorTests.swift */,
 			);
 			path = Persistence;
@@ -289,6 +314,7 @@
 		7C70F41D3070297A0089CDBC /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */,
 				09A000000000000000000009 /* LocalStoreFileSnapshot.swift */,
 				09A000000000000000000002 /* PersistentGoalVersion.swift */,
 				09A000000000000000000001 /* VersionedSchemaV2.swift */,
@@ -310,6 +336,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */,
 				6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */,
 				A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */,
 				BFBF1C29107C5FC8E91B54FA /* KcalDisplayTests.swift */,
@@ -371,6 +398,15 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */,
+				6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */,
+				4AC7EB2E0D1D58132E2BCBB1 /* FoodSelectionView.swift */,
+				A14790832CC08402E15C2DBC /* FoodSelectionRoute.swift */,
+				4B0ABCE27FECDF852877814D /* FoodSelectionDraftUpdate.swift */,
+				03A1E67C3066AF5F8F8A1EAC /* FoodInformationView.swift */,
+				A48D4F13328409248AE595F8 /* FoodInformationRow.swift */,
+				D65E13C2BC544BEE2C3483AF /* FoodDetailRoute.swift */,
+				3872197E867F3E611495D0B9 /* FoodCatalogStatusView.swift */,
 				BC18515961D0F91BAE82BD19 /* GoalFormSaveState.swift */,
 				025E7E87C5BF568BE92741A7 /* GoalContextPresentation.swift */,
 				69B590542104F2EC6EC7DA0A /* KcalDisplay.swift */,
@@ -578,6 +614,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */,
+				6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */,
 				53C50CF106BAD599E2B0A632 /* GoalFormSaveStateTests.swift in Sources */,
 				DE3AD2528E4C4A23ABAA003C /* GoalContextPresentationTests.swift in Sources */,
 				A24DB6BD74DAFBC0428E447B /* KcalDisplayTests.swift in Sources */,
@@ -616,6 +654,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */,
+				651020FEF19A7334155EA586 /* FoodSourcesView.swift in Sources */,
+				E775EBAEBB4ADFDBC121D4F9 /* FoodSourcesRoute.swift in Sources */,
+				C2751DF87010758996476509 /* FoodSelectionView.swift in Sources */,
+				8021ED143F918B8822B4E7D0 /* FoodSelectionRoute.swift in Sources */,
+				969388AEBA66632685CDE8A1 /* FoodSelectionDraftUpdate.swift in Sources */,
+				4B81A2C3C40F360C09AF7626 /* FoodInformationView.swift in Sources */,
+				B5A7116EFDA6502561623AFF /* FoodInformationRow.swift in Sources */,
+				A5081E4EBB2B0B0040B3123C /* FoodDetailRoute.swift in Sources */,
+				06BB350448FA6555181EB667 /* FoodCatalogStatusView.swift in Sources */,
 				B992644D9593649C27E4EBE4 /* GoalFormSaveState.swift in Sources */,
 				C39DD44AD94BFD795EDA0CA9 /* GoalContextPresentation.swift in Sources */,
 				AFF44D4F9479AC10C6BE8790 /* KcalDisplay.swift in Sources */,

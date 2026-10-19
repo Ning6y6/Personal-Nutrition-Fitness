@@ -54,13 +54,16 @@ struct GoalHistoryMigrationTests {
         let oldSelection = try Data(contentsOf: fixture.selectionURL)
         let oldFiles = try fixture.sourceFiles()
         var attempts = 0
-        let failed = fixture.bootstrap { _ in
+        var candidateInspected = false
+        let failed = fixture.bootstrap(candidateInspectionObserver: { candidateInspected = true }) { _ in
             attempts += 1
             throw GoalHistoryStoreFixture.Failure.migration
         }
         #expect(failed.container == nil)
-        #expect(failed.failure as? LocalStoreBootstrapError == .openFailed)
-        #expect(attempts == 1)
+        #expect(failed.failure as? LocalStoreBootstrapError == .openFailed,
+            "failure=\(fixture.safeFailureCategory(failed.failure)); candidateInspected=\(candidateInspected)")
+        #expect(attempts == 1,
+            "failure=\(fixture.safeFailureCategory(failed.failure)); candidateInspected=\(candidateInspected)")
         #expect(try Data(contentsOf: fixture.selectionURL) == oldSelection)
         #expect(try fixture.sourceFiles() == oldFiles)
         #expect(try StoreSchemaCompatibility.recognizedVersion(at: fixture.defaultStoreURL) == .v1)
@@ -94,14 +97,17 @@ struct GoalHistoryMigrationTests {
         let originalSelection = try Data(contentsOf: fixture.selectionURL)
         let sourceFiles = try fixture.sourceFiles()
         var attempts = 0
-        let failed = fixture.bootstrap { url in
+        var candidateInspected = false
+        let failed = fixture.bootstrap(candidateInspectionObserver: { candidateInspected = true }) { url in
             attempts += 1
             if attempts == 2 { throw GoalHistoryStoreFixture.Failure.migration }
             return try LocalStoreBootstrap.openStore(at: url)
         }
-        #expect(attempts == 2)
+        #expect(attempts == 2,
+            "failure=\(fixture.safeFailureCategory(failed.failure)); candidateInspected=\(candidateInspected)")
         #expect(failed.container == nil)
-        #expect(failed.failure as? LocalStoreBootstrapError == .openFailed)
+        #expect(failed.failure as? LocalStoreBootstrapError == .openFailed,
+            "failure=\(fixture.safeFailureCategory(failed.failure)); candidateInspected=\(candidateInspected)")
         #expect(try Data(contentsOf: fixture.selectionURL) == originalSelection)
         #expect(try fixture.sourceFiles() == sourceFiles)
         #expect(try StoreSchemaCompatibility.recognizedVersion(at: fixture.defaultStoreURL) == .v1)
@@ -160,9 +166,26 @@ struct GoalHistoryStoreFixture {
         }
     }
 
-    func bootstrap(opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore) -> LocalStoreBootstrap {
-        LocalStoreBootstrap(defaultStoreURL: defaultStoreURL, restoreDirectory: restoreDirectory,
-            selectionURL: selectionURL, pathValidator: LocalStorePathValidator(trustedDirectory: directory), opener: opener)
+    func safeFailureCategory(_ error: (any Error)?) -> String {
+        guard let error else { return "none" }
+        if let safe = error as? LocalStoreBootstrapError { return String(describing: safe) }
+        if let safe = error as? StoreSchemaCompatibilityError { return String(describing: safe) }
+        if let safe = error as? LocalStoreFileSnapshotError { return String(describing: safe) }
+        return String(describing: type(of: error))
+    }
+
+    func bootstrap(
+        candidateInspectionObserver: (@MainActor () -> Void)? = nil,
+        opener: @escaping @MainActor (URL) throws -> ModelContainer = LocalStoreBootstrap.openStore
+    ) -> LocalStoreBootstrap {
+        let validator = LocalStorePathValidator(trustedDirectory: directory) { path in
+            if URL(fileURLWithPath: path).lastPathComponent == "restored.store" {
+                candidateInspectionObserver?()
+            }
+            return try FileManager.default.attributesOfItem(atPath: path)
+        }
+        return LocalStoreBootstrap(defaultStoreURL: defaultStoreURL, restoreDirectory: restoreDirectory,
+            selectionURL: selectionURL, pathValidator: validator, opener: opener)
     }
 
     func sourceFiles() throws -> [String: Data] {

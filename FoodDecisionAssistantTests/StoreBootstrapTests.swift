@@ -23,11 +23,39 @@ struct StoreBootstrapTests {
             return try FileManager.default.attributesOfItem(atPath: path)
         }
         try autoreleasepool {
-            let bootstrap = fixture.bootstrap(pathValidator: validator)
+            let producerURL = fixture.directory.appendingPathComponent("producer.store")
+            let producerSelectionURL = fixture.directory.appendingPathComponent("producer-selection.json")
+            let bootstrap = LocalStoreBootstrap(
+                defaultStoreURL: producerURL, restoreDirectory: fixture.restoreDirectory,
+                selectionURL: producerSelectionURL, pathValidator: validator
+            )
             let container = try #require(bootstrap.container)
             #expect(bootstrap.failure == nil)
+            container.mainContext.autosaveEnabled = false
             container.mainContext.insert(try meal(title: "synthetic preserved meal"))
             try container.mainContext.save()
+            // Closing a producer can checkpoint or unlink its sidecars asynchronously. The
+            // restart source is a complete verified copy that no framework has opened yet.
+            try withExtendedLifetime((bootstrap, container)) {
+                let snapshot = try LocalStoreFileSnapshot.make(from: producerURL, in: fixture.directory)
+                defer { snapshot.remove() }
+                var snapshotFiles: [String: Data] = [:]
+                var copiedFiles: [String: Data] = [:]
+                for suffix in ["", "-wal", "-shm"] {
+                    let source = URL(fileURLWithPath: snapshot.storeURL.path + suffix)
+                    let target = URL(fileURLWithPath: fixture.defaultStoreURL.path + suffix)
+                    if FileManager.default.fileExists(atPath: source.path) {
+                        snapshotFiles[suffix] = try Data(contentsOf: source)
+                        try FileManager.default.copyItem(at: source, to: target)
+                    }
+                    if FileManager.default.fileExists(atPath: target.path) {
+                        copiedFiles[suffix] = try Data(contentsOf: target)
+                    }
+                }
+                try snapshot.verifySource(at: producerURL)
+                try #require(copiedFiles == snapshotFiles)
+                try FileManager.default.copyItem(at: producerSelectionURL, to: fixture.selectionURL)
+            }
         }
         let restart = fixture.bootstrap(pathValidator: validator)
         let reopened = try #require(restart.container)

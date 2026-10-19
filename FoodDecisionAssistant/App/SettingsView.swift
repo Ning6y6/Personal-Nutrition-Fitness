@@ -30,8 +30,19 @@ struct SettingsView: View {
             } footer: {
                 Text("导出与验证恢复沿用现有本地备份流程，不自动上传个人数据。")
             }
+
+            Section {
+                NavigationLink(value: FoodSourcesRoute()) {
+                    Label("数据来源与许可", systemImage: "doc.text")
+                }
+                .accessibilityIdentifier("settings.foodSources")
+            }
         }
+        .accessibilityIdentifier("settings.form")
         .navigationTitle(AppTab.settings.title)
+        .navigationDestination(for: FoodSourcesRoute.self) { _ in
+            FoodSourcesView()
+        }
         .sheet(isPresented: $isShowingGoalSettings) {
             // The existing form owns validation, saving and unsaved-draft protection.
             // Today re-reads the same store when its tab is selected again.

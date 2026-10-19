@@ -11,6 +11,235 @@ final class NativeNavigationUITests: XCTestCase {
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
 
+    /// Run on the dedicated synthetic OPT-12 QA simulator. Browsing does not save
+    /// a meal; file-library tests separately verify the zero-write boundary.
+    func testFoodSearchPreservesRawDraftRowsAndReadsSources() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let mealName = "[UI测试] 搜索草稿-\(token)"
+        let rice = "熟长粒白米饭（无盐）"
+        let tomato = "西红柿（生）"
+        let tomatoID = "20000000-0000-4000-8000-000000013517"
+        let cookedRiceID = "20000000-0000-4000-8000-000000011862"
+        let rawRiceID = "0A47A02C-713F-5816-977C-6467C0244E6A"
+        let chickenID = "20000000-0000-4000-8000-000000018323"
+
+        try selectTab("今日", in: app)
+        let today = try uniqueIdentifiedControl(identifier: "today.content", in: app)
+        let visibleRowsBefore = today.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.row.")).count
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        try replaceText(in: app.textFields["meal.name"], with: mealName, app: app)
+        try selectFood(rice, prefix: "meal.food.", in: app)
+        let firstWeight = try singleField(prefix: "meal.weight.", in: app)
+        let firstRowID = String(firstWeight.identifier.dropFirst("meal.weight.".count))
+        try replaceText(in: firstWeight, with: "100.0", app: app)
+        let addFood = app.buttons["添加食物"]
+        try reveal(addFood, in: app)
+        try tap(addFood)
+        let secondWeights = app.textFields.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND identifier != %@", "meal.weight.", "meal.weight.\(firstRowID)"
+        ))
+        try reveal(secondWeights.firstMatch, in: app)
+        guard secondWeights.count == 1 else {
+            XCTFail("Adding one component must expose exactly one new row UUID.")
+            throw NavigationUIFailure.missingControl
+        }
+        let secondWeight = secondWeights.firstMatch
+        let secondRowID = String(secondWeight.identifier.dropFirst("meal.weight.".count))
+        XCTAssertNotEqual(firstRowID, secondRowID)
+        try replaceText(in: secondWeight, with: ".", app: app)
+        let secondFoodID = "meal.food.\(secondRowID)"
+        let originalSecondChoice = try uniqueFoodControl(identifier: secondFoodID, in: app).value as? String
+        try openFoodSelection(identifier: secondFoodID, in: app)
+
+        // These are independent real input strings, not values computed by the
+        // production normalization policy. All three tomato queries find one ID.
+        for query in ["西红柿", "番茄", "Tomatoes, standard, raw"] {
+            try enterFoodSearch(query, in: app)
+            _ = try foodSearchResult(id: tomatoID, name: tomato, in: app)
+        }
+        try enterFoodSearch("jxr", in: app)
+        _ = try foodSearchResult(id: chickenID, name: "鸡胸肉（去皮烤熟）", in: app)
+
+        try enterFoodSearch("番茄", in: app)
+        let info = app.buttons.matching(identifier: "food.info.\(tomatoID)")
+        try reveal(info.firstMatch, in: app)
+        guard info.count == 1 else {
+            XCTFail("The exact tomato result must have one separate information action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(info.firstMatch)
+        try requireExists(app.navigationBars["食物资料"])
+        try assertFoodChildHasNoParentToolbar(title: "食物资料", in: app)
+        try assertFoodInformationValue("Tomatoes, standard, raw", identifier: "food.information.originalName", in: app)
+        try assertFoodInformationValue("13-517", identifier: "food.information.code", in: app)
+        try assertFoodInformationValue("2021", identifier: "food.information.datasetVersion", in: app)
+        attachScreen(app, name: "FoodSearchUI-public-tomato-information")
+        try foodNavigationBack(from: "食物资料", in: app)
+        try requireExists(app.navigationBars["选择食物"])
+        XCTAssertEqual(try foodSearchField(in: app).value as? String, "番茄", "Reading information must preserve the actual query.")
+
+        try enterFoodSearch("米", in: app)
+        let cooked = try foodSearchResult(id: cookedRiceID, name: rice, in: app)
+        XCTAssertTrue(cooked.label.contains("熟"))
+        // Keep the verified value before scrolling the virtualized List to raw rice.
+        let cookedIdentifier = cooked.identifier
+        let raw = try foodSearchResult(id: rawRiceID, name: "长粒白米（生）", in: app)
+        XCTAssertTrue(raw.label.contains("生"))
+        XCTAssertNotEqual(raw.identifier, cookedIdentifier, "Raw rice and cooked rice must remain different foods.")
+
+        try enterFoodSearch("未收录食品\(token)", in: app)
+        try requireExists(app.staticTexts["没有找到食物"])
+        let list = try uniqueIdentifiedControl(identifier: "food.selection.list", in: app)
+        XCTAssertEqual(list.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "food.select.")).count, 0)
+        try tap(app.buttons["food.search.clear"])
+        let clearedSearch = try foodSearchField(in: app)
+        XCTAssertTrue(
+            (clearedSearch.value as? String ?? "").isEmpty || clearedSearch.value as? String == clearedSearch.placeholderValue,
+            "Clearing the query must expose the native empty search value."
+        )
+        try foodNavigationBack(from: "选择食物", in: app)
+        try assertRawFoodDraft(firstRowID: firstRowID, secondRowID: secondRowID, secondName: originalSecondChoice, in: app)
+
+        // Only explicit selection updates the initiating UUID. The invalid raw
+        // weight remains invalid, and the other row remains the saved rice choice.
+        try chooseFood(tomato, identifier: secondFoodID, in: app)
+        try assertRawFoodDraft(firstRowID: firstRowID, secondRowID: secondRowID, secondName: tomato, in: app)
+        attachScreen(app, name: "FoodSearchUI-two-row-raw-inputs-preserved")
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        try tap(app.buttons["继续编辑"])
+        try assertRawFoodDraft(firstRowID: firstRowID, secondRowID: secondRowID, secondName: tomato, in: app)
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+        XCTAssertFalse(namedRecordButton(mealName, in: app).exists, "Discarding this token's draft must not create a meal.")
+        XCTAssertEqual(today.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.row.")).count, visibleRowsBefore)
+
+        try selectTab("设置", in: app)
+        try tap(app.buttons["settings.foodSources"])
+        try requireExists(app.navigationBars["数据来源与许可"])
+        try assertFoodInformationValue("CoFID", identifier: "food.sources.provider", in: app)
+        try assertFoodInformationValue("2021", identifier: "food.sources.datasetVersion", in: app)
+        try assertFoodInformationValue("Public Health England (2021)", identifier: "food.sources.attribution", in: app)
+        let licenceLabel = "Open Government Licence v3.0"
+        let licences = app.links.matching(identifier: licenceLabel).allElementsBoundByIndex
+            + app.buttons.matching(identifier: licenceLabel).allElementsBoundByIndex
+        guard licences.count == 1, let licence = licences.first else {
+            XCTFail("The source page must expose one visible licence link; do not open an external site.")
+            throw NavigationUIFailure.missingControl
+        }
+        try reveal(licence, in: app)
+        XCTAssertTrue(licence.isHittable)
+        attachScreen(app, name: "FoodSearchUI-source-attribution-and-licence")
+        try foodNavigationBack(from: "数据来源与许可", in: app)
+    }
+
+    /// Repeat on the dedicated QA simulator with actual AX5/dark and on the
+    /// small-screen QA device. This method never sets preferences or saves a
+    /// meal/template; first-time public-catalog initialization is separate.
+    func testFoodInformationAndSourcesReachableAtCurrentSystemTextSize() throws {
+        executionTimeAllowance = 300
+        let app = try launchApp()
+        defer { app.terminate() }
+        let rice = "熟长粒白米饭（无盐）"
+        let riceID = "20000000-0000-4000-8000-000000011862"
+
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        try requireExists(app.textFields["meal.name"])
+        try selectFoodAtCurrentTextSize(rice, prefix: "meal.food.", in: app)
+        let foodControls = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.food."))
+        try reveal(foodControls.firstMatch, in: app)
+        guard foodControls.count == 1 else {
+            XCTFail("This one-row draft must expose one exact food control before reopening search.")
+            throw NavigationUIFailure.missingControl
+        }
+        let rowControlID = foodControls.firstMatch.identifier
+        XCTAssertEqual(foodControls.firstMatch.value as? String, rice)
+        try openFoodSelection(identifier: rowControlID, in: app)
+        try enterFoodSearch(rice, in: app)
+        let selected = try foodSearchResult(id: riceID, name: rice, in: app)
+        XCTAssertEqual(selected.value as? String, "当前选择")
+        XCTAssertTrue(selected.isSelected)
+        let selectedIdentifier = selected.identifier
+
+        let informationActions = app.buttons.matching(identifier: "food.info.\(riceID)")
+        try reveal(informationActions.firstMatch, in: app)
+        guard informationActions.count == 1 else {
+            XCTFail("The selected rice must expose one independent information button.")
+            throw NavigationUIFailure.missingControl
+        }
+        let information = informationActions.firstMatch
+        XCTAssertNotEqual(information.identifier, selectedIdentifier)
+        XCTAssertTrue(information.isHittable)
+        let informationFrame = information.frame
+        XCTAssertTrue(informationFrame.width.isFinite && informationFrame.height.isFinite)
+        // Floating-point layout can report 43.99999999999994 for a 44-point
+        // target. This epsilon accommodates representation, not smaller targets.
+        XCTAssertGreaterThanOrEqual(informationFrame.width + 0.000_001, 44)
+        XCTAssertGreaterThanOrEqual(informationFrame.height + 0.000_001, 44)
+        attachScreen(app, name: "FoodSearchUI-current-text-size-selected-rice-and-info-action")
+        try tap(information)
+        try requireExists(app.navigationBars["食物资料"])
+        try assertFoodChildHasNoParentToolbar(title: "食物资料", in: app)
+        try assertFoodInformationValue("11-862", identifier: "food.information.code", in: app)
+        try assertFoodInformationValue("2021", identifier: "food.information.datasetVersion", in: app)
+        attachScreen(app, name: "FoodSearchUI-current-text-size-rice-source-code-and-version")
+        try assertFoodInformationValue("每 100 g（可食部分）", identifier: "food.information.basis", in: app)
+        attachScreen(app, name: "FoodSearchUI-current-text-size-rice-information-basis")
+
+        try foodNavigationBack(from: "食物资料", in: app)
+        XCTAssertEqual(try foodSearchField(in: app).value as? String, rice, "Reading information must preserve the actual search query.")
+        let stillSelected = try foodSearchResult(id: riceID, name: rice, in: app)
+        XCTAssertEqual(stillSelected.value as? String, "当前选择")
+        XCTAssertTrue(stillSelected.isSelected, "The independent information action must not change the choice.")
+        try foodNavigationBack(from: "选择食物", in: app)
+        XCTAssertEqual(try uniqueFoodControl(identifier: rowControlID, in: app).value as? String, rice)
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        try requireExists(app.buttons["放弃修改"], "Selecting a food must still protect the unsaved parent draft.")
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+
+        try selectTab("设置", in: app)
+        let sourceEntries = app.buttons.matching(identifier: "settings.foodSources")
+        try reveal(sourceEntries.firstMatch, in: app)
+        guard sourceEntries.count == 1 else {
+            XCTFail("Settings must expose one reachable data-source entry at the actual system text size.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(sourceEntries.firstMatch)
+        try requireExists(app.navigationBars["数据来源与许可"])
+        try assertFoodInformationValue("CoFID", identifier: "food.sources.provider", in: app)
+        try assertFoodInformationValue("2021", identifier: "food.sources.datasetVersion", in: app)
+        try assertFoodInformationValue("Public Health England (2021)", identifier: "food.sources.attribution", in: app)
+        attachScreen(app, name: "FoodSearchUI-current-text-size-source-attribution")
+
+        // SwiftUI Link can be represented as a native Link or Button. Restrict
+        // the query to those actionable types and the full exact label; reveal
+        // before requiring uniqueness because AX List rows are virtualized.
+        let licenceActions = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@ AND (elementType == %@ OR elementType == %@)",
+            "Open Government Licence v3.0",
+            NSNumber(value: XCUIElement.ElementType.button.rawValue),
+            NSNumber(value: XCUIElement.ElementType.link.rawValue)
+        ))
+        try reveal(licenceActions.firstMatch, in: app)
+        guard licenceActions.count == 1 else {
+            XCTFail("The source page must expose one exact, actionable licence link.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertTrue(licenceActions.firstMatch.isHittable, "The licence must be reachable; this test never opens a browser or download.")
+        attachScreen(app, name: "FoodSearchUI-current-text-size-licence-link-reachable")
+        try foodNavigationBack(from: "数据来源与许可", in: app)
+    }
+
     /// Run on the fresh, dedicated synthetic QA simulator with no existing meals.
     /// Displayed kcal are integers; editing and readback must preserve the actual inputs.
     func testKcalDisplayIsConsistentAndPreservesExactInputs() throws {
@@ -837,7 +1066,7 @@ final class NativeNavigationUITests: XCTestCase {
     }
 
     func testChineseMealSaveAndTemplateReusePreserveOriginalWeights() throws {
-        executionTimeAllowance = 360
+        executionTimeAllowance = 720
         let app = try launchApp()
         defer { app.terminate() }
         let suffix = String(UUID().uuidString.prefix(8))
@@ -866,6 +1095,7 @@ final class NativeNavigationUITests: XCTestCase {
         let templateBar = app.navigationBars["新建常用模板"]
         try requireExists(templateBar)
         try replaceText(in: app.textFields["template.name"], with: templateName, app: app)
+        try inspectSelectedFoodWithoutChangingDraft(rice, prefix: "template.food.", in: app)
         try tap(templateBar.buttons["保存"])
         XCTAssertTrue(templateBar.waitForNonExistence(timeout: 5))
         try tap(app.navigationBars["餐食详情"].buttons["关闭"])
@@ -875,6 +1105,7 @@ final class NativeNavigationUITests: XCTestCase {
         try reveal(templateButton, in: app)
         try tap(templateButton)
         try requireExists(app.textFields["meal.name"])
+        try inspectSelectedFoodWithoutChangingDraft(rice, prefix: "meal.food.", in: app)
         let reuseWeight = try singleField(prefix: "meal.weight.", in: app)
         XCTAssertEqual(Double(reuseWeight.value as? String ?? ""), 200)
         try replaceText(in: app.textFields["meal.name"], with: reusedName, app: app)
@@ -905,9 +1136,58 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(savedTemplate)
         try requireExists(app.navigationBars["编辑常用模板"])
         XCTAssertEqual(Double(try singleField(prefix: "template.weight.", in: app).value as? String ?? ""), 200)
+        try inspectSelectedFoodWithoutChangingDraft(rice, prefix: "template.food.", in: app)
         attachScreen(app, name: "NativeMealEntryUI-template-default-still-200g")
         try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
         XCTAssertFalse(app.buttons["放弃修改"].exists, "Opening the unchanged template must not dirty it.")
+        try requireExists(app.navigationBars["常用模板"])
+        try deleteSyntheticTemplate(named: templateName, in: app)
+        try tap(app.navigationBars["常用模板"].buttons["完成"])
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+
+        // Recently Eaten is a real saved-meal route, not a test-created draft.
+        try openMealStart(in: app)
+        let start = try uniqueIdentifiedControl(identifier: "meal.start", in: app)
+        let recent = start.buttons.containing(.staticText, identifier: mealName)
+        try reveal(recent.firstMatch, in: app)
+        guard recent.count == 1 else {
+            XCTFail("The unique original meal must identify one Recently Eaten action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(recent.firstMatch)
+        try requireExists(app.textFields["meal.name"])
+        XCTAssertEqual(Double(try singleField(prefix: "meal.weight.", in: app).value as? String ?? ""), 200)
+        try inspectSelectedFoodWithoutChangingDraft(rice, prefix: "meal.food.", in: app)
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "Read-only search in an untouched reuse must not dirty the draft.")
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+
+        let history = app.buttons["查看全部历史"]
+        try reveal(history, in: app)
+        try tap(history)
+        try requireExists(app.navigationBars["历史餐食"])
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(200, rice: rice, in: app)
+        try tap(app.navigationBars["餐食详情"].buttons["编辑"])
+        try requireExists(app.textFields["meal.name"])
+        try selectFood(rice, prefix: "meal.food.", in: app)
+        XCTAssertEqual(Double(try singleField(prefix: "meal.weight.", in: app).value as? String ?? ""), 200)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        try verifyRiceWeight(200, rice: rice, in: app)
+        attachScreen(app, name: "FoodSearchUI-history-editor-shared-selector-readback")
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+        try tap(app.navigationBars["历史餐食"].buttons["完成"])
+
+        // Only this run's two named meals and verified template are removed.
+        // Unknown records and append-only goal history are never touched.
+        try openMeal(named: reusedName, in: app)
+        try verifyRiceWeight(150, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(200, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
     }
 
     /// Run normally, and repeat with the simulator's real system content size set to AX5.
@@ -1627,13 +1907,10 @@ final class NativeNavigationUITests: XCTestCase {
         let pickers = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", prefix))
         try requireExists(pickers.firstMatch)
         guard pickers.count == 1 else {
-            XCTFail("The fixture must expose one identified native food picker.")
+            XCTFail("The fixture must expose one identified native food selection control.")
             throw NavigationUIFailure.missingControl
         }
-        try reveal(pickers.firstMatch, in: app)
-        try tap(pickers.firstMatch)
-        try tap(app.buttons[name])
-        XCTAssertTrue(pickers.firstMatch.label.contains(name), "The real picker must show the selected public food.")
+        try chooseFood(name, identifier: pickers.firstMatch.identifier, in: app)
     }
 
     private func selectFoodAtCurrentTextSize(_ name: String, prefix: String, in app: XCUIApplication) throws {
@@ -1643,19 +1920,228 @@ final class NativeNavigationUITests: XCTestCase {
         try reveal(controls.firstMatch, in: app)
         guard controls.count == 1 else {
             attachFailureEvidence(app: app, element: controls.firstMatch, context: "The one-component fixture must expose one identified food control.")
-            XCTFail("The named food menu must be unambiguous.")
+            XCTFail("The named food selection control must be unambiguous.")
+            throw NavigationUIFailure.missingControl
+        }
+        try chooseFood(name, identifier: controls.firstMatch.identifier, in: app)
+    }
+
+    private func uniqueFoodControl(identifier: String, in app: XCUIApplication) throws -> XCUIElement {
+        let controls = app.buttons.matching(identifier: identifier)
+        try reveal(controls.firstMatch, in: app)
+        guard controls.count == 1 else {
+            XCTFail("The food action must belong to one exact draft row UUID: \(identifier).")
+            throw NavigationUIFailure.missingControl
+        }
+        return controls.firstMatch
+    }
+
+    private func openFoodSelection(identifier: String, in app: XCUIApplication) throws {
+        try tap(uniqueFoodControl(identifier: identifier, in: app))
+        try requireExists(app.navigationBars["选择食物"])
+        _ = try uniqueIdentifiedControl(identifier: "food.selection.list", in: app)
+        try assertFoodChildHasNoParentToolbar(title: "选择食物", in: app)
+    }
+
+    private func chooseFood(_ name: String, identifier: String, in app: XCUIApplication) throws {
+        try openFoodSelection(identifier: identifier, in: app)
+        try enterFoodSearch(name, in: app)
+        let results = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "food.select.", name
+        ))
+        try reveal(results.firstMatch, in: app)
+        guard results.count == 1 else {
+            XCTFail("The complete public food name must identify one real search result, not an arbitrary first row.")
+            throw NavigationUIFailure.missingControl
+        }
+        let selectedID = String(results.firstMatch.identifier.dropFirst("food.select.".count))
+        XCTAssertNotNil(UUID(uuidString: selectedID))
+        try tap(results.firstMatch)
+        XCTAssertTrue(app.navigationBars["选择食物"].waitForNonExistence(timeout: 5))
+        let returnedControl = try uniqueFoodControl(identifier: identifier, in: app)
+        XCTAssertEqual(returnedControl.value as? String, name, "The same row UUID must expose the complete selected name at every system text size.")
+    }
+
+    private func foodSearchField(in app: XCUIApplication) throws -> XCUIElement {
+        try requireExists(app.navigationBars["选择食物"])
+        let fields = app.searchFields
+        try requireExists(fields.firstMatch)
+        guard fields.count == 1 else {
+            XCTFail("The frontmost selector must expose one native search field.")
+            throw NavigationUIFailure.missingControl
+        }
+        return fields.firstMatch
+    }
+
+    private func enterFoodSearch(_ query: String, in app: XCUIApplication) throws {
+        let field = try foodSearchField(in: app)
+        try tap(field)
+        let value = field.value as? String ?? ""
+        if !value.isEmpty, value != field.placeholderValue {
+            // UISearchTextField's own clear action replaces actual text. Do not
+            // inject state, send Command-A, or assume a caret location.
+            let clears = field.buttons
+            guard clears.count == 1 else {
+                XCTFail("A populated native search field must expose its unique real clear action.")
+                throw NavigationUIFailure.missingControl
+            }
+            try tap(clears.firstMatch)
+            let cleared = field.value as? String ?? ""
+            XCTAssertTrue(cleared.isEmpty || cleared == field.placeholderValue)
+        }
+        field.typeText(query)
+        XCTAssertEqual(field.value as? String, query, "The native search field must show the complete actual query.")
+        let keyboard = app.keyboards.firstMatch
+        try requireExists(keyboard, "Native search entry must open its real software keyboard.")
+        let submits = keyboard.buttons.matching(identifier: "Search")
+        try requireExists(submits.firstMatch)
+        guard submits.count == 1 else {
+            XCTFail("The native search keyboard must expose one Search submit action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(submits.firstMatch)
+        XCTAssertTrue(keyboard.waitForNonExistence(timeout: 5), "Submitting search must dismiss its keyboard.")
+        XCTAssertEqual(field.value as? String, query, "Submitting must preserve the query and current filtered results.")
+        try assertFoodChildHasNoParentToolbar(title: "选择食物", in: app)
+    }
+
+    private func foodSearchResult(id: String, name: String, in app: XCUIApplication) throws -> XCUIElement {
+        let results = app.buttons.matching(identifier: "food.select.\(id)")
+        try reveal(results.firstMatch, in: app)
+        guard results.count == 1 else {
+            XCTFail("A frozen public food UUID must identify one actual search result.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertTrue(results.firstMatch.label.hasPrefix(name), "The result must expose the complete food name and state.")
+        return results.firstMatch
+    }
+
+    private func assertFoodChildHasNoParentToolbar(title: String, in app: XCUIApplication) throws {
+        let bars = app.navigationBars.matching(identifier: title)
+        try requireExists(bars.firstMatch)
+        guard bars.count == 1 else {
+            XCTFail("The food child page must have a unique real navigation bar.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertFalse(bars.firstMatch.buttons["保存"].exists, "The parent Save action must not leak onto a food child page.")
+        XCTAssertFalse(bars.firstMatch.buttons["取消"].exists, "Returning from search must not invoke parent draft cancellation.")
+        let parentKeyboardActions = app.buttons.matching(NSPredicate(
+            format: "identifier IN %@", ["meal.keyboardDone", "template.keyboardDone"]
+        )).allElementsBoundByIndex.filter(\.isHittable)
+        XCTAssertTrue(parentKeyboardActions.isEmpty, "Only the search page may supply its keyboard toolbar.")
+    }
+
+    private func foodNavigationBack(from title: String, in app: XCUIApplication) throws {
+        let bars = app.navigationBars.matching(identifier: title)
+        try requireExists(bars.firstMatch)
+        guard bars.count == 1 else {
+            XCTFail("Back must belong to the exact frontmost food page.")
+            throw NavigationUIFailure.missingControl
+        }
+        // On iOS 27, native search stays presented after the keyboard submits.
+        // Its real Close action leaves search mode, then native Back returns to
+        // the unchanged form. Never replace Back with the parent's Cancel.
+        if title == "选择食物" {
+            let closes = bars.firstMatch.buttons.matching(NSPredicate(format: "label IN %@", ["关闭", "Close"]))
+            if closes.count == 1 {
+                try tap(closes.firstMatch)
+                XCTAssertTrue(closes.firstMatch.waitForNonExistence(timeout: 5))
+                try requireExists(bars.firstMatch)
+            }
+        }
+        let actions = bars.firstMatch.buttons.matching(NSPredicate(
+            format: "label IN %@", ["返回", "Back", "记录一餐", "编辑餐食", "新建常用模板", "编辑常用模板", "选择食物", "设置"]
+        ))
+        guard actions.count == 1 else {
+            attachFailureEvidence(app: app, element: bars.firstMatch, context: "The food page must expose one native Back action after leaving native search mode.")
+            XCTFail("The food page must expose one native Back action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(actions.firstMatch)
+        XCTAssertTrue(bars.firstMatch.waitForNonExistence(timeout: 5))
+    }
+
+    private func assertFoodInformationValue(_ expected: String, identifier: String, in app: XCUIApplication) throws {
+        let controls = app.descendants(matching: .any).matching(identifier: identifier)
+        try reveal(controls.firstMatch, in: app)
+        guard controls.count == 1 else {
+            XCTFail("The visible food information must expose one exact \(identifier) row.")
             throw NavigationUIFailure.missingControl
         }
         let control = controls.firstMatch
-        try tap(control)
-        try tap(app.buttons[name])
-        if control.label == "食物" {
-            // The accessibility-size native Menu has a concise label and the complete
-            // selection in its value; default-size Picker labels retain the selected name.
-            XCTAssertEqual(control.value as? String, name, "The accessibility menu must expose the full selected food name without truncation.")
-        } else {
-            XCTAssertTrue(control.label.contains(name), "The default-size native picker must show the complete selected public food.")
+        let text = ([control.label, control.value as? String ?? ""] + control.staticTexts.allElementsBoundByIndex.map(\.label)).joined(separator: " ")
+        XCTAssertTrue(text.contains(expected), "The actual \(identifier) row must contain its frozen source value: \(expected).")
+    }
+
+    private func assertRawFoodDraft(firstRowID: String, secondRowID: String, secondName: String?, in app: XCUIApplication) throws {
+        let firstFood = try uniqueFoodControl(identifier: "meal.food.\(firstRowID)", in: app)
+        XCTAssertEqual(firstFood.value as? String, "熟长粒白米饭（无盐）", "Selecting another UUID must not change the first row.")
+        let firstWeights = app.textFields.matching(identifier: "meal.weight.\(firstRowID)")
+        try reveal(firstWeights.firstMatch, in: app)
+        XCTAssertEqual(firstWeights.count, 1)
+        XCTAssertEqual(firstWeights.firstMatch.value as? String, "100.0")
+        let secondFood = try uniqueFoodControl(identifier: "meal.food.\(secondRowID)", in: app)
+        XCTAssertEqual(secondFood.value as? String, secondName)
+        let secondWeights = app.textFields.matching(identifier: "meal.weight.\(secondRowID)")
+        try reveal(secondWeights.firstMatch, in: app)
+        XCTAssertEqual(secondWeights.count, 1)
+        XCTAssertEqual(secondWeights.firstMatch.value as? String, ".", "Search must preserve invalid intermediate text without normalization.")
+        XCTAssertEqual(app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "meal.weight.")).count, 2)
+        XCTAssertFalse(mealEntryBar(in: app).buttons["保存"].isEnabled)
+    }
+
+    private func inspectSelectedFoodWithoutChangingDraft(_ name: String, prefix: String, in app: XCUIApplication) throws {
+        let controls = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", prefix))
+        try reveal(controls.firstMatch, in: app)
+        guard controls.count == 1 else {
+            XCTFail("The one-component reuse/template fixture must expose one real food row.")
+            throw NavigationUIFailure.missingControl
         }
+        let identifier = controls.firstMatch.identifier
+        XCTAssertEqual(controls.firstMatch.value as? String, name)
+        try openFoodSelection(identifier: identifier, in: app)
+        try enterFoodSearch(name, in: app)
+        let selected = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "food.select.", name
+        ))
+        try reveal(selected.firstMatch, in: app)
+        guard selected.count == 1 else {
+            XCTFail("The existing selected public food must identify one result.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertEqual(selected.firstMatch.value as? String, "当前选择")
+        XCTAssertTrue(selected.firstMatch.isSelected)
+        try foodNavigationBack(from: "选择食物", in: app)
+        XCTAssertEqual(try uniqueFoodControl(identifier: identifier, in: app).value as? String, name)
+    }
+
+    private func deleteSyntheticTemplate(named name: String, in app: XCUIApplication) throws {
+        try requireExists(app.navigationBars["常用模板"])
+        guard name.hasPrefix("[UI测试] 米饭模板-") else {
+            XCTFail("Cleanup may only target this test's own explicitly named synthetic template.")
+            throw NavigationUIFailure.conditionNotMet
+        }
+        let row = namedRecordButton(name, in: app)
+        try reveal(row, in: app)
+        guard row.identifier.hasPrefix("template.manage.") else {
+            XCTFail("Cleanup must target the exact verified template manager row.")
+            throw NavigationUIFailure.missingControl
+        }
+        row.swipeLeft()
+        let deleteActions = app.buttons.matching(identifier: "删除")
+        guard deleteActions.count == 1 else {
+            XCTFail("Only the verified synthetic row may expose a swipe deletion action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(deleteActions.firstMatch)
+        try requireExists(app.staticTexts["确定删除“\(name)”吗？"])
+        let confirmations = app.buttons.matching(identifier: "删除模板")
+        guard confirmations.count == 1 else {
+            XCTFail("The named template's confirmation must expose one real destructive action.")
+            throw NavigationUIFailure.missingControl
+        }
+        try tap(confirmations.firstMatch)
+        XCTAssertTrue(row.waitForNonExistence(timeout: 5))
     }
 
     private func namedRecordButton(_ name: String, in app: XCUIApplication) -> XCUIElement {
@@ -2187,7 +2673,7 @@ final class NativeNavigationUITests: XCTestCase {
     private func scrollCurrentContentUp(in app: XCUIApplication, towardTop: Bool = false) throws {
         // Identify the actual frontmost form/list. Swiping the app's centre can
         // change the native AX DatePicker wheel instead of scrolling the form.
-        let identifiers = ["template.form", "meal.form", "goal.form", "meal.detail", "goalHistory.detail", "goalHistory.list", "templates.list", "meal.history", "meal.start", "today.content"]
+        let identifiers = ["food.information", "food.selection.list", "food.sources", "template.form", "meal.form", "goal.form", "meal.detail", "goalHistory.detail", "goalHistory.list", "templates.list", "meal.history", "meal.start", "settings.form", "today.content"]
         guard let container = identifiers.lazy.compactMap({ identifier -> XCUIElement? in
             let matches = app.descendants(matching: .any).matching(identifier: identifier)
             guard matches.count == 1, matches.firstMatch.isHittable else { return nil }

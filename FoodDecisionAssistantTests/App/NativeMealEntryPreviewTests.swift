@@ -51,6 +51,9 @@ struct NativeMealEntryPreviewTests {
         let context = container.mainContext
         context.autosaveEnabled = false
         try SeedFoodCatalog.importIfNeeded(into: context)
+        // Catalog installation is setup. The read-only rendering assertion below starts
+        // only after the complete public directory is ready, just like normal selection.
+        try FoodCatalogImportCommand.importIfNeeded(into: container)
         let rice = try #require(SeedFoodCatalog.loadFoods().first { $0.name == "熟长粒白米饭（无盐）" })
         let meal = try MealLog(
             eatenAt: .now, title: "[预览] 熟米饭午餐",

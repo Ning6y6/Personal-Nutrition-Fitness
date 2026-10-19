@@ -1,0 +1,100 @@
+{
+  "checkedOn": "2026-10-18",
+  "notInFormalCatalog": true,
+  "sgFoodID": {
+    "access": "Official browser Food Search; no registration, terms acceptance or bulk export",
+    "samples": [
+      {
+        "code": "F05040011",
+        "name": "Rice flour",
+        "url": "https://pphtpc.hpb.gov.sg/web/sgfoodid/tools/food-search/details/F05040011",
+        "sourceOfData": "Borrowed",
+        "lastUpdated": "2025",
+        "basis": "per100gEdiblePortion",
+        "ediblePortionPercent": "100",
+        "defaultServing": "1 cup=158g",
+        "raw": {
+          "energyKcal": "366",
+          "proteinGrams": "5.95",
+          "fatGrams": "1.42",
+          "saturatedFatGrams": "0.39",
+          "carbohydrateGrams": "80.13",
+          "sugarGrams": "0.12",
+          "dietaryFibreGrams": "2.4",
+          "sodiumMg": "0",
+          "transGrams": "-"
+        }
+      },
+      {
+        "code": "F05090006",
+        "name": "Cooked white rice",
+        "url": "https://pphtpc.hpb.gov.sg/web/sgfoodid/tools/food-search/details/F05090006",
+        "sourceOfData": "Borrowed",
+        "lastUpdated": "2025",
+        "basis": "per100gEdiblePortion",
+        "ediblePortionPercent": "100",
+        "defaultServing": "1 bowl=200g",
+        "raw": {
+          "energyKcal": "130",
+          "proteinGrams": "2.69",
+          "fatGrams": "0.28",
+          "saturatedFatGrams": "0",
+          "carbohydrateGrams": "28.2",
+          "sugarGrams": "0.05",
+          "dietaryFibreGrams": "0.4",
+          "sodiumMg": "1",
+          "transGrams": "-"
+        }
+      },
+      {
+        "code": "F05100049",
+        "name": "Egg fried rice",
+        "url": "https://pphtpc.hpb.gov.sg/web/sgfoodid/tools/food-search/details/F05100049",
+        "sourceOfData": "Lab Analysis",
+        "lastUpdated": "2023",
+        "basis": "per100gEdiblePortion",
+        "ediblePortionPercent": "100",
+        "defaultServing": "1 plate=303g",
+        "raw": {
+          "energyKcal": "217",
+          "proteinGrams": "6.95",
+          "fatGrams": "8.71",
+          "saturatedFatGrams": "3.66",
+          "carbohydrateGrams": "27.64",
+          "sugarGrams": "0",
+          "dietaryFibreGrams": "0.51",
+          "sodiumMg": "323",
+          "transGrams": "-"
+        }
+      }
+    ],
+    "gaps": [
+      "Dietary fibre assay definition not shown",
+      "Specific third-party source/rights for Borrowed not shown",
+      "No frozen bulk release downloaded"
+    ],
+    "provider": "Health Promotion Board, Singapore",
+    "termsURL": "https://file.go.gov.sg/termsofuse-hpbsgfoodid.pdf",
+    "attribution": "Health Promotion Board, Singapore Food Insights Database (SG FoodID), accessed 18 October 2026. Data are provided as-is; no HPB endorsement is implied."
+  },
+  "tfda": {
+    "metadataURL": "https://data.gov.tw/dataset/8543",
+    "metadataUpdated": "2026-10-05 08:34",
+    "queryURL": "https://consumer.fda.gov.tw/Food/TFND.aspx?nodeID=178",
+    "foodLevelSamples": [],
+    "actualFailure": [
+      "web timeout",
+      "HTTPS connection reset",
+      "Chrome ERR_CONNECTION_CLOSED"
+    ],
+    "openAPIURL": "https://data.fda.gov.tw/data/dataset/oas/classification/8d4ca1bf-ae1d-4280-849e-2fa2947a9cb2",
+    "publishedExportPaths": [
+      "/opendata/export/20/csv",
+      "/opendata/export/20/json",
+      "/opendata/export/20/xml"
+    ],
+    "paginationOrFilterDocumented": false,
+    "bulkDownloaded": false,
+    "version2020IndependentlyVerified": false
+  }
+}

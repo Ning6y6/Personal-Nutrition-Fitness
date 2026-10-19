@@ -1,0 +1,274 @@
+{
+  "catalogVersion": "cofid-2021-zh-v1",
+  "ruleVersion": "food-import-cofid-2021-v1",
+  "source": {
+    "id": "cofid",
+    "title": "CoFID",
+    "datasetVersion": "2021",
+    "url": "https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid",
+    "downloadURL": "https://assets.publishing.service.gov.uk/media/60538b91e90e07527df82ae4/McCance_Widdowsons_Composition_of_Foods_Integrated_Dataset_2021..xlsx",
+    "guideURL": "https://assets.publishing.service.gov.uk/media/60538e66d3bf7f03249bac58/McCance_and_Widdowsons_Composition_of_Foods_integrated_dataset_2021.pdf",
+    "licenseName": "Open Government Licence v3.0",
+    "licenseURL": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "attribution": "Public Health England (2021). McCance and Widdowson’s The Composition of Foods Integrated Dataset (CoFID). Contains public sector information licensed under the Open Government Licence v3.0.",
+    "sourceFileName": "McCance_Widdowsons_Composition_of_Foods_Integrated_Dataset_2021..xlsx",
+    "sha256": "436e9445ef2adb2a75f3d7edd51302de3adad25385f9795fc94ba58bd030e97d",
+    "retrievedOn": "2026-10-18",
+    "modifications": "Selected subset; reviewed simplified Chinese names, aliases and frozen pinyin initials; trace values approximated as zero only for numeric calculation; salt calculated from sodium; original 12 installation values preserved independently of source projection."
+  },
+  "curationVersion": "cofid-2021-curation-v1",
+  "curationSHA256": "7dc585069fdfddbc257f71793b795f3d758011194be47cdb9348958a4f51a208",
+  "catalogSHA256": "dfa65f09417aca70f4a83306b4869b603524d466a88f4962f0eaf54e5e10d36d",
+  "totalEntries": 357,
+  "legacyEntries": 12,
+  "categories": {
+    "staple_grain": 47,
+    "mixed_meal": 133,
+    "protein_main": 108,
+    "oil": 14,
+    "sauce": 10,
+    "snack_dessert": 31,
+    "beverage": 14
+  },
+  "sourceDataRows": 2887,
+  "uniqueSourceCodes": 2886,
+  "quarantinedSourceRows": [
+    {
+      "row": 55,
+      "code": "13-669",
+      "name": "Aubergine, flesh and skin, roasted in rapeseed oil",
+      "reason": "duplicateSourceCode"
+    },
+    {
+      "row": 2827,
+      "code": "13-669",
+      "name": "Watercress, raw",
+      "reason": "duplicateSourceCode"
+    }
+  ],
+  "sourceRequiredUnknownCounts": {
+    "SATFOD": 276,
+    "KCALS": 33,
+    "CHO": 34,
+    "TOTSUG": 98,
+    "NA": 43
+  },
+  "selectedAOACUnknown": 168,
+  "selectedRawCellStates": {
+    "numeric": 6014,
+    "trace": 658,
+    "blank": 1058,
+    "unknownN": 124
+  },
+  "curationExclusions": [
+    {
+      "code": "11-1045",
+      "sourceRow": 1164,
+      "originalName": "Flour, corn",
+      "reason": "The source says Flour, corn, description 6 samples, 5 products, without resolving cornmeal versus UK cornflour/starch. Do not infer food identity from nutrient values. Not selectable in v1."
+    }
+  ],
+  "sourceColumns": {
+    "KCALS": {
+      "worksheet": "1.3 Proximates",
+      "column": "M",
+      "unit": "kcal",
+      "basis": "per100gFood",
+      "definition": "来源热量；不加纤维能量",
+      "guidePrintedPage": 10
+    },
+    "KJ": {
+      "worksheet": "1.3 Proximates",
+      "column": "N",
+      "unit": "kJ",
+      "basis": "per100gFood",
+      "definition": "来源千焦；不当作kcal",
+      "guidePrintedPage": 11
+    },
+    "PROT": {
+      "worksheet": "1.3 Proximates",
+      "column": "J",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "来源蛋白，按原氮换算系数",
+      "guidePrintedPage": 10
+    },
+    "FAT": {
+      "worksheet": "1.3 Proximates",
+      "column": "K",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "总脂肪，不等于脂肪酸之和",
+      "guidePrintedPage": 10
+    },
+    "SATFOD": {
+      "worksheet": "1.3 Proximates",
+      "column": "AB",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "每100g食品的饱和脂肪酸",
+      "guidePrintedPage": 11
+    },
+    "CHO": {
+      "worksheet": "1.3 Proximates",
+      "column": "L",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "可利用碳水，单糖当量，不含纤维",
+      "guidePrintedPage": 10
+    },
+    "TOTSUG": {
+      "worksheet": "1.3 Proximates",
+      "column": "Q",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "总糖，单糖当量，不含寡糖",
+      "guidePrintedPage": 11
+    },
+    "NA": {
+      "worksheet": "1.4 Inorganics",
+      "column": "H",
+      "unit": "mg",
+      "basis": "per100gFood",
+      "definition": "钠；盐g=钠mg/1000*2.5",
+      "guidePrintedPage": 12
+    },
+    "AOACFIB": {
+      "worksheet": "1.3 Proximates",
+      "column": "Z",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "AOAC纤维；不以NSP替代",
+      "guidePrintedPage": 11
+    },
+    "ENGFIB": {
+      "worksheet": "1.3 Proximates",
+      "column": "Y",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "NSP，非淀粉多糖",
+      "guidePrintedPage": 11
+    },
+    "RET": {
+      "worksheet": "1.5 Vitamins",
+      "column": "H",
+      "unit": "µg",
+      "basis": "per100gFood",
+      "definition": "全反式视黄醇当量；不是总维生素A",
+      "guidePrintedPage": 12
+    },
+    "CAREQU": {
+      "worksheet": "1.5 Vitamins",
+      "column": "I",
+      "unit": "µg",
+      "basis": "per100gFood",
+      "definition": "β-胡萝卜素当量",
+      "guidePrintedPage": 12
+    },
+    "RETEQU": {
+      "worksheet": "1.5 Vitamins",
+      "column": "J",
+      "unit": "µg",
+      "basis": "per100gFood",
+      "definition": "总RE；不是RAE",
+      "guidePrintedPage": 13
+    },
+    "CHOL": {
+      "worksheet": "1.3 Proximates",
+      "column": "AU",
+      "unit": "mg",
+      "basis": "per100gFood",
+      "definition": "胆固醇",
+      "guidePrintedPage": 12
+    },
+    "FODTRANS": {
+      "worksheet": "1.3 Proximates",
+      "column": "AT",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "总反式脂肪酸；已在对应MUFA/PUFA内",
+      "guidePrintedPage": 11
+    },
+    "MONOFOD": {
+      "worksheet": "1.3 Proximates",
+      "column": "AJ",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "总单不饱和脂肪酸，含其反式成分",
+      "guidePrintedPage": 11
+    },
+    "POLYFOD": {
+      "worksheet": "1.3 Proximates",
+      "column": "AN",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "总多不饱和脂肪酸，含其反式成分",
+      "guidePrintedPage": 11
+    },
+    "MONOFODc": {
+      "worksheet": "1.3 Proximates",
+      "column": "AH",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "顺式单不饱和脂肪酸",
+      "guidePrintedPage": 11
+    },
+    "POLYFODc": {
+      "worksheet": "1.3 Proximates",
+      "column": "AL",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "顺式多不饱和脂肪酸",
+      "guidePrintedPage": 11
+    },
+    "ALCO": {
+      "worksheet": "1.3 Proximates",
+      "column": "X",
+      "unit": "g",
+      "basis": "sourceBasis",
+      "definition": "酒精；酒精饮料原基准为100ml",
+      "guidePrintedPage": 11
+    },
+    "STAR": {
+      "worksheet": "1.3 Proximates",
+      "column": "O",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "淀粉单糖当量，含糊精、不含抗性淀粉",
+      "guidePrintedPage": 11
+    },
+    "OLIGO": {
+      "worksheet": "1.3 Proximates",
+      "column": "P",
+      "unit": "g",
+      "basis": "per100gFood",
+      "definition": "寡糖单糖当量",
+      "guidePrintedPage": 11
+    }
+  },
+  "identityPolicy": {
+    "new": "UUIDv5 / NAMESPACE_URL / GOV publication URL + '#2021:' + food code",
+    "legacy": {
+      "11-862": "20000000-0000-4000-8000-000000011862",
+      "13-517": "20000000-0000-4000-8000-000000013517",
+      "12-937": "20000000-0000-4000-8000-000000012937",
+      "13-318": "20000000-0000-4000-8000-000000013318",
+      "13-161": "20000000-0000-4000-8000-000000013161",
+      "13-570": "20000000-0000-4000-8000-000000013570",
+      "18-006": "20000000-0000-4000-8000-000000018006",
+      "18-020": "20000000-0000-4000-8000-000000018020",
+      "18-323": "20000000-0000-4000-8000-000000018323",
+      "18-319": "20000000-0000-4000-8000-000000018319",
+      "17-041": "20000000-0000-4000-8000-000000017041",
+      "17-721": "20000000-0000-4000-8000-000000017721"
+    }
+  },
+  "review": {
+    "method": "Each selected source name and its raw/cooked, edible-part and preparation qualifiers were checked against the frozen Chinese label and aliases during development. No nutritional values were generated.",
+    "reviewedOn": "2026-10-18",
+    "independentHumanSignoff": "Pending user catalog spot-check and acceptance; development review is not an independent human certification.",
+    "limitations": "Generic animal ingredients do not certify halal procurement. Source descriptions do not establish a specific local product recipe or species beyond what the English name states.",
+    "independentDevelopmentReview": "A second agent read all 358 initial code/name/originalName/state/alias/pinyin records, identified six wording/basis issues plus three initials, and confirmed no explicit pork/alcohol/gelatine entries. The changes were incorporated and the unresolved corn-flour candidate was removed; final total 357. This remains development review, not human certification."
+  },
+  "reproduction": "python3 scripts/import_cofid.py /path/to/official-2021.xlsx --check"
+}

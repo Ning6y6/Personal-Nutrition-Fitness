@@ -22,7 +22,11 @@ struct MealEntryView: View {
     @State private var rows: [MealFormComponentDraft]
     @State private var dismissalGuard: FormDismissalGuard
     @State private var saveError: Error?
-    @State private var seedImportError: Error?
+    @State private var catalogImportError: Error?
+    @State private var catalogImportFailed = false
+    @State private var catalogConflictCount = 0
+    @State private var hasAttemptedCatalogImport = false
+    @State private var navigationPath = NavigationPath()
     @State private var isShowingAdvancedOptions = false
 
     @FocusState private var focusedField: FocusedField?
@@ -67,7 +71,7 @@ struct MealEntryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Form {
                 mealDetailsSection
                 componentsSection
@@ -84,32 +88,40 @@ struct MealEntryView: View {
             .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", role: .cancel, action: cancelEditing)
-                        .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
-                            Button("放弃修改", role: .destructive) { dismiss() }
-                            // Popovers omit role.cancel; keep the safe exit explicitly visible.
-                            Button("继续编辑") {}
-                        } message: {
-                            Text("本次输入尚未保存，放弃后无法恢复。")
+                if navigationPath.isEmpty {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("取消", role: .cancel, action: cancelEditing)
+                            .confirmationDialog("放弃未保存的修改？", isPresented: $dismissalGuard.isConfirmingDiscard, titleVisibility: .visible) {
+                                Button("放弃修改", role: .destructive) { dismiss() }
+                                // Popovers omit role.cancel; keep the safe exit explicitly visible.
+                                Button("继续编辑") {}
+                            } message: {
+                                Text("本次输入尚未保存，放弃后无法恢复。")
+                            }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("保存") {
+                            saveMeal()
                         }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        saveMeal()
+                        .disabled(!canSave)
                     }
-                    .disabled(!canSave)
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("完成") {
-                        focusedField = nil
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("完成") {
+                            focusedField = nil
+                        }
+                        .accessibilityIdentifier("meal.keyboardDone")
                     }
-                    .accessibilityIdentifier("meal.keyboardDone")
                 }
             }
-            .task(id: foodItems.count) {
-                importSeedsIfNeeded()
+            .navigationDestination(for: FoodSelectionRoute.self) { route in
+                foodSelection(for: route.rowID)
+            }
+            .navigationDestination(for: FoodDetailRoute.self) { route in
+                FoodInformationView(foodID: route.foodID)
+            }
+            .task {
+                if !hasAttemptedCatalogImport { prepareFoodCatalog() }
             }
             .alert(
                 "无法保存餐食",
@@ -125,13 +137,13 @@ struct MealEntryView: View {
             .alert(
                 "无法载入食物库",
                 isPresented: Binding(
-                    get: { seedImportError != nil },
-                    set: { if !$0 { seedImportError = nil } }
+                    get: { catalogImportError != nil },
+                    set: { if !$0 { catalogImportError = nil } }
                 )
             ) {
                 Button("好", role: .cancel) {}
             } message: {
-                Text(seedImportError?.localizedDescription ?? "")
+                Text(catalogImportError?.localizedDescription ?? "")
             }
         }
         .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
@@ -234,29 +246,23 @@ struct MealEntryView: View {
 
     private var componentsSection: some View {
         Section {
-            if foodItems.isEmpty {
+            FoodCatalogStatusView(
+                isUnavailable: catalogImportFailed,
+                conflictCount: catalogConflictCount,
+                retry: prepareFoodCatalog
+            )
+            if foodItems.isEmpty && !catalogImportFailed {
                 ProgressView("正在准备个人食物库…")
             }
 
             ForEach($rows) { $row in
                 VStack(alignment: .leading, spacing: 10) {
                     NativeFoodMenuRow(
-                        selection: $row.foodItemID,
                         selectedName: foodItem(for: row.foodItemID)?.name
                             ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择"),
                         identifier: "meal.food.\(row.id.uuidString)"
                     ) {
-                        Text("请选择").tag(UUID?.none)
-                        if
-                            let selectedID = row.foodItemID,
-                            !foodItems.contains(where: { $0.id == selectedID })
-                        {
-                            Text("原食物已不可用，请重新选择")
-                                .tag(Optional(selectedID))
-                        }
-                        ForEach(foodItems) { foodItem in
-                            Text(foodItem.name).tag(Optional(foodItem.id))
-                        }
+                        openFoodSelection(for: row.id)
                     }
 
                     weightField(for: $row)
@@ -416,11 +422,38 @@ struct MealEntryView: View {
         source.components(separatedBy: " · ").first ?? source
     }
 
-    private func importSeedsIfNeeded() {
+    private func prepareFoodCatalog() {
+        hasAttemptedCatalogImport = true
         do {
-            try SeedFoodCatalog.importIfNeeded(into: modelContext)
+            let result = try FoodCatalogImportCommand.importIfNeeded(into: modelContext.container)
+            catalogConflictCount = result.conflictingIDs.count
+            catalogImportFailed = false
+            catalogImportError = nil
         } catch {
-            seedImportError = error
+            catalogImportFailed = true
+            catalogImportError = error
+        }
+    }
+
+    private func openFoodSelection(for rowID: UUID) {
+        focusedField = nil
+        navigationPath.append(FoodSelectionRoute(rowID: rowID))
+    }
+
+    @ViewBuilder
+    private func foodSelection(for rowID: UUID) -> some View {
+        if let row = rows.first(where: { $0.id == rowID }) {
+            FoodSelectionView(
+                selectedFoodID: row.foodItemID,
+                onSelect: { foodID in
+                    FoodSelectionDraftUpdate.apply(foodID: foodID, to: rowID, rows: &rows)
+                },
+                onShowInformation: { foodID in
+                    navigationPath.append(FoodDetailRoute(foodID: foodID))
+                }
+            )
+        } else {
+            ContentUnavailableView("食物分项已移除", systemImage: "fork.knife", description: Text("请返回表单继续编辑。"))
         }
     }
 

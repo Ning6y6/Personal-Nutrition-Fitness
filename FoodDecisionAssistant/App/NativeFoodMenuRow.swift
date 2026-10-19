@@ -1,60 +1,54 @@
-import Foundation
 import SwiftUI
 
-/// Large accessibility text is shown outside the compact menu's selected-value
-/// label. Both presentations use the same native Picker binding and options.
-struct NativeFoodMenuRow<Options: View>: View {
+/// Opens the shared search page without binding navigation to a mutable row index.
+struct NativeFoodMenuRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Binding private var selection: UUID?
 
-    private let selectedName: String
-    private let identifier: String
-    private let options: () -> Options
-
-    init(
-        selection: Binding<UUID?>,
-        selectedName: String,
-        identifier: String,
-        @ViewBuilder options: @escaping () -> Options
-    ) {
-        _selection = selection
-        self.selectedName = selectedName
-        self.identifier = identifier
-        self.options = options
-    }
+    let selectedName: String
+    let identifier: String
+    let action: () -> Void
 
     var body: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading) {
-                Text("食物")
-                    .accessibilityHidden(true)
-
-                Menu {
-                    Picker("食物", selection: $selection, content: options)
-                        .pickerStyle(.inline)
-                } label: {
-                    HStack {
-                        Text(selectedName)
+        Button(action: action) {
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("食物")
                             .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down")
-                            .accessibilityHidden(true)
+                        selectedValue
                     }
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                    .contentShape(.rect)
+                } else {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("食物")
+                            .foregroundStyle(.primary)
+                        Spacer(minLength: 12)
+                        selectedValue
+                    }
                 }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("食物")
-                .accessibilityValue(selectedName)
-                .accessibilityIdentifier(identifier)
             }
-            .fixedSize(horizontal: false, vertical: true)
-        } else {
-            Picker("食物", selection: $selection, content: options)
-                .pickerStyle(.menu)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier(identifier)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(.rect)
         }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("食物")
+        .accessibilityValue(selectedName)
+        .accessibilityHint("打开本地食物搜索")
+        .accessibilityIdentifier(identifier)
+    }
+
+    private var selectedValue: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(selectedName)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity, alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+        .contentShape(.rect)
     }
 }

@@ -20,4 +20,25 @@ enum FormDraftSnapshot: Equatable {
         timeZoneIdentifier: String
     )
     case template(name: String, components: [MealFormComponentDraft])
+
+    /// A cancellation-only candidate, never a normalized replacement for the saved baseline.
+    /// Raw whitespace, invalid weight text and unresolved food references remain user inputs.
+    var removingInitialEmptyPlaceholder: FormDraftSnapshot? {
+        switch self {
+        case let .meal(title, eatenAt, entryMethod, coverageStatus, components):
+            guard Self.hasOnlyEmptyPlaceholder(components) else { return nil }
+            return .meal(title: title, eatenAt: eatenAt, entryMethod: entryMethod,
+                         coverageStatus: coverageStatus, components: [])
+        case let .template(name, components):
+            guard Self.hasOnlyEmptyPlaceholder(components) else { return nil }
+            return .template(name: name, components: [])
+        case .goal, .goalHistory:
+            return nil
+        }
+    }
+
+    private static func hasOnlyEmptyPlaceholder(_ components: [MealFormComponentDraft]) -> Bool {
+        guard components.count == 1, let row = components.first else { return false }
+        return row.foodItemID == nil && row.foodName == nil && row.weightText.isEmpty
+    }
 }

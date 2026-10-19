@@ -48,9 +48,39 @@ struct MealTemplateManagerView: View {
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("template.manage.\(template.id.uuidString)")
                         .swipeActions {
-                            Button("删除", systemImage: "trash", role: .destructive) {
+                            Button("删除", systemImage: "trash") {
                                 templatePendingDeletion = template
                             }
+                            // This action requests confirmation; only the dialog
+                            // performs a destructive deletion. Keep the row alive
+                            // as the presentation source until then.
+                            .tint(.red)
+                            .accessibilityIdentifier("template.delete.\(template.id.uuidString)")
+                        }
+                        // The swipe action disappears after tapping. Keep the
+                        // presentation anchored to its stable, matching row.
+                        .confirmationDialog(
+                            "确定删除“\(template.name)”吗？",
+                            isPresented: Binding(
+                                get: { templatePendingDeletion?.id == template.id },
+                                set: { isPresented in
+                                    if !isPresented, templatePendingDeletion?.id == template.id {
+                                        templatePendingDeletion = nil
+                                    }
+                                }
+                            ),
+                            titleVisibility: .visible
+                        ) {
+                            Button("删除模板", role: .destructive) {
+                                guard templatePendingDeletion?.id == template.id else { return }
+                                deletePendingTemplate()
+                            }
+                            Button("取消", role: .cancel) {
+                                guard templatePendingDeletion?.id == template.id else { return }
+                                templatePendingDeletion = nil
+                            }
+                        } message: {
+                            Text("只会删除模板，不会删除任何历史餐食。")
                         }
                     }
                     .accessibilityIdentifier("templates.list")
@@ -75,23 +105,6 @@ struct MealTemplateManagerView: View {
             }
             .sheet(item: $selectedTemplate) { template in
                 MealTemplateEditorView(template: template)
-            }
-            .confirmationDialog(
-                "确定删除“\(templatePendingDeletion?.name ?? "此模板")”吗？",
-                isPresented: Binding(
-                    get: { templatePendingDeletion != nil },
-                    set: { if !$0 { templatePendingDeletion = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                Button("删除模板", role: .destructive) {
-                    deletePendingTemplate()
-                }
-                Button("取消", role: .cancel) {
-                    templatePendingDeletion = nil
-                }
-            } message: {
-                Text("只会删除模板，不会删除任何历史餐食。")
             }
             .alert(
                 "无法删除模板",

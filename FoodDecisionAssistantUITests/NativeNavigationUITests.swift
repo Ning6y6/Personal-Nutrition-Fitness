@@ -11,6 +11,114 @@ final class NativeNavigationUITests: XCTestCase {
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
 
+    /// Removing a new form's untouched placeholder is not a meaningful edit;
+    /// a changed name must remain protected even after that row is removed.
+    func testDeletingInitialEmptyRowsKeepsNewDraftsCleanAndProtectsChangedNames() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        try openMealStart(in: app)
+
+        for prefix in ["meal", "template"] {
+            if prefix == "template" {
+                try reveal(app.buttons["管理常用模板"], in: app)
+                try tap(app.buttons["管理常用模板"])
+                try requireExists(app.navigationBars["常用模板"])
+            }
+            for changedName in [false, true] {
+                if prefix == "meal" {
+                    try tap(app.buttons["空白记录"])
+                } else {
+                    try tap(app.navigationBars["常用模板"].buttons["新建"])
+                }
+                let name = app.textFields["\(prefix).name"]
+                try requireExists(name)
+                let draftName = "[UI测试] 空行取消-\(prefix)-\(token)"
+                if changedName { try replaceText(in: name, with: draftName, app: app) }
+                let weight = try visibleSingleComponentWeight(prefix: prefix, in: app)
+                let rowID = String(weight.identifier.dropFirst("\(prefix).weight.".count))
+                XCTAssertNotNil(UUID(uuidString: rowID))
+                XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String, "请选择")
+                try setComponentEditing(true, prefix: prefix, in: app)
+                try deleteComponentUsingNativeEditControl(rowID: rowID, prefix: prefix, in: app)
+                let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
+                XCTAssertFalse(bar.buttons["保存"].isEnabled, "Removing the only empty row must never enable saving an empty record.")
+                try setComponentEditing(false, prefix: prefix, in: app)
+                attachScreen(app, name: "EmptyRowCancelUI-\(prefix)-\(changedName ? "changed-name" : "untouched")-before-cancel")
+                try tap(bar.buttons["取消"])
+                if changedName {
+                    try requireExists(app.buttons["继续编辑"])
+                    try requireExists(app.buttons["放弃修改"])
+                    try tap(app.buttons["继续编辑"])
+                    let continuedName = try draftNameAtFormTop(prefix: prefix, in: app)
+                    XCTAssertEqual(continuedName.value as? String, draftName, "Continue editing must preserve the meaningful name change after placeholder removal.")
+                    XCTAssertFalse(bar.buttons["保存"].isEnabled)
+                    try tap(bar.buttons["取消"])
+                    try requireExists(app.buttons["放弃修改"])
+                    try tap(app.buttons["放弃修改"])
+                }
+                XCTAssertTrue(name.waitForNonExistence(timeout: 5), "An untouched placeholder-only draft must cancel directly; a changed draft must exit only after explicit discard.")
+                XCTAssertFalse(app.buttons["放弃修改"].exists)
+                XCTAssertFalse(namedRecordButton(draftName, in: app).exists, "These cancellation scenarios must not save a meal or template.")
+            }
+            if prefix == "template" { try tap(app.navigationBars["常用模板"].buttons["完成"]) }
+        }
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+    }
+
+    /// Only these unique public-seed fixtures are saved or deleted. Native
+    /// confirmation screenshots and source IDs support the anchor inspection.
+    func testMealAndTemplateDeletionConfirmationsCancelBeforeDeletingOnlyOwnSamples() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let mealName = "[UI测试] 删除确认餐-\(token)"
+        let templateName = "[UI测试] 米饭模板-删除确认-\(token)"
+        let rice = "熟长粒白米饭（无盐）"
+
+        try createRiceMeal(named: mealName, grams: 100, in: app)
+        try openMeal(named: mealName, in: app)
+        try verifyRiceWeight(100, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: true, expectedName: mealName, in: app, afterCancellation: {
+            try self.verifyRiceWeight(100, rice: rice, fromBottom: true, in: app)
+            try self.assertIdentifiedKcal(131, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
+        })
+        XCTAssertTrue(namedRecordButton(mealName, in: app).waitForNonExistence(timeout: 5))
+
+        try openMealStart(in: app)
+        try reveal(app.buttons["管理常用模板"], in: app)
+        try tap(app.buttons["管理常用模板"])
+        let managerBar = app.navigationBars["常用模板"]
+        try requireExists(managerBar)
+        try tap(managerBar.buttons["新建"])
+        try replaceText(in: app.textFields["template.name"], with: templateName, app: app)
+        try selectFoodAtCurrentTextSize(rice, prefix: "template.food.", in: app)
+        let weight = try visibleSingleComponentWeight(prefix: "template", in: app)
+        let rowID = String(weight.identifier.dropFirst("template.weight.".count))
+        try replaceText(in: weight, with: "200", app: app)
+        try tap(app.navigationBars["新建常用模板"].buttons["保存"])
+        XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
+        try deleteSyntheticTemplate(named: templateName, cancelFirst: true, in: app, afterCancellation: {
+            let row = self.namedRecordButton(templateName, in: app)
+            try self.reveal(row, in: app)
+            try self.tap(row)
+            try self.requireExists(app.navigationBars["编辑常用模板"])
+            let retainedWeight = try self.componentWeight(rowID: rowID, prefix: "template", in: app)
+            XCTAssertEqual(Double(retainedWeight.value as? String ?? ""), 200)
+            XCTAssertEqual(try self.uniqueFoodControl(identifier: "template.food.\(rowID)", in: app).value as? String, rice)
+            try self.tap(app.navigationBars["编辑常用模板"].buttons["取消"])
+            XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
+            XCTAssertFalse(app.buttons["放弃修改"].exists)
+        })
+        XCTAssertTrue(namedRecordButton(templateName, in: app).waitForNonExistence(timeout: 5))
+        try tap(managerBar.buttons["完成"])
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+    }
+
     /// Real native edit controls remove only the identified empty draft row.
     /// Run on a dedicated synthetic QA simulator; only this token's meal is saved/deleted.
     func testMealComponentEditModeDeletesOnlyEmptyRowAndPreservesSavedMeal() throws {
@@ -2093,6 +2201,50 @@ final class NativeNavigationUITests: XCTestCase {
         return fields.firstMatch
     }
 
+    private func draftNameAtFormTop(prefix: String, in app: XCUIApplication) throws -> XCUIElement {
+        let form = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
+        let fields = form.textFields.matching(identifier: "\(prefix).name")
+        // This known field is at the top of both forms. Continue Editing can
+        // leave it virtualized above the viewport; a zero frame is not evidence
+        // that it lies below the currently visible component section.
+        for attempt in 0...16 {
+            _ = fields.firstMatch.waitForExistence(timeout: 1)
+            let formFrame = form.frame
+            let navigationBottom = app.navigationBars.allElementsBoundByIndex.filter(\.isHittable).map(\.frame.maxY).max() ?? app.frame.minY
+            let visibleTop = max(formFrame.minY, navigationBottom)
+            var visibleBottom = min(formFrame.maxY, app.frame.maxY)
+            let keyboard = app.keyboards.firstMatch
+            if keyboard.exists {
+                visibleBottom = min(visibleBottom, keyboard.frame.minY)
+                let doneControls = app.buttons.matching(NSPredicate(format: "identifier ENDSWITH %@", ".keyboardDone"))
+                    .allElementsBoundByIndex.filter(\.isHittable)
+                guard doneControls.count == 1, let done = doneControls.first else {
+                    attachFailureEvidence(app: app, element: fields.firstMatch, context: "The continued draft's name requires one real keyboard Done control to determine its visible area.")
+                    XCTFail("Name readback must use the actual unobscured form viewport.")
+                    throw NavigationUIFailure.missingControl
+                }
+                visibleBottom = min(visibleBottom, done.frame.minY)
+            }
+            let usableBounds = CGRect(
+                x: max(formFrame.minX, app.frame.minX), y: visibleTop,
+                width: min(formFrame.maxX, app.frame.maxX) - max(formFrame.minX, app.frame.minX),
+                height: visibleBottom - visibleTop
+            )
+            let targetFrame = fields.firstMatch.exists ? fields.firstMatch.frame : .zero
+            if fields.count == 1, fields.firstMatch.isHittable,
+               targetFrame.width > 0, targetFrame.height > 0,
+               usableBounds.width > 0, usableBounds.height > 0,
+               usableBounds.contains(targetFrame) {
+                return fields.element(boundBy: 0)
+            }
+            if attempt == 16 { break }
+            try scrollCurrentContentUp(in: app, towardTop: true)
+        }
+        attachFailureEvidence(app: app, element: fields.firstMatch, context: "After Continue Editing, the known top-of-form name must be unique, hittable, and wholly inside the actual navigation/keyboard-safe viewport after at most 16 upward-content scans.")
+        XCTFail("The continued draft's current name must be read from its real fully visible native field.")
+        throw NavigationUIFailure.missingControl
+    }
+
     private func componentEditControl(prefix: String, in app: XCUIApplication) throws -> XCUIElement {
         let controls = app.buttons.matching(identifier: "\(prefix).components.edit")
         let form = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
@@ -2533,7 +2685,10 @@ final class NativeNavigationUITests: XCTestCase {
         XCTAssertEqual(try uniqueFoodControl(identifier: identifier, in: app).value as? String, name)
     }
 
-    private func deleteSyntheticTemplate(named name: String, in app: XCUIApplication) throws {
+    private func deleteSyntheticTemplate(
+        named name: String, cancelFirst: Bool = false, in app: XCUIApplication,
+        afterCancellation: (() throws -> Void)? = nil
+    ) throws {
         try requireExists(app.navigationBars["常用模板"])
         guard name.hasPrefix("[UI测试] 米饭模板-") else {
             XCTFail("Cleanup may only target this test's own explicitly named synthetic template.")
@@ -2545,20 +2700,38 @@ final class NativeNavigationUITests: XCTestCase {
             XCTFail("Cleanup must target the exact verified template manager row.")
             throw NavigationUIFailure.missingControl
         }
-        row.swipeLeft()
-        let deleteActions = app.buttons.matching(identifier: "删除")
-        guard deleteActions.count == 1 else {
-            XCTFail("Only the verified synthetic row may expose a swipe deletion action.")
+        let rowID = String(row.identifier.dropFirst("template.manage.".count))
+        guard UUID(uuidString: rowID) != nil else {
+            XCTFail("The synthetic template must expose its real stable UUID.")
             throw NavigationUIFailure.missingControl
         }
-        try tap(deleteActions.firstMatch)
-        try requireExists(app.staticTexts["确定删除“\(name)”吗？"])
-        let confirmations = app.buttons.matching(identifier: "删除模板")
-        guard confirmations.count == 1 else {
-            XCTFail("The named template's confirmation must expose one real destructive action.")
-            throw NavigationUIFailure.missingControl
+        let sourceIdentifier = row.identifier
+        let triggerIdentifier = "template.delete.\(rowID)"
+        for attempt in 0..<(cancelFirst ? 2 : 1) {
+            try reveal(row, in: app)
+            let sourceFrame = row.frame
+            row.swipeLeft()
+            let deleteActions = app.buttons.matching(identifier: triggerIdentifier)
+            try requireExists(deleteActions.firstMatch)
+            guard deleteActions.count == 1, deleteActions.firstMatch.isHittable else {
+                attachFailureEvidence(app: app, element: row, context: "Only this exact template UUID may expose the identified native swipe deletion action.")
+                XCTFail("The verified synthetic template must have one reachable swipe deletion action.")
+                throw NavigationUIFailure.missingControl
+            }
+            try tap(deleteActions.firstMatch)
+            let confirmation = try nativeDeletionConfirmation(
+                expectedName: name, actionTitle: "删除模板", sourceIdentifier: sourceIdentifier,
+                triggerIdentifier: triggerIdentifier, sourceFrame: sourceFrame, in: app
+            )
+            if cancelFirst, attempt == 0 {
+                try cancelNativeDeletionConfirmation(confirmation, in: app)
+                try reveal(row, in: app)
+                XCTAssertEqual(row.identifier, sourceIdentifier)
+                try afterCancellation?()
+            } else {
+                try tap(confirmation.action)
+            }
         }
-        try tap(confirmations.firstMatch)
         XCTAssertTrue(row.waitForNonExistence(timeout: 5))
     }
 
@@ -2671,48 +2844,111 @@ final class NativeNavigationUITests: XCTestCase {
         return number
     }
 
-    private func deleteCurrentlyOpenedMeal(cancelFirst: Bool, in app: XCUIApplication) throws {
-        let action = app.buttons["删除餐食"]
+    private func deleteCurrentlyOpenedMeal(
+        cancelFirst: Bool, expectedName: String? = nil, in app: XCUIApplication,
+        afterCancellation: (() throws -> Void)? = nil
+    ) throws {
+        let actions = app.buttons.matching(identifier: "meal.delete")
+        let action = actions.firstMatch
         try reveal(action, in: app)
-        try tap(action)
-        let dialog = app.sheets.firstMatch
-        try requireExists(dialog)
-        if cancelFirst {
-            if dialog.buttons["取消"].exists {
-                try tap(dialog.buttons["取消"])
-            } else {
-                // R2's real hierarchy presents confirmationDialog as a native
-                // Popover without a cancel button. Its explicit dismiss region
-                // is outside the popover; derive an uncovered point from the
-                // two observed bounds rather than tapping a guessed location.
-                let region = app.descendants(matching: .any).matching(identifier: "PopoverDismissRegion").firstMatch
-                let popover = app.popovers.firstMatch
-                try requireExists(region)
-                try requireExists(popover)
-                let bounds = region.frame
-                let popup = popover.frame
-                guard region.isHittable, bounds.width.isFinite, bounds.height.isFinite,
-                      bounds.width > 44, bounds.height > 44 else {
-                    XCTFail("The native popover must expose a usable actual dismiss region.")
-                    throw NavigationUIFailure.conditionNotMet
-                }
-                let point = CGPoint(x: bounds.minX + 22, y: bounds.midY)
-                guard bounds.contains(point), !popup.insetBy(dx: -1, dy: -1).contains(point) else {
-                    XCTFail("Cancellation must target the observed native surface outside the confirmation.")
-                    throw NavigationUIFailure.conditionNotMet
-                }
-                region.coordinate(withNormalizedOffset: CGVector(
-                    dx: (point.x - bounds.minX) / bounds.width,
-                    dy: (point.y - bounds.minY) / bounds.height
-                )).tap()
-            }
-            XCTAssertTrue(dialog.waitForNonExistence(timeout: 5), "Cancel must dismiss only the deletion confirmation.")
-            try requireExists(app.navigationBars["餐食详情"])
-            try tap(action)
-            try requireExists(dialog)
+        guard actions.count == 1 else {
+            attachFailureEvidence(app: app, element: action, context: "Meal deletion must start at the uniquely identified actual delete button.")
+            XCTFail("The frontmost meal must have one stable deletion source.")
+            throw NavigationUIFailure.missingControl
         }
-        try tap(dialog.buttons["删除餐食"])
+        for attempt in 0..<(cancelFirst ? 2 : 1) {
+            try reveal(action, in: app)
+            let sourceFrame = action.frame
+            try tap(action)
+            let confirmation = try nativeDeletionConfirmation(
+                expectedName: expectedName, actionTitle: "删除餐食", sourceIdentifier: "meal.delete",
+                triggerIdentifier: "meal.delete", sourceFrame: sourceFrame, in: app
+            )
+            if cancelFirst, attempt == 0 {
+                try cancelNativeDeletionConfirmation(confirmation, in: app)
+                try requireExists(app.navigationBars["餐食详情"])
+                try afterCancellation?()
+            } else {
+                try tap(confirmation.action)
+            }
+        }
         XCTAssertTrue(app.navigationBars["餐食详情"].waitForNonExistence(timeout: 5))
+    }
+
+    private func nativeDeletionConfirmation(
+        expectedName: String?, actionTitle: String, sourceIdentifier: String,
+        triggerIdentifier: String, sourceFrame: CGRect, in app: XCUIApplication
+    ) throws -> (container: XCUIElement, action: XCUIElement, title: XCUIElement) {
+        let titlePredicate = expectedName.map { NSPredicate(format: "label == %@", "确定删除“\($0)”吗？") }
+            ?? NSPredicate(format: "label BEGINSWITH %@ AND label ENDSWITH %@", "确定删除“", "”吗？")
+        let titles = app.staticTexts.matching(titlePredicate)
+        try requireExists(titles.firstMatch)
+        guard titles.count == 1 else {
+            attachFailureEvidence(app: app, element: titles.firstMatch, context: "The actual native deletion confirmation must identify one exact requested record title.")
+            XCTFail("Deletion confirmation must not refer to an ambiguous saved record.")
+            throw NavigationUIFailure.missingControl
+        }
+        let title = titles.element(boundBy: 0)
+        let popovers = app.popovers.containing(.staticText, identifier: title.label)
+        let containers = popovers.count > 0 ? popovers : app.sheets.containing(.staticText, identifier: title.label)
+        guard containers.count == 1 else {
+            attachFailureEvidence(app: app, element: title, context: "Expected one actual native popover or sheet containing this deletion title; found \(containers.count).")
+            XCTFail("The confirmation must have one observed native container.")
+            throw NavigationUIFailure.missingControl
+        }
+        let container = containers.element(boundBy: 0)
+        let destructiveActions = container.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", actionTitle, sourceIdentifier))
+        guard destructiveActions.count == 1, destructiveActions.firstMatch.isHittable else {
+            attachFailureEvidence(app: app, element: container, context: "The native confirmation must expose one hittable destructive action, excluding its underlying source button.")
+            XCTFail("Deletion requires one real unambiguous confirmation action.")
+            throw NavigationUIFailure.missingControl
+        }
+        let action = destructiveActions.element(boundBy: 0)
+        let metadata = XCTAttachment(string: "sourceIdentifier=\(sourceIdentifier)\ntriggerIdentifier=\(triggerIdentifier)\nsourceFrameBeforeTrigger=\(sourceFrame)\nconfirmationTitle=\(title.label)\ncontainerType=\(container.elementType.rawValue)\ncontainerFrame=\(container.frame)\nconfirmationActionFrame=\(action.frame)\nconfirmationActionIsHittable=\(action.isHittable)")
+        metadata.name = "DeletionAnchorUI-\(actionTitle)-source-and-native-confirmation"
+        metadata.lifetime = .keepAlways
+        add(metadata)
+        attachScreen(app, name: "DeletionAnchorUI-\(actionTitle)-confirmation-before-action")
+        return (container, action, title)
+    }
+
+    private func cancelNativeDeletionConfirmation(
+        _ confirmation: (container: XCUIElement, action: XCUIElement, title: XCUIElement),
+        in app: XCUIApplication
+    ) throws {
+        let cancelActions = confirmation.container.buttons.matching(NSPredicate(format: "label == %@", "取消"))
+        if cancelActions.count == 1, cancelActions.firstMatch.isHittable {
+            try tap(cancelActions.firstMatch)
+        } else {
+            // Existing actual iOS 27 evidence exposes a native dismissal region
+            // when the popover omits Cancel. This is that real system surface,
+            // not a coordinate substitute for a missing business control.
+            let regions = app.descendants(matching: .any).matching(identifier: "PopoverDismissRegion")
+            let popovers = app.popovers.containing(.staticText, identifier: confirmation.title.label)
+            guard cancelActions.count == 0, regions.count == 1, popovers.count == 1 else {
+                attachFailureEvidence(app: app, element: confirmation.container, context: "Cancellation needs one native Cancel button or the previously observed unique popover dismiss surface.")
+                XCTFail("Do not guess how to dismiss an unobserved native confirmation.")
+                throw NavigationUIFailure.missingControl
+            }
+            let region = regions.element(boundBy: 0)
+            let bounds = region.frame
+            let popup = popovers.element(boundBy: 0).frame
+            let point = CGPoint(x: bounds.minX + 22, y: bounds.midY)
+            guard region.isHittable, bounds.width.isFinite, bounds.height.isFinite,
+                  bounds.width > 44, bounds.height > 44,
+                  bounds.contains(point), !popup.insetBy(dx: -1, dy: -1).contains(point) else {
+                attachFailureEvidence(app: app, element: region, context: "The derived native dismissal point must be inside the actual system surface and outside the observed popover.")
+                XCTFail("Native cancellation must not tap inside the destructive confirmation.")
+                throw NavigationUIFailure.conditionNotMet
+            }
+            region.coordinate(withNormalizedOffset: CGVector(
+                dx: (point.x - bounds.minX) / bounds.width,
+                dy: (point.y - bounds.minY) / bounds.height
+            )).tap()
+        }
+        XCTAssertTrue(confirmation.title.waitForNonExistence(timeout: 5), "Cancel or native outside dismissal must close only the deletion prompt.")
+        XCTAssertTrue(confirmation.action.waitForNonExistence(timeout: 5))
+        attachScreen(app, name: "DeletionAnchorUI-native-confirmation-cancelled-record-retained")
     }
 
     private func changeMealDate(to date: Date, in app: XCUIApplication) throws {
@@ -2767,13 +3003,45 @@ final class NativeNavigationUITests: XCTestCase {
         try requireExists(mealEntryBar(in: app))
     }
 
-    private func verifyRiceWeight(_ grams: Int, rice: String, in app: XCUIApplication) throws {
+    private func verifyRiceWeight(_ grams: Int, rice: String, fromBottom: Bool = false, in app: XCUIApplication) throws {
         let combined = "\(rice)、\(grams) g"
         // English system accessibility joins LabeledContent with a comma even when
         // its visible custom labels are Chinese. Keep the food and weight exact.
         let englishCombined = "\(rice), \(grams) g"
         // The expanded underlying row also exposes the identical saved weight.
         // Assert the frontmost detail snapshot, not hidden content behind its sheet.
+        if fromBottom {
+            let detail = try uniqueIdentifiedControl(identifier: "meal.detail", in: app)
+            let rows = detail.staticTexts.matching(NSPredicate(format: "label == %@ OR label == %@", combined, englishCombined))
+            // Delete is at the detail's bottom. Its cancelled prompt leaves the
+            // known food snapshot above the viewport, possibly virtualized.
+            for attempt in 0...16 {
+                _ = rows.firstMatch.waitForExistence(timeout: 1)
+                let frame = rows.firstMatch.exists ? rows.firstMatch.frame : .zero
+                let detailFrame = detail.frame
+                let navigationBottom = app.navigationBars.allElementsBoundByIndex.filter(\.isHittable).map(\.frame.maxY).max() ?? app.frame.minY
+                let visibleTop = max(detailFrame.minY, navigationBottom)
+                var visibleBottom = min(detailFrame.maxY, app.frame.maxY)
+                if app.keyboards.firstMatch.exists { visibleBottom = min(visibleBottom, app.keyboards.firstMatch.frame.minY) }
+                let usableBounds = CGRect(
+                    x: max(detailFrame.minX, app.frame.minX), y: visibleTop,
+                    width: min(detailFrame.maxX, app.frame.maxX) - max(detailFrame.minX, app.frame.minX),
+                    height: visibleBottom - visibleTop
+                )
+                if rows.count == 1, rows.firstMatch.isHittable,
+                   frame.width > 0, frame.height > 0,
+                   usableBounds.width > 0, usableBounds.height > 0,
+                   usableBounds.contains(frame) {
+                    XCTAssertTrue([combined, englishCombined].contains(rows.element(boundBy: 0).label), "Cancelling deletion must retain the exact stored rice and weight in the actual frontmost detail.")
+                    return
+                }
+                if attempt == 16 { break }
+                try scrollCurrentContentUp(in: app, towardTop: true)
+            }
+            attachFailureEvidence(app: app, element: rows.firstMatch, context: "After cancellation at the detail bottom, the exact \(rice)/\(grams) g snapshot must be unique and fully visible after at most 16 real scrolls toward the top.")
+            XCTFail("Cancellation readback cannot substitute another food, weight, or hidden underlying meal.")
+            throw NavigationUIFailure.missingControl
+        }
         let detail = app.descendants(matching: .any).matching(identifier: "meal.detail").firstMatch
         try requireExists(detail)
         let row = detail.staticTexts.matching(NSPredicate(

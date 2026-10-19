@@ -65,10 +65,11 @@ struct MealEntryView: View {
         _entryMethod = State(initialValue: initialMethod)
         _coverageStatus = State(initialValue: initialCoverage)
         _rows = State(initialValue: initialRows)
-        _dismissalGuard = State(initialValue: FormDismissalGuard(baseline: .meal(
-            title: initialTitle, eatenAt: initialDate, entryMethod: initialMethod,
-            coverageStatus: initialCoverage, components: initialRows
-        )))
+        _dismissalGuard = State(initialValue: FormDismissalGuard(
+            baseline: .meal(title: initialTitle, eatenAt: initialDate, entryMethod: initialMethod,
+                            coverageStatus: initialCoverage, components: initialRows),
+            allowsInitialPlaceholderRemoval: meal == nil && draft == nil
+        ))
     }
 
     var body: some View {
@@ -148,7 +149,7 @@ struct MealEntryView: View {
                 Text(catalogImportError?.localizedDescription ?? "")
             }
         }
-        .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+        .interactiveDismissDisabled(dismissalGuard.hasChangesRequiringDiscard(comparedTo: draftSnapshot))
         .presentationDetents([.large])
     }
 
@@ -476,7 +477,9 @@ struct MealEntryView: View {
 
     private func deleteRows(at offsets: IndexSet) {
         focusedField = nil
+        let previous = draftSnapshot
         rows.remove(atOffsets: offsets)
+        dismissalGuard.recordComponentRemoval(from: previous, to: draftSnapshot)
     }
 
     private func saveMeal() {

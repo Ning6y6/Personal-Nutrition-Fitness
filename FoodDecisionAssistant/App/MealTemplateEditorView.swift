@@ -61,9 +61,10 @@ struct MealTemplateEditorView: View {
             : components.map { MealFormComponentDraft(component: $0) }
         _name = State(initialValue: initialName)
         _rows = State(initialValue: initialRows)
-        _dismissalGuard = State(initialValue: FormDismissalGuard(baseline: .template(
-            name: initialName, components: initialRows
-        )))
+        _dismissalGuard = State(initialValue: FormDismissalGuard(
+            baseline: .template(name: initialName, components: initialRows),
+            allowsInitialPlaceholderRemoval: template == nil && sourceMeal == nil
+        ))
     }
 
     var body: some View {
@@ -176,7 +177,7 @@ struct MealTemplateEditorView: View {
                 Text(catalogImportError?.localizedDescription ?? "")
             }
         }
-        .interactiveDismissDisabled(dismissalGuard.hasUnsavedChanges(comparedTo: draftSnapshot))
+        .interactiveDismissDisabled(dismissalGuard.hasChangesRequiringDiscard(comparedTo: draftSnapshot))
         .presentationDetents([.large])
     }
 
@@ -307,7 +308,9 @@ struct MealTemplateEditorView: View {
 
     private func deleteRows(at offsets: IndexSet) {
         focusedField = nil
+        let previous = draftSnapshot
         rows.remove(atOffsets: offsets)
+        dismissalGuard.recordComponentRemoval(from: previous, to: draftSnapshot)
     }
 
     private func saveTemplate() {

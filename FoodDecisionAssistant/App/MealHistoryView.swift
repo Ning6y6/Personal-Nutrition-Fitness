@@ -207,6 +207,19 @@ struct MealDetailView: View {
                     Button("删除餐食", systemImage: "trash", role: .destructive) {
                         isConfirmingDelete = true
                     }
+                    .accessibilityIdentifier("meal.delete")
+                    .confirmationDialog(
+                        "确定删除“\(meal.title)”吗？",
+                        isPresented: $isConfirmingDelete,
+                        titleVisibility: .visible
+                    ) {
+                        Button("删除餐食", role: .destructive) {
+                            deleteMeal()
+                        }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("删除后无法撤销，今日汇总会立即重算。")
+                    }
                 }
             }
             .accessibilityIdentifier("meal.detail")
@@ -229,18 +242,6 @@ struct MealDetailView: View {
             }
             .sheet(item: $templateSeed) { sourceMeal in
                 MealTemplateEditorView(sourceMeal: sourceMeal)
-            }
-            .confirmationDialog(
-                "确定删除“\(meal.title)”吗？",
-                isPresented: $isConfirmingDelete,
-                titleVisibility: .visible
-            ) {
-                Button("删除餐食", role: .destructive) {
-                    deleteMeal()
-                }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("删除后无法撤销，今日汇总会立即重算。")
             }
             .alert(
                 "无法删除餐食",

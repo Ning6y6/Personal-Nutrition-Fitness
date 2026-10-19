@@ -255,6 +255,277 @@ struct FormDismissalGuardTests {
         #expect(guardState.canLoadInitialValues(comparedTo: .goal(current)))
     }
 
+    @Test("Placeholder removal is disabled by default for loaded or saved forms", arguments: ["meal", "template"])
+    func placeholderRemovalRequiresExplicitOptIn(kind: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: kind, components: [row])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var defaultGuard = FormDismissalGuard(baseline: baseline)
+        var optedOutGuard = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: false)
+
+        defaultGuard.recordComponentRemoval(from: baseline, to: empty)
+        optedOutGuard.recordComponentRemoval(from: baseline, to: empty)
+
+        #expect(defaultGuard.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(optedOutGuard.hasChangesRequiringDiscard(comparedTo: empty))
+        let canDismiss = defaultGuard.requestCancellation(comparedTo: empty)
+        #expect(canDismiss == false)
+        #expect(defaultGuard.isConfirmingDiscard)
+        #expect(defaultGuard.baseline == baseline)
+    }
+
+    @Test("Deleting the untouched initial placeholder only relaxes cancellation", arguments: ["meal", "template"])
+    func initialPlaceholderRemovalKeepsStrictBaseline(kind: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: kind, components: [row])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: baseline, to: empty)
+
+        #expect(guardState.baseline == baseline)
+        #expect(guardState.hasUnsavedChanges(comparedTo: empty))
+        #expect(guardState.canLoadInitialValues(comparedTo: empty) == false)
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty) == false)
+        let firstCancellation = guardState.requestCancellation(comparedTo: empty)
+        let secondCancellation = guardState.requestCancellation(comparedTo: empty)
+        #expect(firstCancellation)
+        #expect(secondCancellation)
+        #expect(guardState.isConfirmingDiscard == false)
+        #expect(guardState.hasUnsavedChanges(comparedTo: baseline) == false)
+        #expect(guardState.canLoadInitialValues(comparedTo: baseline))
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("An empty current array without the actual removal event remains dirty", arguments: ["meal", "template"])
+    func emptyStateAloneDoesNotGrantAnException(kind: String) {
+        let baseline = componentSnapshot(kind: kind, components: [MealFormComponentDraft(decimalSeparator: ".")])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        let canDismiss = guardState.requestCancellation(comparedTo: empty)
+        #expect(canDismiss == false)
+    }
+
+    @Test("Food references, names and raw weight inputs cannot be empty placeholders", arguments: ["meal", "template"], [
+        "foodReference", "emptyFoodName", "foodName", ".", " ", "0", "100.0", "NaN",
+    ])
+    func initialRowsWithInputCannotBeExempted(kind: String, input: String) {
+        var row = MealFormComponentDraft(decimalSeparator: ".")
+        switch input {
+        case "foodReference": row.foodItemID = UUID()
+        case "emptyFoodName": row.foodName = ""
+        case "foodName": row.foodName = "测试历史食物"
+        default: row.weightText = input
+        }
+        let baseline = componentSnapshot(kind: kind, components: [row])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: baseline, to: empty)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(guardState.hasUnsavedChanges(comparedTo: empty))
+        #expect(guardState.baseline == baseline)
+        let canDismiss = guardState.requestCancellation(comparedTo: empty)
+        #expect(canDismiss == false)
+    }
+
+    @Test("Removal must begin at the exact original row state", arguments: ["meal", "template"], [
+        "componentID", "decimalSeparator", "foodReference", "foodName", "weightText", "add",
+    ])
+    func removalFromAnEditedRowRemainsProtected(kind: String, field: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: kind, components: [row])
+        var changedRows = [row]
+        switch field {
+        case "componentID": changedRows[0].id = UUID()
+        case "decimalSeparator":
+            changedRows[0] = MealFormComponentDraft(component: row.domainDraft, decimalSeparator: ",")
+        case "foodReference": changedRows[0].foodItemID = UUID()
+        case "foodName": changedRows[0].foodName = "测试食物"
+        case "weightText": changedRows[0].weightText = "."
+        default: changedRows.append(MealFormComponentDraft(decimalSeparator: "."))
+        }
+        let previous = componentSnapshot(kind: kind, components: changedRows)
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: previous, to: empty)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("Meal metadata changes before or after removal still require discard", arguments: [
+        "title", "eatenAt", "entryMethod", "coverageStatus",
+    ], ["before", "after"])
+    func mealMetadataRemainsProtected(field: String, phase: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: "meal", components: [row])
+        let empty = componentSnapshot(kind: "meal", components: [])
+        let changedEmpty = changingMealMetadata(in: empty, field: field)
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+        if phase == "before" {
+            guardState.recordComponentRemoval(from: changingMealMetadata(in: baseline, field: field), to: changedEmpty)
+            #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        } else {
+            guardState.recordComponentRemoval(from: baseline, to: empty)
+        }
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: changedEmpty))
+        #expect(guardState.canLoadInitialValues(comparedTo: changedEmpty) == false)
+        let canDismiss = guardState.requestCancellation(comparedTo: changedEmpty)
+        #expect(canDismiss == false)
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("Template name changes before or after removal still require discard", arguments: ["before", "after"])
+    func templateNameRemainsProtected(phase: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: "template", components: [row])
+        let empty = componentSnapshot(kind: "template", components: [])
+        let changedEmpty = changePrimaryField(in: empty)
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+        if phase == "before" {
+            guardState.recordComponentRemoval(from: changePrimaryField(in: baseline), to: changedEmpty)
+            #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        } else {
+            guardState.recordComponentRemoval(from: baseline, to: empty)
+        }
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: changedEmpty))
+        let canDismiss = guardState.requestCancellation(comparedTo: changedEmpty)
+        #expect(canDismiss == false)
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("Removal must leave exactly zero rows in the same kind of form", arguments: ["meal", "template"], [
+        "keptRow", "replacementRow", "twoRows", "otherForm",
+    ])
+    func onlyTheExactRemovalResultCanBeExempted(kind: String, result: String) {
+        let row = MealFormComponentDraft(decimalSeparator: ".")
+        let baseline = componentSnapshot(kind: kind, components: [row])
+        let empty = componentSnapshot(kind: kind, components: [])
+        let current: FormDraftSnapshot
+        switch result {
+        case "keptRow": current = baseline
+        case "replacementRow": current = componentSnapshot(kind: kind, components: [MealFormComponentDraft(decimalSeparator: ".")])
+        case "twoRows": current = componentSnapshot(kind: kind, components: [row, MealFormComponentDraft(decimalSeparator: ".")])
+        default: current = componentSnapshot(kind: kind == "meal" ? "template" : "meal", components: [])
+        }
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: baseline, to: current)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("A later deletion revokes the initial-placeholder exception", arguments: ["meal", "template"], [
+        "foodReference", "foodName", ".", " ", "0", "100.0", "empty",
+    ])
+    func laterRemovalCannotReuseTheOldException(kind: String, input: String) {
+        let baseline = componentSnapshot(kind: kind, components: [MealFormComponentDraft(decimalSeparator: ".")])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+        guardState.recordComponentRemoval(from: baseline, to: empty)
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty) == false)
+        var laterRow = MealFormComponentDraft(decimalSeparator: ".")
+        switch input {
+        case "foodReference": laterRow.foodItemID = UUID()
+        case "foodName": laterRow.foodName = "测试食物"
+        case "empty": break
+        default: laterRow.weightText = input
+        }
+        let laterDraft = componentSnapshot(kind: kind, components: [laterRow])
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: laterDraft))
+
+        guardState.recordComponentRemoval(from: laterDraft, to: empty)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(guardState.hasUnsavedChanges(comparedTo: empty))
+        #expect(guardState.canLoadInitialValues(comparedTo: empty) == false)
+        let canDismiss = guardState.requestCancellation(comparedTo: empty)
+        #expect(canDismiss == false)
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("An explicit baseline reset revokes the cancellation exception", arguments: ["meal", "template"])
+    func resetClearsThePlaceholderException(kind: String) {
+        let baseline = componentSnapshot(kind: kind, components: [MealFormComponentDraft(decimalSeparator: ".")])
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+        guardState.recordComponentRemoval(from: baseline, to: empty)
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty) == false)
+
+        guardState.resetBaseline(to: baseline)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty))
+        #expect(guardState.hasUnsavedChanges(comparedTo: empty))
+        #expect(guardState.baseline == baseline)
+    }
+
+    @Test("Goal forms cannot acquire a component-removal exception", arguments: ["goal", "goalHistory"])
+    func goalsKeepStrictCancellation(kind: String) {
+        let baseline: FormDraftSnapshot = kind == "goal"
+            ? makeSnapshot(kind: "goal")
+            : .goalHistory(draft: makeGoalDraft(), effectiveDate: Date(timeIntervalSince1970: 1_800_000_000),
+                           source: .selfSelected, sourceNote: "", timeZoneIdentifier: "Europe/London")
+        let changed = changePrimaryField(in: baseline)
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: baseline, to: changed)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: changed))
+        let canDismiss = guardState.requestCancellation(comparedTo: changed)
+        #expect(canDismiss == false)
+    }
+
+    @Test("Only one initial placeholder can qualify", arguments: ["meal", "template"], [0, 2])
+    func zeroOrMultipleInitialRowsDoNotQualify(kind: String, count: Int) {
+        let rows = (0..<count).map { _ in MealFormComponentDraft(decimalSeparator: ".") }
+        let baseline = componentSnapshot(kind: kind, components: rows)
+        let empty = componentSnapshot(kind: kind, components: [])
+        var guardState = FormDismissalGuard(baseline: baseline, allowsInitialPlaceholderRemoval: true)
+
+        guardState.recordComponentRemoval(from: baseline, to: empty)
+        let added = componentSnapshot(kind: kind, components: [MealFormComponentDraft(decimalSeparator: ".")])
+        guardState.recordComponentRemoval(from: added, to: empty)
+
+        #expect(guardState.hasChangesRequiringDiscard(comparedTo: empty) == (count != 0))
+        #expect(guardState.baseline == baseline)
+    }
+
+    private func componentSnapshot(kind: String, components: [MealFormComponentDraft]) -> FormDraftSnapshot {
+        kind == "meal"
+            ? .meal(title: "测试午餐", eatenAt: Date(timeIntervalSince1970: 1_800_000_000),
+                    entryMethod: .weighed, coverageStatus: .complete, components: components)
+            : .template(name: "", components: components)
+    }
+
+    private func changingMealMetadata(in snapshot: FormDraftSnapshot, field: String) -> FormDraftSnapshot {
+        guard case let .meal(title, date, method, coverage, components) = snapshot else {
+            Issue.record("Expected a synthetic meal snapshot")
+            return snapshot
+        }
+        switch field {
+        case "title":
+            return .meal(title: title + "修改", eatenAt: date, entryMethod: method,
+                         coverageStatus: coverage, components: components)
+        case "eatenAt":
+            return .meal(title: title, eatenAt: date.addingTimeInterval(1), entryMethod: method,
+                         coverageStatus: coverage, components: components)
+        case "entryMethod":
+            return .meal(title: title, eatenAt: date, entryMethod: .standardPortionEstimate,
+                         coverageStatus: coverage, components: components)
+        default:
+            return .meal(title: title, eatenAt: date, entryMethod: method,
+                         coverageStatus: .partial, components: components)
+        }
+    }
+
     private func makeSnapshot(kind: String) -> FormDraftSnapshot {
         switch kind {
         case "meal":

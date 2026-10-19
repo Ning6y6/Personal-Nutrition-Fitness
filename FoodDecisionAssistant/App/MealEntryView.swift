@@ -27,6 +27,7 @@ struct MealEntryView: View {
     @State private var catalogConflictCount = 0
     @State private var hasAttemptedCatalogImport = false
     @State private var navigationPath = NavigationPath()
+    @State private var componentEditMode = EditMode.inactive
     @State private var isShowingAdvancedOptions = false
 
     @FocusState private var focusedField: FocusedField?
@@ -83,6 +84,7 @@ struct MealEntryView: View {
                     }
                 }
             }
+            .environment(\.editMode, $componentEditMode)
             .accessibilityIdentifier("meal.form")
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
@@ -284,7 +286,10 @@ struct MealEntryView: View {
             }
             .disabled(foodItems.isEmpty)
         } header: {
-            Text("食物分项")
+            ComponentEditingHeader(
+                title: "食物分项", isEditing: componentEditMode.isEditing,
+                identifier: "meal.components.edit", toggleEditing: toggleComponentEditing
+            )
         } footer: {
             Text("请选择与实际称重状态一致的条目，例如生肉用生重条目，熟米饭用熟重条目；油和酱汁需要单独添加。")
         }
@@ -435,8 +440,16 @@ struct MealEntryView: View {
         }
     }
 
+    private func toggleComponentEditing() {
+        focusedField = nil
+        withAnimation {
+            componentEditMode = componentEditMode.isEditing ? .inactive : .active
+        }
+    }
+
     private func openFoodSelection(for rowID: UUID) {
         focusedField = nil
+        componentEditMode = .inactive
         navigationPath.append(FoodSelectionRoute(rowID: rowID))
     }
 
@@ -462,6 +475,7 @@ struct MealEntryView: View {
     }
 
     private func deleteRows(at offsets: IndexSet) {
+        focusedField = nil
         rows.remove(atOffsets: offsets)
     }
 

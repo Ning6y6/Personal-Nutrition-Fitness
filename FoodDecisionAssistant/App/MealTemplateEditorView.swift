@@ -21,6 +21,7 @@ struct MealTemplateEditorView: View {
     @State private var catalogConflictCount = 0
     @State private var hasAttemptedCatalogImport = false
     @State private var navigationPath = NavigationPath()
+    @State private var componentEditMode = EditMode.inactive
 
     @FocusState private var focusedField: TemplateFocusedField?
 
@@ -103,11 +104,15 @@ struct MealTemplateEditorView: View {
                     }
                     .disabled(foodItems.isEmpty)
                 } header: {
-                    Text("默认分项")
+                    ComponentEditingHeader(
+                        title: "默认分项", isEditing: componentEditMode.isEditing,
+                        identifier: "template.components.edit", toggleEditing: toggleComponentEditing
+                    )
                 } footer: {
                     Text("模板只保存食物和默认克重。每次使用时会按当前食物库重新计算营养。")
                 }
             }
+            .environment(\.editMode, $componentEditMode)
             .accessibilityIdentifier("template.form")
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(templateToEdit == nil ? "新建常用模板" : "编辑常用模板")
@@ -270,8 +275,16 @@ struct MealTemplateEditorView: View {
         }
     }
 
+    private func toggleComponentEditing() {
+        focusedField = nil
+        withAnimation {
+            componentEditMode = componentEditMode.isEditing ? .inactive : .active
+        }
+    }
+
     private func openFoodSelection(for rowID: UUID) {
         focusedField = nil
+        componentEditMode = .inactive
         navigationPath.append(FoodSelectionRoute(rowID: rowID))
     }
 
@@ -293,6 +306,7 @@ struct MealTemplateEditorView: View {
     }
 
     private func deleteRows(at offsets: IndexSet) {
+        focusedField = nil
         rows.remove(atOffsets: offsets)
     }
 

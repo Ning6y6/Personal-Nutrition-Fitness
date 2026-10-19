@@ -11,6 +11,71 @@ final class NativeNavigationUITests: XCTestCase {
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
 
+    /// A new form with original metadata and no remaining rows can cancel
+    /// directly after real weight input and native deletion of its entire row.
+    func testDeletingOnlyWeightedRowsFromNewMealAndTemplateCancelsWithoutDiscardAndProtectsChangedNames() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        try openMealStart(in: app)
+
+        for prefix in ["meal", "template"] {
+            if prefix == "template" {
+                try reveal(app.buttons["管理常用模板"], in: app)
+                try tap(app.buttons["管理常用模板"])
+                try requireExists(app.navigationBars["常用模板"])
+            }
+            for changedName in [false, true] {
+                if prefix == "meal" {
+                    try tap(app.buttons["空白记录"])
+                } else {
+                    try tap(app.navigationBars["常用模板"].buttons["新建"])
+                }
+                let name = app.textFields["\(prefix).name"]
+                try requireExists(name)
+                let draftName = "[UI测试] 已输重量整行取消-\(prefix)-\(token)"
+                if changedName { try replaceText(in: name, with: draftName, app: app) }
+
+                let weight = try visibleSingleComponentWeight(prefix: prefix, in: app)
+                let rowID = String(weight.identifier.dropFirst("\(prefix).weight.".count))
+                XCTAssertNotNil(UUID(uuidString: rowID))
+                XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String, "请选择")
+                try replaceText(in: weight, with: "100", app: app)
+                XCTAssertEqual(try componentWeight(rowID: rowID, prefix: prefix, in: app).value as? String, "100", "This scenario requires real raw weight input before deletion, not an untouched placeholder.")
+                attachScreen(app, name: "EmptyNewDraftUI-\(prefix)-raw100-before-whole-row-deletion")
+
+                try setComponentEditing(true, prefix: prefix, in: app)
+                try deleteComponentUsingNativeEditControl(rowID: rowID, prefix: prefix, in: app)
+                XCTAssertFalse(app.textFields["\(prefix).weight.\(rowID)"].exists)
+                XCTAssertFalse(app.buttons["\(prefix).food.\(rowID)"].exists)
+                let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
+                XCTAssertFalse(bar.buttons["保存"].isEnabled, "Deleting the only weighted row must leave an unsavable zero-row draft.")
+                attachScreen(app, name: "EmptyNewDraftUI-\(prefix)-\(changedName ? "changed-name" : "original-metadata")-zero-rows-before-cancel")
+                try tap(bar.buttons["取消"])
+
+                if changedName {
+                    try requireExists(app.buttons["继续编辑"])
+                    try requireExists(app.buttons["放弃修改"])
+                    try tap(app.buttons["继续编辑"])
+                    let continuedName = try draftNameAtFormTop(prefix: prefix, in: app)
+                    XCTAssertEqual(continuedName.value as? String, draftName, "Removing all row input must not discard a meaningful name change.")
+                    XCTAssertFalse(bar.buttons["保存"].isEnabled)
+                    try tap(bar.buttons["取消"])
+                    try requireExists(app.buttons["放弃修改"])
+                    try tap(app.buttons["放弃修改"])
+                }
+                XCTAssertTrue(name.waitForNonExistence(timeout: 5), "A zero-row new draft with original metadata must exit directly; a changed name requires explicit discard.")
+                XCTAssertFalse(app.buttons["放弃修改"].exists)
+                XCTAssertFalse(app.buttons["继续编辑"].exists)
+                XCTAssertFalse(namedRecordButton(draftName, in: app).exists, "No cancellation scenario may create a saved meal or template.")
+            }
+            if prefix == "template" { try tap(app.navigationBars["常用模板"].buttons["完成"]) }
+        }
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+    }
+
     /// Removing a new form's untouched placeholder is not a meaningful edit;
     /// a changed name must remain protected even after that row is removed.
     func testDeletingInitialEmptyRowsKeepsNewDraftsCleanAndProtectsChangedNames() throws {

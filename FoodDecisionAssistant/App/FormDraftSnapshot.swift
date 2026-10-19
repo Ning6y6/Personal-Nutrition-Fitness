@@ -21,8 +21,8 @@ enum FormDraftSnapshot: Equatable {
     )
     case template(name: String, components: [MealFormComponentDraft])
 
-    /// A cancellation-only candidate, never a normalized replacement for the saved baseline.
-    /// Raw whitespace, invalid weight text and unresolved food references remain user inputs.
+    /// The zero-row cancellation state of a form that initially had one purely empty row.
+    /// Never normalizes the baseline or any remaining row, including invalid raw weight text.
     var removingInitialEmptyPlaceholder: FormDraftSnapshot? {
         switch self {
         case let .meal(title, eatenAt, entryMethod, coverageStatus, components):

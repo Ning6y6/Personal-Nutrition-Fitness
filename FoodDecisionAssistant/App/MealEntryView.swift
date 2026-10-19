@@ -68,7 +68,7 @@ struct MealEntryView: View {
         _dismissalGuard = State(initialValue: FormDismissalGuard(
             baseline: .meal(title: initialTitle, eatenAt: initialDate, entryMethod: initialMethod,
                             coverageStatus: initialCoverage, components: initialRows),
-            allowsInitialPlaceholderRemoval: meal == nil && draft == nil
+            allowsEmptyNewDraftCancellation: meal == nil && draft == nil
         ))
     }
 
@@ -477,9 +477,7 @@ struct MealEntryView: View {
 
     private func deleteRows(at offsets: IndexSet) {
         focusedField = nil
-        let previous = draftSnapshot
         rows.remove(atOffsets: offsets)
-        dismissalGuard.recordComponentRemoval(from: previous, to: draftSnapshot)
     }
 
     private func saveMeal() {

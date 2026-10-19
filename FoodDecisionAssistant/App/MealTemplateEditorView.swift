@@ -63,7 +63,7 @@ struct MealTemplateEditorView: View {
         _rows = State(initialValue: initialRows)
         _dismissalGuard = State(initialValue: FormDismissalGuard(
             baseline: .template(name: initialName, components: initialRows),
-            allowsInitialPlaceholderRemoval: template == nil && sourceMeal == nil
+            allowsEmptyNewDraftCancellation: template == nil && sourceMeal == nil
         ))
     }
 
@@ -308,9 +308,7 @@ struct MealTemplateEditorView: View {
 
     private func deleteRows(at offsets: IndexSet) {
         focusedField = nil
-        let previous = draftSnapshot
         rows.remove(atOffsets: offsets)
-        dismissalGuard.recordComponentRemoval(from: previous, to: draftSnapshot)
     }
 
     private func saveTemplate() {

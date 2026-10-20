@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4AF7A0D67E55CEFF1C3B0F50 /* MealSnapshotEditingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B07C2DF6ED7DC1523C3CD8D3 /* MealSnapshotEditingUITests.swift */; };
+		0904BE318DDBEC6B3DF2E601 /* MealEditCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */; };
+		D5241EAB8B7987DF9E8AFB5F /* MealEditFormStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */; };
+		E3B414281D6856349FA61E9A /* MealEditCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */; };
+		51F16D0590C85BACC1FBB80D /* MealEditFormState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */; };
 		E3A7BCD9E7DB478D5C325136 /* ComponentEditingHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */; };
 		B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */; };
 		6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */; };
@@ -148,6 +153,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B07C2DF6ED7DC1523C3CD8D3 /* MealSnapshotEditingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantUITests/MealSnapshotEditingUITests.swift; sourceTree = SOURCE_ROOT; };
+		320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/MealEditCommandTests.swift; sourceTree = SOURCE_ROOT; };
+		582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/App/MealEditFormStateTests.swift; sourceTree = SOURCE_ROOT; };
+		6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/MealEditCommand.swift; sourceTree = SOURCE_ROOT; };
+		566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/MealEditFormState.swift; sourceTree = SOURCE_ROOT; };
 		25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ComponentEditingHeader.swift"; sourceTree = "<group>"; };
 		0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/FoodSelectionDraftUpdateTests.swift"; sourceTree = "<group>"; };
 		97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogImportCommandTests.swift"; sourceTree = "<group>"; };
@@ -298,6 +308,7 @@
 		DF0000000000000000000001 /* FoodDecisionAssistantUITests */ = {
 			isa = PBXGroup;
 			children = (
+				B07C2DF6ED7DC1523C3CD8D3 /* MealSnapshotEditingUITests.swift */,
 				09A000000000000000000008 /* GoalHistoryUITests.swift */,
 				BF0000000000000000000001 /* NativeNavigationUITests.swift */,
 			);
@@ -307,6 +318,7 @@
 		C80000000000000000000001 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */,
 				97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */,
 				B80000000000000000000002 /* LocalStorePathValidatorTests.swift */,
 			);
@@ -316,6 +328,7 @@
 		7C70F41D3070297A0089CDBC /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */,
 				86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */,
 				09A000000000000000000009 /* LocalStoreFileSnapshot.swift */,
 				09A000000000000000000002 /* PersistentGoalVersion.swift */,
@@ -338,6 +351,7 @@
 		7C70F420307029DC0089CDBC /* FoodDecisionAssistantTests */ = {
 			isa = PBXGroup;
 			children = (
+				582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */,
 				0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */,
 				6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */,
 				A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */,
@@ -400,6 +414,7 @@
 		D00000000000000000000003 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */,
 				25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */,
 				14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */,
 				6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */,
@@ -608,6 +623,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4AF7A0D67E55CEFF1C3B0F50 /* MealSnapshotEditingUITests.swift in Sources */,
 				09B000000000000000000008 /* GoalHistoryUITests.swift in Sources */,
 				AF0000000000000000000001 /* NativeNavigationUITests.swift in Sources */,
 			);
@@ -617,6 +633,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0904BE318DDBEC6B3DF2E601 /* MealEditCommandTests.swift in Sources */,
+				D5241EAB8B7987DF9E8AFB5F /* MealEditFormStateTests.swift in Sources */,
 				B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */,
 				6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */,
 				53C50CF106BAD599E2B0A632 /* GoalFormSaveStateTests.swift in Sources */,
@@ -657,6 +675,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E3B414281D6856349FA61E9A /* MealEditCommand.swift in Sources */,
+				51F16D0590C85BACC1FBB80D /* MealEditFormState.swift in Sources */,
 				E3A7BCD9E7DB478D5C325136 /* ComponentEditingHeader.swift in Sources */,
 				4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */,
 				651020FEF19A7334155EA586 /* FoodSourcesView.swift in Sources */,

@@ -10,6 +10,7 @@ struct MealEntryView: View {
 
     private let mealToEdit: PersistentMealLog?
     private let sourceTemplateID: UUID?
+    @State private var editState: MealEditFormState?
     private let onSaved: () -> Void
 
     @Query(sort: \PersistentFoodItem.name)
@@ -48,18 +49,26 @@ struct MealEntryView: View {
         let initialCoverage = meal.flatMap { MealCoverageStatus(rawValue: $0.coverageStatusRawValue) }
             ?? draft?.coverageStatus ?? .complete
         let components = meal?.components
-            .sorted { $0.sortIndex < $1.sortIndex }
+            .sorted { ($0.sortIndex, $0.id.uuidString) < ($1.sortIndex, $1.id.uuidString) }
             .map {
                 MealEntryDraftComponent(
+                    id: $0.id,
                     foodItemID: $0.foodItemID,
                     foodName: $0.foodName,
                     weightGrams: $0.consumedWeightGrams
                 )
             } ?? draft?.components ?? []
         // Prepare the default empty row before capturing the baseline, not in a later task.
-        let initialRows = components.isEmpty
+        let initialRows = components.isEmpty && meal == nil
             ? [MealFormComponentDraft()]
             : components.map { MealFormComponentDraft(component: $0) }
+        _editState = State(initialValue: meal.map {
+            MealEditFormState(
+                baseline: MealEditSnapshot.capture($0), initialRows: initialRows,
+                initialTitle: initialTitle, initialDate: initialDate,
+                initialMethod: initialMethod, initialCoverage: initialCoverage
+            )
+        })
         _title = State(initialValue: initialTitle)
         _eatenAt = State(initialValue: initialDate)
         _entryMethod = State(initialValue: initialMethod)
@@ -77,11 +86,13 @@ struct MealEntryView: View {
             Form {
                 mealDetailsSection
                 componentsSection
-                if let nutrients = previewNutrients, !resolvedComponents.isEmpty {
+                if let nutrients = previewNutrients, !resolvedComponents.isEmpty || isPreservingStoredComponents {
                     nutritionPreviewSection(nutrients)
-                } else if !resolvedComponents.isEmpty {
+                } else if !resolvedComponents.isEmpty || isPreservingStoredComponents {
                     Section {
-                        Label("营养合计超出可计算范围，请检查重量；不能保存。", systemImage: "exclamationmark.triangle")
+                        Label(isPreservingStoredComponents
+                              ? "原营养数据有异常；未改分项时仅保存记录信息，原值保持。"
+                              : "营养合计超出可计算范围，请检查重量；不能保存。", systemImage: "exclamationmark.triangle")
                     }
                 }
             }
@@ -261,8 +272,7 @@ struct MealEntryView: View {
             ForEach($rows) { $row in
                 VStack(alignment: .leading, spacing: 10) {
                     NativeFoodMenuRow(
-                        selectedName: foodItem(for: row.foodItemID)?.name
-                            ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择"),
+                        selectedName: selectedFoodName(for: row),
                         identifier: "meal.food.\(row.id.uuidString)"
                     ) {
                         openFoodSelection(for: row.id)
@@ -270,7 +280,11 @@ struct MealEntryView: View {
 
                     weightField(for: $row)
 
-                    if let foodItem = foodItem(for: row.foodItemID) {
+                    if editState?.isOriginalFood(row) == true {
+                        Text("营养依据：原记录快照")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if let foodItem = foodItem(for: row.foodItemID) {
                         Text("营养来源：\(foodSourceName(foodItem.source))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -338,11 +352,19 @@ struct MealEntryView: View {
             nutrientRow("脂肪", value: previewNutrients.fatGrams, unit: "g")
             nutrientRow("饱和脂肪", value: previewNutrients.saturatedFatGrams, unit: "g")
 
-            FibreSummaryRow(summary: try? FibreIntakeSummary(snapshots: resolvedComponents.map(\.nutrients)))
+            if isPreservingStoredComponents && hasIncompleteRows {
+                LabeledContent("纤维（原始快照）", value: previewNutrients.fibreGrams.map {
+                    "\($0.formatted(.number.precision(.fractionLength(0...1)))) g"
+                } ?? "未知")
+            } else {
+                FibreSummaryRow(summary: try? FibreIntakeSummary(snapshots: resolvedComponents.map(\.nutrients)))
+            }
         } header: {
             Text("本餐营养预览")
         } footer: {
-            if hasIncompleteRows {
+            if isPreservingStoredComponents && hasIncompleteRows {
+                Text("当前显示原记录营养快照；异常分项保持，未重新计算。可保存记录信息，原异常状态不变。")
+            } else if hasIncompleteRows {
                 Text("当前仅预览已填有效分项；每项选择食物并输入大于0克的重量后才能保存。未填分项尚未计入上述数据。")
             } else if previewNutrients.fibreGrams == nil {
                 Text("至少一个分项缺少可靠纤维数据，因此本餐纤维不显示精确合计。")
@@ -350,8 +372,13 @@ struct MealEntryView: View {
         }
     }
 
+    private var isPreservingStoredComponents: Bool {
+        editState?.componentsAreUnchanged(rows) == true
+    }
+
     private var resolvedComponents: [MealComponent] {
         rows.compactMap { row in
+            if let editState { return try? editState.resolve(row, foods: foodItems) }
             guard
                 let foodItem = foodItem(for: row.foodItemID),
                 let weight = row.weightGrams,
@@ -369,7 +396,10 @@ struct MealEntryView: View {
     }
 
     private var previewNutrients: NutrientValues? {
-        try? NutrientValues.sum(resolvedComponents.map(\.nutrients))
+        if let editState, editState.componentsAreUnchanged(rows) {
+            return try? editState.baseline.nutrientSnapshot
+        }
+        return try? NutrientValues.sum(resolvedComponents.map(\.nutrients))
     }
 
     private var hasIncompleteRows: Bool {
@@ -377,21 +407,40 @@ struct MealEntryView: View {
     }
 
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if let editState {
+            guard let changes = try? editState.changes(
+                title: title, eatenAt: eatenAt, entryMethod: entryMethod,
+                coverageStatus: coverageStatus, rows: rows, foods: foodItems
+            ) else { return false }
+            if changes.title != nil && title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return false }
+            if changes.eatenAt != nil && !eatenAt.timeIntervalSinceReferenceDate.isFinite { return false }
+            return changes.components == nil || (!hasIncompleteRows && previewNutrients != nil)
+        }
+        return !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !hasIncompleteRows && previewNutrients != nil
     }
 
     private var evidenceLabel: String {
-        switch entryMethod.evidenceGrade {
+        let grade: EstimateEvidenceGrade?
+        if let editState, entryMethod == editState.initialMethod {
+            grade = EstimateEvidenceGrade(rawValue: editState.baseline.evidenceGradeRawValue)
+        } else {
+            grade = entryMethod.evidenceGrade
+        }
+        return switch grade {
         case .a: "A · 高"
         case .b: "B · 中"
         case .c: "C · 已确认照片"
         case .d: "D · 草稿"
+        case nil: "未知"
         }
     }
 
     private var entryMethodDescription: String {
-        switch entryMethod {
+        if let editState, entryMethod == editState.initialMethod {
+            return "修改名称、时间或克重时，保留原记录的营养依据与证据等级。"
+        }
+        return switch entryMethod {
         case .weighed:
             "适用于厨房秤、包装净重或餐厅公布数据，保存为证据 A。"
         case .standardPortionEstimate:
@@ -417,6 +466,12 @@ struct MealEntryView: View {
                 ? KcalDisplay.amount(value)
                 : "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
         )
+    }
+
+    private func selectedFoodName(for row: MealFormComponentDraft) -> String {
+        if editState?.isOriginalFood(row) == true { return row.foodName ?? "原记录食物" }
+        return foodItem(for: row.foodItemID)?.name
+            ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择")
     }
 
     private func foodItem(for id: UUID?) -> PersistentFoodItem? {
@@ -481,6 +536,20 @@ struct MealEntryView: View {
     }
 
     private func saveMeal() {
+        if let editState {
+            do {
+                let changes = try editState.changes(
+                    title: title, eatenAt: eatenAt, entryMethod: entryMethod,
+                    coverageStatus: coverageStatus, rows: rows, foods: foodItems
+                )
+                try MealEditCommand.save(baseline: editState.baseline, changes: changes, in: modelContext.container)
+                dismiss()
+                onSaved()
+            } catch {
+                saveError = error
+            }
+            return
+        }
         do {
             // Revalidate every draft row at the write boundary; never save a compacted subset.
             let components = try MealDraftValidation.components(from: rows.map(\.domainDraft), foods: foodItems)
@@ -493,11 +562,7 @@ struct MealEntryView: View {
                 components: components,
                 healthKitSyncVersion: mealToEdit?.healthKitSyncVersion ?? 1
             )
-            if let mealToEdit {
-                try mealToEdit.update(from: meal, in: modelContext)
-            } else {
-                modelContext.insert(PersistentMealLog(domain: meal))
-            }
+            modelContext.insert(PersistentMealLog(domain: meal))
             if let sourceTemplateID {
                 let templateID = sourceTemplateID
                 let descriptor = FetchDescriptor<PersistentMealTemplate>(

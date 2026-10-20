@@ -6,6 +6,7 @@ struct NativeFoodMenuRow: View {
 
     let selectedName: String
     let identifier: String
+    let onRemove: () -> Void
     let action: () -> Void
 
     var body: some View {
@@ -36,6 +37,10 @@ struct NativeFoodMenuRow: View {
         .accessibilityValue(selectedName)
         .accessibilityHint("打开本地食物搜索")
         .accessibilityIdentifier(identifier)
+        .contextMenu {
+            Button("移除此项", systemImage: "trash", role: .destructive, action: onRemove)
+                .accessibilityIdentifier("\(identifier).remove")
+        }
     }
 
     private var selectedValue: some View {

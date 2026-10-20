@@ -21,7 +21,7 @@ struct MealTemplateEditorView: View {
     @State private var catalogConflictCount = 0
     @State private var hasAttemptedCatalogImport = false
     @State private var navigationPath = NavigationPath()
-    @State private var componentEditMode = EditMode.inactive
+    @State private var pendingRemovalID: UUID?
 
     @FocusState private var focusedField: TemplateFocusedField?
 
@@ -85,36 +85,41 @@ struct MealTemplateEditorView: View {
                     }
 
                     ForEach($rows) { $row in
+                        let rowID = row.id
                         VStack(alignment: .leading, spacing: 10) {
                             NativeFoodMenuRow(
                                 selectedName: foodItems.first(where: { $0.id == row.foodItemID })?.name
                                     ?? (row.foodItemID == nil ? "请选择" : "原食物已不可用，请重新选择"),
-                                identifier: "template.food.\(row.id.uuidString)"
+                                identifier: "template.food.\(rowID.uuidString)",
+                                onRemove: { removeRow(id: rowID) }
                             ) {
-                                openFoodSelection(for: row.id)
+                                openFoodSelection(for: rowID)
                             }
 
                             weightField(for: $row)
                         }
                         .fixedSize(horizontal: false, vertical: true)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button("移除", systemImage: "trash", role: .destructive) {
+                                removeRow(id: rowID)
+                            }
+                            .tint(.red)
+                            .accessibilityIdentifier("template.component.remove.\(rowID.uuidString)")
+                        }
                     }
-                    .onDelete(perform: deleteRows)
 
-                    Button("添加食物", systemImage: "plus.circle.fill") {
+                    Button("添加食物") {
                         rows.append(MealFormComponentDraft())
                     }
                     .disabled(foodItems.isEmpty)
                 } header: {
-                    ComponentEditingHeader(
-                        title: "默认分项", isEditing: componentEditMode.isEditing,
-                        identifier: "template.components.edit", toggleEditing: toggleComponentEditing
-                    )
+                    Text("默认分项")
                 } footer: {
                     Text("模板只保存食物和默认克重。每次使用时会按当前食物库重新计算营养。")
                 }
             }
-            .environment(\.editMode, $componentEditMode)
             .accessibilityIdentifier("template.form")
+            .onAppear(perform: finishPendingRemoval)
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(templateToEdit == nil ? "新建常用模板" : "编辑常用模板")
             .navigationBarTitleDisplayMode(.inline)
@@ -146,7 +151,7 @@ struct MealTemplateEditorView: View {
                 }
             }
             .navigationDestination(for: FoodSelectionRoute.self) { route in
-                foodSelection(for: route.rowID)
+                foodSelection(for: route)
             }
             .navigationDestination(for: FoodDetailRoute.self) { route in
                 FoodInformationView(foodID: route.foodID)
@@ -276,39 +281,41 @@ struct MealTemplateEditorView: View {
         }
     }
 
-    private func toggleComponentEditing() {
-        focusedField = nil
-        withAnimation {
-            componentEditMode = componentEditMode.isEditing ? .inactive : .active
-        }
-    }
-
     private func openFoodSelection(for rowID: UUID) {
+        guard let row = rows.first(where: { $0.id == rowID }) else { return }
         focusedField = nil
-        componentEditMode = .inactive
-        navigationPath.append(FoodSelectionRoute(rowID: rowID))
+        navigationPath.append(FoodSelectionRoute(rowID: rowID, selectedFoodID: row.foodItemID))
     }
 
-    @ViewBuilder
-    private func foodSelection(for rowID: UUID) -> some View {
-        if let row = rows.first(where: { $0.id == rowID }) {
-            FoodSelectionView(
-                selectedFoodID: row.foodItemID,
-                onSelect: { foodID in
-                    FoodSelectionDraftUpdate.apply(foodID: foodID, to: rowID, rows: &rows)
-                },
-                onShowInformation: { foodID in
-                    navigationPath.append(FoodDetailRoute(foodID: foodID))
-                }
-            )
-        } else {
-            ContentUnavailableView("食物分项已移除", systemImage: "fork.knife", description: Text("请返回表单继续编辑。"))
-        }
+    private func foodSelection(for route: FoodSelectionRoute) -> some View {
+        FoodSelectionView(
+            selectedFoodID: route.selectedFoodID,
+            removalLabel: "从模板移除",
+            onSelect: { foodID in
+                FoodSelectionDraftUpdate.apply(foodID: foodID, to: route.rowID, rows: &rows)
+            },
+            onRemove: { removeFromSelection(id: route.rowID) },
+            onShowInformation: { foodID in
+                navigationPath.append(FoodDetailRoute(foodID: foodID))
+            }
+        )
     }
 
-    private func deleteRows(at offsets: IndexSet) {
+    private func removeRow(id: UUID) {
         focusedField = nil
-        rows.remove(atOffsets: offsets)
+        rows.removeAll { $0.id == id }
+    }
+
+    private func removeFromSelection(id: UUID) {
+        focusedField = nil
+        pendingRemovalID = id
+        if !navigationPath.isEmpty { navigationPath.removeLast() }
+    }
+
+    private func finishPendingRemoval() {
+        guard navigationPath.isEmpty, let id = pendingRemovalID else { return }
+        pendingRemovalID = nil
+        removeRow(id: id)
     }
 
     private func saveTemplate() {

@@ -3,13 +3,15 @@ import SwiftData
 import SwiftUI
 
 /// Search and information browsing are read-only. The caller changes one draft
-/// row only after an explicit selection or clear action.
+/// row only after an explicit selection or removal action.
 struct FoodSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \PersistentFoodItem.name) private var foods: [PersistentFoodItem]
 
     let selectedFoodID: UUID?
+    let removalLabel: String
     let onSelect: (UUID?) -> Void
+    let onRemove: () -> Void
     let onShowInformation: (UUID) -> Void
 
     @State private var query = ""
@@ -20,15 +22,6 @@ struct FoodSelectionView: View {
     var body: some View {
         let results = FoodSearchPolicy.search(query, in: searchDocuments)
         List {
-            if selectedFoodID != nil {
-                Section {
-                    Button("清空当前选择", systemImage: "xmark.circle") {
-                        select(nil)
-                    }
-                    .accessibilityIdentifier("food.selection.clear")
-                }
-            }
-
             if catalogError != nil {
                 Section {
                     Label("食品资料未能载入，当前仅按本地名称搜索。", systemImage: "exclamationmark.triangle")
@@ -38,7 +31,7 @@ struct FoodSelectionView: View {
 
             if let selectedFoodID, !foods.contains(where: { $0.id == selectedFoodID }) {
                 Section {
-                    Text("原食物已不可用。返回会保留原选择；请重新选择或明确清空。")
+                    Text("原食物已不可用。返回会保留原选择；请重新选择或移除此项。")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -75,6 +68,18 @@ struct FoodSelectionView: View {
         .textInputAutocapitalization(.never)
         .autocorrectionDisabled()
         .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                Button(removalLabel, role: .destructive, action: removeComponent)
+                    .tint(.red)
+                    .disabled(searchIsFocused)
+                    .accessibilityHidden(searchIsFocused)
+                    .opacity(searchIsFocused ? 0 : 1)
+                    .allowsHitTesting(!searchIsFocused)
+                    .accessibilityIdentifier("food.selection.remove")
+            }
+        }
+        .toolbarVisibility(searchIsFocused ? .hidden : .visible, for: .bottomBar)
         .task { loadCatalog() }
     }
 
@@ -149,6 +154,12 @@ struct FoodSelectionView: View {
         searchIsFocused = false
         onSelect(id)
         dismiss()
+    }
+
+    private func removeComponent() {
+        searchIsFocused = false
+        // The caller returns to its editor before removing the row by ID.
+        onRemove()
     }
 
     private func loadCatalog() {

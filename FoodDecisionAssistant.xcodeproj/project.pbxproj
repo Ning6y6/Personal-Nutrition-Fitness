@@ -12,7 +12,6 @@
 		D5241EAB8B7987DF9E8AFB5F /* MealEditFormStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */; };
 		E3B414281D6856349FA61E9A /* MealEditCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */; };
 		51F16D0590C85BACC1FBB80D /* MealEditFormState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */; };
-		E3A7BCD9E7DB478D5C325136 /* ComponentEditingHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */; };
 		B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */; };
 		6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */; };
 		4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */; };
@@ -158,7 +157,6 @@
 		582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/App/MealEditFormStateTests.swift; sourceTree = SOURCE_ROOT; };
 		6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/MealEditCommand.swift; sourceTree = SOURCE_ROOT; };
 		566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/MealEditFormState.swift; sourceTree = SOURCE_ROOT; };
-		25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ComponentEditingHeader.swift"; sourceTree = "<group>"; };
 		0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/FoodSelectionDraftUpdateTests.swift"; sourceTree = "<group>"; };
 		97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogImportCommandTests.swift"; sourceTree = "<group>"; };
 		86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoodCatalogImportCommand.swift"; sourceTree = "<group>"; };
@@ -415,7 +413,6 @@
 			isa = PBXGroup;
 			children = (
 				566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */,
-				25C10A843CC25BC81DC375B4 /* ComponentEditingHeader.swift */,
 				14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */,
 				6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */,
 				4AC7EB2E0D1D58132E2BCBB1 /* FoodSelectionView.swift */,
@@ -677,7 +674,6 @@
 			files = (
 				E3B414281D6856349FA61E9A /* MealEditCommand.swift in Sources */,
 				51F16D0590C85BACC1FBB80D /* MealEditFormState.swift in Sources */,
-				E3A7BCD9E7DB478D5C325136 /* ComponentEditingHeader.swift in Sources */,
 				4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */,
 				651020FEF19A7334155EA586 /* FoodSourcesView.swift in Sources */,
 				E775EBAEBB4ADFDBC121D4F9 /* FoodSourcesRoute.swift in Sources */,

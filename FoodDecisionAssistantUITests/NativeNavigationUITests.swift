@@ -7,6 +7,46 @@ import XCTest
 /// No app reset, database inspection, test-only launch mode, network, export or restore is used.
 @MainActor
 final class NativeNavigationUITests: XCTestCase {
+    /// The bottomBar removal action must remain operable after native search.
+    func testFoodSelectionRemovalRestoresTapTargetAfterSearchSubmission() throws {
+        executionTimeAllowance = 180
+        let app = try launchApp()
+        defer { app.terminate() }
+        try openMealStart(in: app)
+        try tap(app.buttons["空白记录"])
+        let weight = try visibleSingleComponentWeight(prefix: "meal", in: app)
+        let rowID = String(weight.identifier.dropFirst("meal.weight.".count))
+        try openFoodSelection(identifier: "meal.food.\(rowID)", in: app)
+        let search = try foodSearchField(in: app)
+        try tap(search)
+        let query = "未收录食品\(String(UUID().uuidString.prefix(8)))"
+        search.typeText(query)
+        try requireExists(app.keyboards.firstMatch)
+        XCTAssertFalse(app.buttons["food.selection.remove"].exists)
+        let submit = app.keyboards.firstMatch.buttons["Search"]
+        try requireExists(submit)
+        try tap(submit)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(search.value as? String, query)
+        try requireExists(app.staticTexts["没有找到食物"])
+        attachScreen(app, name: "ComponentRemovalUI-native-search-submitted-remove-restored")
+        let removal = app.buttons["food.selection.remove"]
+        try requireExists(removal)
+        XCTAssertEqual(removal.label, "从本餐移除")
+        XCTAssertTrue(removal.isEnabled)
+        let hitMetadata = XCTAttachment(string: "hittable=\(removal.isHittable) frame=\(removal.frame)")
+        hitMetadata.name = "ComponentRemovalUI-native-search-submitted-hit-metadata"
+        hitMetadata.lifetime = .keepAlways
+        add(hitMetadata)
+        removal.tap()
+        XCTAssertTrue(app.navigationBars["选择食物"].waitForNonExistence(timeout: 5))
+        try assertComponentRemoved(rowID: rowID, prefix: "meal", in: app)
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+    }
+
     // Only the simulator application launched by this test is included in failure evidence.
     // This reference is never used to mutate an app store or bypass a failed interaction.
     private var diagnosticApplication: XCUIApplication?
@@ -45,8 +85,7 @@ final class NativeNavigationUITests: XCTestCase {
                 XCTAssertEqual(try componentWeight(rowID: rowID, prefix: prefix, in: app).value as? String, "100", "This scenario requires real raw weight input before deletion, not an untouched placeholder.")
                 attachScreen(app, name: "EmptyNewDraftUI-\(prefix)-raw100-before-whole-row-deletion")
 
-                try setComponentEditing(true, prefix: prefix, in: app)
-                try deleteComponentUsingNativeEditControl(rowID: rowID, prefix: prefix, in: app)
+                try removeComponentUsingContextMenu(rowID: rowID, prefix: prefix, in: app)
                 XCTAssertFalse(app.textFields["\(prefix).weight.\(rowID)"].exists)
                 XCTAssertFalse(app.buttons["\(prefix).food.\(rowID)"].exists)
                 let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
@@ -105,11 +144,9 @@ final class NativeNavigationUITests: XCTestCase {
                 let rowID = String(weight.identifier.dropFirst("\(prefix).weight.".count))
                 XCTAssertNotNil(UUID(uuidString: rowID))
                 XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String, "请选择")
-                try setComponentEditing(true, prefix: prefix, in: app)
-                try deleteComponentUsingNativeEditControl(rowID: rowID, prefix: prefix, in: app)
+                try removeComponentUsingSwipe(rowID: rowID, prefix: prefix, in: app)
                 let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
                 XCTAssertFalse(bar.buttons["保存"].isEnabled, "Removing the only empty row must never enable saving an empty record.")
-                try setComponentEditing(false, prefix: prefix, in: app)
                 attachScreen(app, name: "EmptyRowCancelUI-\(prefix)-\(changedName ? "changed-name" : "untouched")-before-cancel")
                 try tap(bar.buttons["取消"])
                 if changedName {
@@ -184,192 +221,205 @@ final class NativeNavigationUITests: XCTestCase {
         try requireExists(app.navigationBars["今日"])
     }
 
-    /// Real native edit controls remove only the identified empty draft row.
-    /// Run on a dedicated synthetic QA simulator; only this token's meal is saved/deleted.
-    func testMealComponentEditModeDeletesOnlyEmptyRowAndPreservesSavedMeal() throws {
+    /// Each removal acts on the identified draft row; the saved meal and its
+    /// original snapshot stay intact until a successful explicit save.
+    func testMealComponentRemovalPreservesSurvivingRowsAndSavedSnapshot() throws {
         executionTimeAllowance = 600
         let app = try launchApp()
         defer { app.terminate() }
-        let mealName = "[UI测试] 分项删除餐-\(String(UUID().uuidString.prefix(8)))"
+        let mealName = "[UI测试] 分项移除餐-\(String(UUID().uuidString.prefix(8)))"
         let rice = "熟长粒白米饭（无盐）"
 
-        // Mode is presentation state, not a mutation of an untouched meal draft.
         try openMealStart(in: app)
         try tap(app.buttons["空白记录"])
         try requireExists(app.textFields["meal.name"])
-        try setComponentEditing(true, prefix: "meal", in: app)
-        try setComponentEditing(false, prefix: "meal", in: app)
-        try tap(mealEntryBar(in: app).buttons["取消"])
-        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["放弃修改"].exists, "Toggling component editing must not dirty an untouched draft.")
-
-        try tap(app.buttons["空白记录"])
-        try requireExists(app.textFields["meal.name"])
+        XCTAssertFalse(app.buttons["meal.components.edit"].exists, "The component section must no longer expose a mode switch.")
         try replaceText(in: app.textFields["meal.name"], with: mealName, app: app)
         try selectFoodAtCurrentTextSize(rice, prefix: "meal.food.", in: app)
         let originalWeight = try visibleSingleComponentWeight(prefix: "meal", in: app)
         let originalRowID = String(originalWeight.identifier.dropFirst("meal.weight.".count))
         try replaceText(in: originalWeight, with: "100.0", app: app)
-        XCTAssertTrue(mealEntryBar(in: app).buttons["保存"].isEnabled)
+        let originalFoodX = try uniqueFoodControl(identifier: "meal.food.\(originalRowID)", in: app).frame.minX
+        let originalWeightX = try componentWeight(rowID: originalRowID, prefix: "meal", in: app).frame.minX
 
         let emptyRowID = try addComponent(prefix: "meal", excluding: [originalRowID], in: app)
-        XCTAssertFalse(mealEntryBar(in: app).buttons["保存"].isEnabled, "An extra empty row must block saving all components.")
+        XCTAssertFalse(mealEntryBar(in: app).buttons["保存"].isEnabled)
         let emptyWeight = try componentWeight(rowID: emptyRowID, prefix: "meal", in: app)
         try tap(emptyWeight)
         try requireExists(app.keyboards.firstMatch)
-        try setComponentEditing(true, prefix: "meal", in: app)
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "Entering component edit mode must dismiss the real keyboard.")
-        try deleteComponentUsingNativeEditControl(rowID: emptyRowID, prefix: "meal", in: app)
+        try removeComponentUsingSwipe(rowID: emptyRowID, prefix: "meal", in: app)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "Removing a focused component must dismiss its keyboard.")
         try assertSurvivingComponent(rowID: originalRowID, prefix: "meal", foodName: rice, rawWeight: "100.0", in: app)
+        XCTAssertEqual(try uniqueFoodControl(identifier: "meal.food.\(originalRowID)", in: app).frame.minX, originalFoodX, accuracy: 1, "Removal must not put the surviving row into an indented edit mode.")
+        XCTAssertEqual(try componentWeight(rowID: originalRowID, prefix: "meal", in: app).frame.minX, originalWeightX, accuracy: 1)
         XCTAssertTrue(mealEntryBar(in: app).buttons["保存"].isEnabled)
-        try setComponentEditing(false, prefix: "meal", in: app)
-        attachScreen(app, name: "ComponentDeletionUI-meal-empty-row-removed-raw100point0")
+        attachScreen(app, name: "ComponentRemovalUI-meal-focused-empty-row-swiped-preserves100point0")
 
-        // Opening the real selector while editing must return to an inactive
-        // component mode, preserving the original UUID and raw weight.
-        try setComponentEditing(true, prefix: "meal", in: app)
-        try openFoodSelection(identifier: "meal.food.\(originalRowID)", in: app)
-        try foodNavigationBack(from: "选择食物", in: app)
-        XCTAssertEqual(try componentEditControl(prefix: "meal", in: app).label, "编辑")
+        // A second row with the same food cannot be confused with the first UUID.
+        let duplicateID = try addComponent(prefix: "meal", excluding: [originalRowID], in: app)
+        try chooseFood(rice, identifier: "meal.food.\(duplicateID)", in: app)
+        try replaceText(in: componentWeight(rowID: duplicateID, prefix: "meal", in: app), with: "200", app: app)
+        try removeComponentUsingContextMenu(rowID: duplicateID, prefix: "meal", in: app)
         try assertSurvivingComponent(rowID: originalRowID, prefix: "meal", foodName: rice, rawWeight: "100.0", in: app)
         try assertIdentifiedKcal(131, identifier: "meal.preview.energy", containerID: "meal.form", in: app)
         try tap(mealEntryBar(in: app).buttons["保存"])
         XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
-        try requireExists(app.navigationBars["今日"])
         try openMeal(named: mealName, in: app)
         try verifyRiceWeight(100, rice: rice, in: app)
         try assertIdentifiedKcal(131, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
 
         try tap(app.navigationBars["餐食详情"].buttons["编辑"])
-        try requireExists(app.textFields["meal.name"])
         let savedWeight = try visibleSingleComponentWeight(prefix: "meal", in: app)
-        // Existing meal edit initialization creates new draft-row UUIDs. Only
-        // the original unsaved draft's deletion is required to preserve its ID.
-        let savedDraftRowID = String(savedWeight.identifier.dropFirst("meal.weight.".count))
-        XCTAssertNotNil(UUID(uuidString: savedDraftRowID))
-        try reveal(savedWeight, in: app)
-        XCTAssertEqual(Double(savedWeight.value as? String ?? ""), 100)
-        XCTAssertEqual(try uniqueFoodControl(identifier: "meal.food.\(savedDraftRowID)", in: app).value as? String, rice)
-        try setComponentEditing(true, prefix: "meal", in: app)
-        try setComponentEditing(false, prefix: "meal", in: app)
+        XCTAssertEqual(savedWeight.identifier, "meal.weight.\(originalRowID)", "Historical editing must preserve the stored component UUID.")
+        try openFoodSelection(identifier: "meal.food.\(originalRowID)", in: app)
+        try removeInitiatingComponentFromSelection(rowID: originalRowID, prefix: "meal", in: app)
+        XCTAssertFalse(mealEntryBar(in: app).buttons["保存"].isEnabled)
         try tap(mealEntryBar(in: app).buttons["取消"])
-        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["放弃修改"].exists, "Mode-only changes must not dirty an existing meal either.")
+        try tap(app.buttons["继续编辑"])
+        XCTAssertFalse(app.textFields["meal.weight.\(originalRowID)"].exists)
+        XCTAssertFalse(mealEntryBar(in: app).buttons["保存"].isEnabled)
+        try tap(mealEntryBar(in: app).buttons["取消"])
+        try tap(app.buttons["放弃修改"])
         try verifyRiceWeight(100, rice: rice, in: app)
         try assertIdentifiedKcal(131, identifier: "meal.detail.energy", containerID: "meal.detail", in: app)
-        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, expectedName: mealName, in: app)
         XCTAssertTrue(namedRecordButton(mealName, in: app).waitForNonExistence(timeout: 5))
     }
 
-    /// Native edit deletion, the existing swipe action, and cancellation all act
-    /// on this test's one template, never on an arbitrary saved user's template.
-    func testTemplateComponentEditModeProtectsSavedRowsAndSupportsSwipeDeletion() throws {
+    /// Swipe, food-only context menus, and the selector remove only draft rows.
+    /// Discard preserves this test's saved template and its original UUID.
+    func testTemplateComponentRemovalProtectsSavedRowsAndRawInput() throws {
         executionTimeAllowance = 600
         let app = try launchApp()
         defer { app.terminate() }
-        let templateName = "[UI测试] 米饭模板-\(String(UUID().uuidString.prefix(8)))"
+        let templateName = "[UI测试] 米饭模板-分项移除-\(String(UUID().uuidString.prefix(8)))"
         let rice = "熟长粒白米饭（无盐）"
-
         try openMealStart(in: app)
         try reveal(app.buttons["管理常用模板"], in: app)
         try tap(app.buttons["管理常用模板"])
         let managerBar = app.navigationBars["常用模板"]
         try requireExists(managerBar)
         try tap(managerBar.buttons["新建"])
-        try requireExists(app.textFields["template.name"])
-        try setComponentEditing(true, prefix: "template", in: app)
-        try setComponentEditing(false, prefix: "template", in: app)
-        try tap(app.navigationBars["新建常用模板"].buttons["取消"])
-        XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["放弃修改"].exists, "An untouched template must stay clean after mode-only changes.")
-
-        try tap(managerBar.buttons["新建"])
+        XCTAssertFalse(app.buttons["template.components.edit"].exists)
         try replaceText(in: app.textFields["template.name"], with: templateName, app: app)
         try selectFoodAtCurrentTextSize(rice, prefix: "template.food.", in: app)
         let originalWeight = try visibleSingleComponentWeight(prefix: "template", in: app)
         let originalRowID = String(originalWeight.identifier.dropFirst("template.weight.".count))
         try replaceText(in: originalWeight, with: "200", app: app)
-        XCTAssertTrue(app.navigationBars["新建常用模板"].buttons["保存"].isEnabled)
 
         let emptyRowID = try addComponent(prefix: "template", excluding: [originalRowID], in: app)
         XCTAssertFalse(app.navigationBars["新建常用模板"].buttons["保存"].isEnabled)
-        try setComponentEditing(true, prefix: "template", in: app)
-        try deleteComponentUsingNativeEditControl(rowID: emptyRowID, prefix: "template", in: app)
+        try removeComponentUsingContextMenu(rowID: emptyRowID, prefix: "template", in: app)
         try assertSurvivingComponent(rowID: originalRowID, prefix: "template", foodName: rice, rawWeight: "200", in: app)
-        try setComponentEditing(false, prefix: "template", in: app)
-
-        // Preserve the already available native left-swipe path independently
-        // from the explicit edit-mode delete control.
         let swipeRowID = try addComponent(prefix: "template", excluding: [originalRowID], in: app)
-        XCTAssertFalse(app.navigationBars["新建常用模板"].buttons["保存"].isEnabled)
-        let swipeCell = try componentCell(rowID: swipeRowID, prefix: "template", in: app)
-        let swipeRowFrame = swipeCell.frame
-        swipeCell.swipeLeft()
-        try finishNativeComponentDeletion(rowID: swipeRowID, prefix: "template", originalRowFrame: swipeRowFrame, in: app)
+        try removeComponentUsingSwipe(rowID: swipeRowID, prefix: "template", fullSwipe: true, in: app)
         try assertSurvivingComponent(rowID: originalRowID, prefix: "template", foodName: rice, rawWeight: "200", in: app)
         XCTAssertTrue(app.navigationBars["新建常用模板"].buttons["保存"].isEnabled)
-        attachScreen(app, name: "ComponentDeletionUI-template-native-and-swipe-preserve200g")
+        attachScreen(app, name: "ComponentRemovalUI-template-context-and-swipe-preserve200g")
         try tap(app.navigationBars["新建常用模板"].buttons["保存"])
         XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
-        try requireExists(managerBar)
         let savedTemplate = namedRecordButton(templateName, in: app)
         try reveal(savedTemplate, in: app)
         let savedSummary = ([savedTemplate.label] + savedTemplate.staticTexts.allElementsBoundByIndex.map(\.label)).joined(separator: " ")
-        XCTAssertNotNil(savedSummary.range(of: "(?<![0-9])1\\s*项\\s*·\\s*已使用\\s*0\\s*次(?![0-9])", options: .regularExpression), "The saved manager summary must report one component and no uses, independent of offscreen form virtualization.")
+        XCTAssertNotNil(savedSummary.range(of: "(?<![0-9])1\\s*项\\s*·\\s*已使用\\s*0\\s*次(?![0-9])", options: .regularExpression))
         try tap(savedTemplate)
         try requireExists(app.navigationBars["编辑常用模板"])
-        let savedWeight = try visibleSingleComponentWeight(prefix: "template", in: app)
-        XCTAssertEqual(savedWeight.identifier, "template.weight.\(originalRowID)")
-        try reveal(savedWeight, in: app)
-        XCTAssertEqual(Double(savedWeight.value as? String ?? ""), 200)
-        try setComponentEditing(true, prefix: "template", in: app)
-        try setComponentEditing(false, prefix: "template", in: app)
-        try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
-        XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["放弃修改"].exists, "Mode-only changes must not dirty the saved template.")
-
-        try tap(namedRecordButton(templateName, in: app))
-        try requireExists(app.navigationBars["编辑常用模板"])
-        try setComponentEditing(true, prefix: "template", in: app)
-        try deleteComponentUsingNativeEditControl(rowID: originalRowID, prefix: "template", in: app)
-        XCTAssertFalse(app.textFields["template.weight.\(originalRowID)"].exists)
-        XCTAssertFalse(app.buttons["template.food.\(originalRowID)"].exists)
-        XCTAssertFalse(app.navigationBars["编辑常用模板"].buttons["保存"].isEnabled, "Deleting the last row must block save without inventing a replacement row.")
-        let done = try componentEditControl(prefix: "template", in: app)
-        XCTAssertEqual(done.label, "完成")
-        XCTAssertTrue(done.isEnabled, "Completion must remain reachable after deleting the last row.")
-        try setComponentEditing(false, prefix: "template", in: app)
+        XCTAssertEqual(try visibleSingleComponentWeight(prefix: "template", in: app).identifier, "template.weight.\(originalRowID)")
+        try openFoodSelection(identifier: "template.food.\(originalRowID)", in: app)
+        try removeInitiatingComponentFromSelection(rowID: originalRowID, prefix: "template", in: app)
+        XCTAssertFalse(app.navigationBars["编辑常用模板"].buttons["保存"].isEnabled)
 
         let replacementID = try addComponent(prefix: "template", excluding: [], in: app)
         XCTAssertNotEqual(replacementID, originalRowID)
-        try setComponentEditing(true, prefix: "template", in: app)
         try chooseFood(rice, identifier: "template.food.\(replacementID)", in: app)
-        XCTAssertEqual(try componentEditControl(prefix: "template", in: app).label, "编辑", "Opening food search must leave component edit mode.")
-        let replacementWeight = try componentWeight(rowID: replacementID, prefix: "template", in: app)
-        try replaceText(in: replacementWeight, with: ".", app: app, dismissKeyboard: false)
+        try replaceText(in: componentWeight(rowID: replacementID, prefix: "template", in: app), with: ".", app: app)
         XCTAssertFalse(app.navigationBars["编辑常用模板"].buttons["保存"].isEnabled)
-        try setComponentEditing(true, prefix: "template", in: app)
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
-        XCTAssertEqual(try componentWeight(rowID: replacementID, prefix: "template", in: app).value as? String, ".")
         try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
         try tap(app.buttons["继续编辑"])
-        XCTAssertEqual(try componentWeight(rowID: replacementID, prefix: "template", in: app).value as? String, ".", "Continue editing must preserve invalid raw text after row deletion/addition.")
-        attachScreen(app, name: "ComponentDeletionUI-template-replacement-invalid-raw-protected")
+        XCTAssertEqual(try componentWeight(rowID: replacementID, prefix: "template", in: app).value as? String, ".", "Continue editing must retain invalid raw input after removal and replacement.")
+        attachScreen(app, name: "ComponentRemovalUI-template-replacement-invalid-raw-protected")
         try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
         try tap(app.buttons["放弃修改"])
         XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
-
         try tap(namedRecordButton(templateName, in: app))
-        try requireExists(app.navigationBars["编辑常用模板"])
         let unchangedWeight = try visibleSingleComponentWeight(prefix: "template", in: app)
         XCTAssertEqual(unchangedWeight.identifier, "template.weight.\(originalRowID)")
-        try reveal(unchangedWeight, in: app)
-        XCTAssertEqual(Double(unchangedWeight.value as? String ?? ""), 200, "Discarding deletion must preserve the saved template's original component and default weight.")
+        XCTAssertEqual(Double(unchangedWeight.value as? String ?? ""), 200)
         XCTAssertEqual(try uniqueFoodControl(identifier: "template.food.\(originalRowID)", in: app).value as? String, rice)
         try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
         XCTAssertFalse(app.buttons["放弃修改"].exists)
         try deleteSyntheticTemplate(named: templateName, in: app)
         try tap(managerBar.buttons["完成"])
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+    }
+
+    /// No fixture is saved here: the current row UUID must be the one removed,
+    /// including duplicate food names and a blank choice, with search active.
+    func testFoodSelectionRemovalHidesDuringSearchAndTargetsOnlyInitiatingMealAndTemplateRow() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let rice = "熟长粒白米饭（无盐）"
+        try openMealStart(in: app)
+        for prefix in ["meal", "template"] {
+            if prefix == "template" {
+                try reveal(app.buttons["管理常用模板"], in: app)
+                try tap(app.buttons["管理常用模板"])
+                try tap(app.navigationBars["常用模板"].buttons["新建"])
+            } else {
+                try tap(app.buttons["空白记录"])
+            }
+            try selectFoodAtCurrentTextSize(rice, prefix: "\(prefix).food.", in: app)
+            let original = try visibleSingleComponentWeight(prefix: prefix, in: app)
+            let originalID = String(original.identifier.dropFirst("\(prefix).weight.".count))
+            try replaceText(in: original, with: "100.0", app: app)
+            let weightForTextEditing = try componentWeight(rowID: originalID, prefix: prefix, in: app)
+            try tap(weightForTextEditing)
+            weightForTextEditing.press(forDuration: 1)
+            try requireExists(app.keyboards.firstMatch)
+            XCTAssertFalse(app.buttons["移除此项"].exists, "Long-pressing the weight must retain native text editing rather than open the food removal menu.")
+            XCTAssertEqual(weightForTextEditing.value as? String, "100.0")
+            attachScreen(app, name: "ComponentRemovalUI-\(prefix)-weight-native-text-editing")
+            try finishKeyboardEditing(identifier: "\(prefix).keyboardDone", in: app)
+            let duplicateID = try addComponent(prefix: prefix, excluding: [originalID], in: app)
+            try chooseFood(rice, identifier: "\(prefix).food.\(duplicateID)", in: app)
+            try replaceText(in: componentWeight(rowID: duplicateID, prefix: prefix, in: app), with: "200", app: app)
+            try openFoodSelection(identifier: "\(prefix).food.\(duplicateID)", in: app)
+            XCTAssertFalse(app.buttons["food.selection.clear"].exists, "Only whole-row removal may be offered; a clear-choice action must not remain.")
+            let search = try foodSearchField(in: app)
+            try tap(search)
+            search.typeText("未收录食品\(token)")
+            try requireExists(app.keyboards.firstMatch)
+            try requireExists(app.staticTexts["没有找到食物"])
+            XCTAssertFalse(app.buttons["food.selection.remove"].exists, "The destructive bottom action must be hidden while the actual search keyboard is visible.")
+            attachScreen(app, name: "ComponentRemovalUI-\(prefix)-search-keyboard-no-destructive-toolbar")
+            let keyboard = app.keyboards.firstMatch
+            let submits = keyboard.buttons.matching(identifier: "Search")
+            try requireExists(submits.firstMatch)
+            guard submits.count == 1 else {
+                XCTFail("The actual native search keyboard must expose one Search submit action.")
+                throw NavigationUIFailure.missingControl
+            }
+            try tap(submits.firstMatch)
+            XCTAssertTrue(keyboard.waitForNonExistence(timeout: 5), "Submitting the current search must dismiss the real keyboard.")
+            XCTAssertEqual(search.value as? String, "未收录食品\(token)", "Keyboard dismissal must preserve the no-results search query.")
+            try requireExists(app.staticTexts["没有找到食物"])
+            try removeInitiatingComponentFromSelection(rowID: duplicateID, prefix: prefix, in: app)
+            try assertSurvivingComponent(rowID: originalID, prefix: prefix, foodName: rice, rawWeight: "100.0", in: app)
+
+            let blankID = try addComponent(prefix: prefix, excluding: [originalID], in: app)
+            try openFoodSelection(identifier: "\(prefix).food.\(blankID)", in: app)
+            try removeInitiatingComponentFromSelection(rowID: blankID, prefix: prefix, in: app)
+            try assertSurvivingComponent(rowID: originalID, prefix: prefix, foodName: rice, rawWeight: "100.0", in: app)
+            XCTAssertFalse(app.buttons["\(prefix).components.edit"].exists)
+            let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
+            try tap(bar.buttons["取消"])
+            try tap(app.buttons["放弃修改"])
+            XCTAssertTrue(app.textFields["\(prefix).name"].waitForNonExistence(timeout: 5))
+            if prefix == "template" { try tap(app.navigationBars["常用模板"].buttons["完成"]) }
+        }
         try tap(app.navigationBars["记录一餐"].buttons["取消"])
         try requireExists(app.navigationBars["今日"])
     }
@@ -2310,90 +2360,6 @@ final class NativeNavigationUITests: XCTestCase {
         throw NavigationUIFailure.missingControl
     }
 
-    private func componentEditControl(prefix: String, in app: XCUIApplication) throws -> XCUIElement {
-        let controls = app.buttons.matching(identifier: "\(prefix).components.edit")
-        let form = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
-        // The meal's tall AX DatePicker precedes this header. A missing header
-        // can be below that picker, or above currently visible component rows.
-        for attempt in 0...16 {
-            _ = controls.firstMatch.waitForExistence(timeout: 1)
-            let targetFrame = controls.firstMatch.exists ? controls.firstMatch.frame : .zero
-            let navigationBottom = app.navigationBars.allElementsBoundByIndex.filter(\.isHittable).map(\.frame.maxY).max() ?? app.frame.minY
-            let formFrame = form.frame
-            let visibleTop = max(formFrame.minY, navigationBottom)
-            var visibleBottom = min(formFrame.maxY, app.frame.maxY)
-            let keyboard = app.keyboards.firstMatch
-            var keyboardFrame: CGRect?
-            var keyboardDoneFrame: CGRect?
-            if keyboard.exists {
-                keyboardFrame = keyboard.frame
-                visibleBottom = min(visibleBottom, keyboard.frame.minY)
-                let doneControls = app.buttons.matching(NSPredicate(format: "identifier ENDSWITH %@", ".keyboardDone"))
-                    .allElementsBoundByIndex.filter(\.isHittable)
-                guard doneControls.count == 1, let done = doneControls.first else {
-                    attachFailureEvidence(app: app, element: controls.firstMatch, context: "The real keyboard must expose one hittable identified Done control before establishing the header's usable area.")
-                    XCTFail("The header's visible bounds require the unique real keyboard toolbar.")
-                    throw NavigationUIFailure.missingControl
-                }
-                keyboardDoneFrame = done.frame
-                visibleBottom = min(visibleBottom, done.frame.minY)
-            }
-            let usableBounds = CGRect(
-                x: max(formFrame.minX, app.frame.minX), y: visibleTop,
-                width: min(formFrame.maxX, app.frame.maxX) - max(formFrame.minX, app.frame.minX),
-                height: visibleBottom - visibleTop
-            )
-            let hasVisibleGeometry = targetFrame.width > 0 && targetFrame.height > 0
-                && usableBounds.width > 0 && usableBounds.height > 0
-                && usableBounds.contains(targetFrame)
-            if controls.count == 1, hasVisibleGeometry, controls.firstMatch.isHittable {
-                let metadata = XCTAttachment(string: "identifier=\(controls.firstMatch.identifier)\nlabel=\(controls.firstMatch.label)\nisHittable=\(controls.firstMatch.isHittable)\ntargetFrame=\(targetFrame)\nusableBounds=\(usableBounds)\nformFrame=\(formFrame)\nnavigationBottom=\(navigationBottom)\nkeyboardFrame=\(String(describing: keyboardFrame))\nkeyboardDoneFrame=\(String(describing: keyboardDoneFrame))")
-                metadata.name = "ComponentDeletionUI-\(prefix)-fully-visible-mode-control"
-                metadata.lifetime = .keepAlways
-                add(metadata)
-                return controls.firstMatch
-            }
-            if attempt == 16 { break }
-            let towardTop: Bool
-            if targetFrame.width > 0, targetFrame.height > 0 {
-                towardTop = targetFrame.minY < visibleTop
-            } else {
-                let visibleWeight = form.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "\(prefix).weight."))
-                    .allElementsBoundByIndex.contains { $0.isHittable }
-                let visibleFood = form.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "\(prefix).food."))
-                    .allElementsBoundByIndex.contains { $0.isHittable }
-                let visibleAdd = form.buttons.matching(identifier: "添加食物").allElementsBoundByIndex.contains { $0.isHittable }
-                towardTop = visibleWeight || visibleFood || visibleAdd
-            }
-            try scrollCurrentContentUp(in: app, towardTop: towardTop)
-        }
-        attachFailureEvidence(app: app, element: controls.firstMatch, context: "The component section must expose one identified native edit-mode toggle wholly inside the real Form area between the navigation bar and keyboard toolbar.")
-        XCTFail("Component edit mode must have one fully visible, unique and hittable header action.")
-        throw NavigationUIFailure.missingControl
-    }
-
-    private func setComponentEditing(_ editing: Bool, prefix: String, in app: XCUIApplication) throws {
-        let control = try componentEditControl(prefix: prefix, in: app)
-        XCTAssertEqual(control.label, editing ? "编辑" : "完成", "The mode toggle must expose its actual next action.")
-        let keyboardWasVisible = app.keyboards.firstMatch.exists
-        if keyboardWasVisible {
-            attachScreen(app, name: "ComponentDeletionUI-\(prefix)-mode-before-keyboard-dismissal")
-        }
-        try tap(control)
-        if keyboardWasVisible {
-            attachScreen(app, name: "ComponentDeletionUI-\(prefix)-mode-after-single-tap")
-        }
-        // Reveal and verify the same identified action after the real tap;
-        // never tap it a second time to obtain the requested mode.
-        let updatedControl = try componentEditControl(prefix: prefix, in: app)
-        do {
-            try waitFor(NSPredicate(format: "label == %@", editing ? "完成" : "编辑"), on: updatedControl, message: "The actual edit-mode button must show the new state after the single tap.")
-        } catch {
-            attachFailureEvidence(app: app, element: updatedControl, context: "The same identified component edit button did not expose the requested mode after one real tap and a fresh reveal.")
-            throw error
-        }
-    }
-
     private func componentWeight(rowID: String, prefix: String, in app: XCUIApplication) throws -> XCUIElement {
         let fields = app.textFields.matching(identifier: "\(prefix).weight.\(rowID)")
         try reveal(fields.firstMatch, in: app)
@@ -2461,71 +2427,88 @@ final class NativeNavigationUITests: XCTestCase {
         return cells.firstMatch
     }
 
-    private func deleteComponentUsingNativeEditControl(rowID: String, prefix: String, in app: XCUIApplication) throws {
-        XCTAssertEqual(try componentEditControl(prefix: prefix, in: app).label, "完成")
-        let cell = try componentCell(rowID: rowID, prefix: prefix, in: app)
-        let originalRowFrame = cell.frame
-        // Actual iOS 27 AX exposes the visible native minus twice as Images,
-        // with the same identifier and frame. Accept only that observed
-        // duplicate representation, never an arbitrary first control or point.
-        let minusImages = cell.images.matching(identifier: "minus.circle.fill").allElementsBoundByIndex
-        guard let action = minusImages.first,
-              action.frame.width > 0, action.frame.height > 0,
-              minusImages.allSatisfy({ $0.frame == action.frame && $0.isHittable }) else {
-            attachFailureEvidence(app: app, element: cell, context: "Expected hittable native minus.circle.fill Images sharing one exact frame in the requested UUID cell; found \(minusImages.count). No gesture or coordinate fallback is permitted.")
-            XCTFail("The component's observed native minus must identify one real hit target.")
+    private func removeComponentUsingContextMenu(rowID: String, prefix: String, in app: XCUIApplication) throws {
+        let food = try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app)
+        food.press(forDuration: 1)
+        let removals = app.buttons.matching(identifier: "\(prefix).food.\(rowID).remove")
+        try requireExists(removals.firstMatch)
+        guard removals.count == 1 else {
+            XCTFail("The actual context menu must expose one remove action for the pressed UUID.")
             throw NavigationUIFailure.missingControl
         }
-        let description = XCTAttachment(string: cell.debugDescription)
-        description.name = "ComponentDeletionUI-native-edit-row-before-action"
-        description.lifetime = .keepAlways
-        add(description)
-        attachScreen(app, name: "ComponentDeletionUI-\(prefix)-native-minus-before-tap")
-        try tap(action)
-        try finishNativeComponentDeletion(rowID: rowID, prefix: prefix, originalRowFrame: originalRowFrame, in: app)
+        XCTAssertEqual(removals.firstMatch.label, "移除此项")
+        XCTAssertFalse(app.buttons["删除"].exists, "Component-removal wording must be distinct from deleting a saved meal or template.")
+        attachScreen(app, name: "ComponentRemovalUI-\(prefix)-food-context-menu")
+        try tap(removals.firstMatch)
+        try assertComponentRemoved(rowID: rowID, prefix: prefix, in: app)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
     }
 
-    private func finishNativeComponentDeletion(
-        rowID: String, prefix: String,
-        originalRowFrame: CGRect,
-        in app: XCUIApplication
-    ) throws {
-        let weight = app.textFields["\(prefix).weight.\(rowID)"]
-        // Native onDelete may act immediately or reveal a native confirmation.
-        // Both are valid only if this exact UUID actually disappears; the
-        // subsequent survivor/save/readback assertions remain mandatory.
-        if !weight.waitForNonExistence(timeout: 1) {
-            // Do not scroll here: a scroll could dismiss the system's pending
-            // confirmation and accidentally turn this into a different gesture.
-            let cell = try componentCell(rowID: rowID, prefix: prefix, in: app, revealWeight: false)
-            let form = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
-            // Actual iOS 27 puts the trailing Delete button in a CollectionView
-            // sibling of the shifted UUID cell, not inside that cell. Require
-            // one native button in this same Form and bind its full frame to
-            // the requested row's pre-action vertical extent.
-            let confirmations = form.buttons.matching(NSPredicate(format: "label == %@", "删除"))
-            guard confirmations.firstMatch.waitForExistence(timeout: 5), confirmations.count == 1 else {
-                attachFailureEvidence(app: app, element: cell, context: "The same UUID remains after the native action; expected one native 删除 button in this exact Form, found \(confirmations.count).")
-                XCTFail("A remaining component requires one real unambiguous native confirmation.")
-                throw NavigationUIFailure.missingControl
-            }
-            let confirmation = confirmations.element(boundBy: 0)
-            let confirmationFrame = confirmation.frame
-            let formFrame = form.frame
-            guard confirmation.isHittable,
-                  confirmationFrame.width > 0, confirmationFrame.height > 0,
-                  confirmationFrame.minY >= originalRowFrame.minY,
-                  confirmationFrame.maxY <= originalRowFrame.maxY,
-                  formFrame.contains(confirmationFrame),
-                  confirmationFrame.minX >= cell.frame.maxX else {
-                attachFailureEvidence(app: app, element: confirmation, context: "Native Delete must be hittable and wholly inside the exact UUID's original row height at the trailing side of this Form. row=\(originalRowFrame), button=\(confirmationFrame), form=\(formFrame).")
-                XCTFail("Native confirmation must belong geometrically to the targeted UUID row.")
-                throw NavigationUIFailure.conditionNotMet
-            }
-            attachScreen(app, name: "ComponentDeletionUI-\(prefix)-native-confirmation-before-tap")
-            try tap(confirmation)
+    private func removeComponentUsingSwipe(rowID: String, prefix: String, fullSwipe: Bool = false, in app: XCUIApplication) throws {
+        let cell = try componentCell(rowID: rowID, prefix: prefix, in: app)
+        // An ordinary partial swipe proves the visible action's wording. The
+        // application independently enables the full-swipe shortcut.
+        let start = cell.coordinate(withNormalizedOffset: CGVector(dx: fullSwipe ? 0.95 : 0.88, dy: 0.5))
+        let end = cell.coordinate(withNormalizedOffset: CGVector(dx: fullSwipe ? 0.03 : 0.48, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: end)
+        if fullSwipe {
+            try assertComponentRemoved(rowID: rowID, prefix: prefix, in: app)
+            return
         }
-        XCTAssertTrue(weight.waitForNonExistence(timeout: 5), "Only the targeted component UUID must be removed.")
+        let form = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
+        let removals = form.buttons.matching(identifier: "\(prefix).component.remove.\(rowID)")
+        try requireExists(removals.firstMatch)
+        guard removals.count == 1 else {
+            XCTFail("A partial native swipe must expose one visible 移除 action in this form.")
+            throw NavigationUIFailure.missingControl
+        }
+        let removal = removals.firstMatch
+        // A focused row can move vertically when the swipe dismisses its
+        // keyboard. Compare the native action with the same UUID's current
+        // cell, without scrolling away or reusing its pre-gesture geometry.
+        let currentCell = try componentCell(rowID: rowID, prefix: prefix, in: app, revealWeight: false)
+        let currentFrame = currentCell.frame
+        XCTAssertEqual(removal.label, "移除")
+        XCTAssertFalse(form.buttons["删除"].exists)
+        XCTAssertGreaterThan(removal.frame.width, 0)
+        XCTAssertGreaterThan(removal.frame.height, 0)
+        XCTAssertGreaterThan(currentFrame.width, 0)
+        XCTAssertGreaterThan(currentFrame.height, 0)
+        XCTAssertGreaterThanOrEqual(removal.frame.minY, currentFrame.minY)
+        XCTAssertLessThanOrEqual(removal.frame.maxY, currentFrame.maxY)
+        attachScreen(app, name: "ComponentRemovalUI-\(prefix)-native-swipe-remove-wording")
+        try tap(removal)
+        try assertComponentRemoved(rowID: rowID, prefix: prefix, in: app)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+    }
+
+    private func removeInitiatingComponentFromSelection(rowID: String, prefix: String, in app: XCUIApplication) throws {
+        try requireExists(app.navigationBars["选择食物"])
+        let removals = app.buttons.matching(identifier: "food.selection.remove")
+        try requireExists(removals.firstMatch)
+        guard removals.count == 1 else {
+            XCTFail("The selector must expose one fixed, explicit whole-row removal action.")
+            throw NavigationUIFailure.missingControl
+        }
+        XCTAssertEqual(removals.firstMatch.label, prefix == "meal" ? "从本餐移除" : "从模板移除")
+        XCTAssertFalse(app.buttons["food.selection.clear"].exists)
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        let removal = removals.firstMatch
+        XCTAssertTrue(removal.isEnabled)
+        XCTAssertGreaterThan(removal.frame.width, 0)
+        XCTAssertGreaterThan(removal.frame.height, 0)
+        XCTAssertTrue(app.frame.contains(removal.frame), "The fixed toolbar action must be on screen.")
+        // Native search can report isHittable=false for a visible toolbar item.
+        // Exercise XCUIElement.tap itself, then verify the exact removal result.
+        removal.tap()
+        XCTAssertTrue(app.navigationBars["选择食物"].waitForNonExistence(timeout: 5))
+        _ = try uniqueIdentifiedControl(identifier: "\(prefix).form", in: app)
+        XCTAssertFalse(app.staticTexts["分项已移除"].exists, "Removal must return before deleting the initiating draft row.")
+        try assertComponentRemoved(rowID: rowID, prefix: prefix, in: app)
+    }
+
+    private func assertComponentRemoved(rowID: String, prefix: String, in app: XCUIApplication) throws {
+        XCTAssertTrue(app.textFields["\(prefix).weight.\(rowID)"].waitForNonExistence(timeout: 5), "Only the explicitly targeted component UUID may disappear.")
         XCTAssertTrue(app.buttons["\(prefix).food.\(rowID)"].waitForNonExistence(timeout: 5))
     }
 

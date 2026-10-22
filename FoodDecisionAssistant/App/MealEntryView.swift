@@ -287,7 +287,7 @@ struct MealEntryView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else if let foodItem = foodItem(for: row.foodItemID) {
-                        Text("营养来源：\(foodSourceName(foodItem.source))")
+                        Text("营养来源：\(FoodSourcePresentation.shortText(source: foodItem.source, foodID: foodItem.id))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -478,10 +478,6 @@ struct MealEntryView: View {
     private func foodItem(for id: UUID?) -> PersistentFoodItem? {
         guard let id else { return nil }
         return foodItems.first { $0.id == id }
-    }
-
-    private func foodSourceName(_ source: String) -> String {
-        source.components(separatedBy: " · ").first ?? source
     }
 
     private func prepareFoodCatalog() {

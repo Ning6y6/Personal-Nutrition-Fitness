@@ -6,6 +6,8 @@ struct FoodInformationView: View {
     @Query private var foods: [PersistentFoodItem]
     @State private var catalog: FoodCatalog?
     @State private var catalogError: String?
+    @State private var personalIdentity: PersonalFoodIdentity?
+    @State private var editingFood: FoodItem?
 
     init(foodID: UUID) {
         _foods = Query(filter: #Predicate<PersistentFoodItem> { $0.id == foodID })
@@ -19,7 +21,7 @@ struct FoodInformationView: View {
                         .font(.headline)
                         .fixedSize(horizontal: false, vertical: true)
                     FoodInformationRow(title: "营养基准", value: "每 100 \(food.unit)")
-                    Text(food.source)
+                    Text(FoodSourcePresentation.text(source: food.source, foodID: food.id))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -28,6 +30,11 @@ struct FoodInformationView: View {
                     nutritionSection(domain.nutrientsPer100Units, unit: food.unit)
                     if let metadata = catalog?.metadata(for: domain), let catalog {
                         metadataSection(metadata, source: catalog.source)
+                    } else if personalIdentity?.isEditable(domain) == true {
+                        Section("个人录入") {
+                            Text("修改食物卡用于以后的新记录；已有餐食保留原营养。")
+                                .foregroundStyle(.secondary)
+                        }
                     } else if catalog != nil {
                         Section("来源资料") {
                             Text("此本地记录的来源资料尚未核实。营养数值以当前本地记录为准。")
@@ -52,6 +59,19 @@ struct FoodInformationView: View {
         .accessibilityIdentifier("food.information")
         .navigationTitle("食物资料")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let food = foods.first.flatMap({ try? $0.domainModel }),
+               personalIdentity?.isEditable(food) == true {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("编辑") { editingFood = food }
+                        .accessibilityLabel("编辑我的食物")
+                        .accessibilityIdentifier("food.information.editPersonal")
+                }
+            }
+        }
+        .sheet(item: $editingFood) { food in
+            PersonalFoodEditorView(food: food) { _ in }
+        }
         .task { loadCatalog() }
     }
 
@@ -96,6 +116,7 @@ struct FoodInformationView: View {
     }
 
     private func loadCatalog() {
+        personalIdentity = try? PersonalFoodIdentity()
         do {
             catalog = try FoodCatalog.bundled()
             catalogError = nil

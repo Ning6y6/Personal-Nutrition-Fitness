@@ -32,6 +32,10 @@ struct SettingsView: View {
             }
 
             Section {
+                NavigationLink(value: PersonalFoodsRoute()) {
+                    Label("我的食物", systemImage: "fork.knife")
+                }
+                .accessibilityIdentifier("settings.myFoods")
                 NavigationLink(value: FoodSourcesRoute()) {
                     Label("数据来源与许可", systemImage: "doc.text")
                 }
@@ -42,6 +46,9 @@ struct SettingsView: View {
         .navigationTitle(AppTab.settings.title)
         .navigationDestination(for: FoodSourcesRoute.self) { _ in
             FoodSourcesView()
+        }
+        .navigationDestination(for: PersonalFoodsRoute.self) { _ in
+            MyFoodsView()
         }
         .sheet(isPresented: $isShowingGoalSettings) {
             // The existing form owns validation, saving and unsaved-draft protection.

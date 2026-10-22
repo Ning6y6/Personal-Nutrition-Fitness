@@ -2,8 +2,8 @@ import FoodDecisionCore
 import SwiftData
 import SwiftUI
 
-/// Search and information browsing are read-only. The caller changes one draft
-/// row only after an explicit selection or removal action.
+/// Browsing leaves the parent draft unchanged. Creating a card writes only
+/// the library; explicit selection or removal changes one identified draft row.
 struct FoodSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \PersistentFoodItem.name) private var foods: [PersistentFoodItem]
@@ -17,11 +17,35 @@ struct FoodSelectionView: View {
     @State private var query = ""
     @State private var catalog: FoodCatalog?
     @State private var catalogError: String?
+    @State private var personalIdentity: PersonalFoodIdentity?
+    @State private var isShowingPersonalFoodEditor = false
+    @State private var savedPersonalFoodID: UUID?
     @FocusState private var searchIsFocused: Bool
 
     var body: some View {
         let results = FoodSearchPolicy.search(query, in: searchDocuments)
         List {
+            if let savedPersonalFoodID,
+               let savedPersonalFood = foods.first(where: { $0.id == savedPersonalFoodID }) {
+                Section {
+                    Text("已加入食物库，尚未记录摄入。")
+                        .font(.footnote)
+                        .accessibilityIdentifier("food.personal.savedStatus")
+                    Button("选择\(savedPersonalFood.name)") {
+                        select(savedPersonalFood.id)
+                    }
+                    .accessibilityIdentifier("food.personal.selectSaved")
+                }
+            }
+
+            Section {
+                Button("新建我的食物", systemImage: "plus") {
+                    searchIsFocused = false
+                    isShowingPersonalFoodEditor = true
+                }
+                .accessibilityIdentifier("food.personal.create")
+            }
+
             if catalogError != nil {
                 Section {
                     Label("食品资料未能载入，当前仅按本地名称搜索。", systemImage: "exclamationmark.triangle")
@@ -80,6 +104,12 @@ struct FoodSelectionView: View {
             }
         }
         .toolbarVisibility(searchIsFocused ? .hidden : .visible, for: .bottomBar)
+        .sheet(isPresented: $isShowingPersonalFoodEditor) {
+            PersonalFoodEditorView(initialName: query) { food in
+                savedPersonalFoodID = food.id
+                loadPersonalIdentity()
+            }
+        }
         .task { loadCatalog() }
     }
 
@@ -144,6 +174,9 @@ struct FoodSelectionView: View {
     }
 
     private func sourceSummary(for food: PersistentFoodItem) -> String {
+        if let domain = try? food.domainModel, personalIdentity?.isEditable(domain) == true {
+            return "我的食物 · 每 100 g · 用户手动录入"
+        }
         if let domain = try? food.domainModel, let catalog, catalog.metadata(for: domain) != nil {
             return "CoFID \(catalog.source.datasetVersion) · 每 100 g"
         }
@@ -163,6 +196,7 @@ struct FoodSelectionView: View {
     }
 
     private func loadCatalog() {
+        loadPersonalIdentity()
         do {
             catalog = try FoodCatalog.bundled()
             catalogError = nil
@@ -170,5 +204,10 @@ struct FoodSelectionView: View {
             catalog = nil
             catalogError = error.localizedDescription
         }
+    }
+
+    private func loadPersonalIdentity() {
+        // Recognition failure never turns unknown local records into personal cards.
+        personalIdentity = try? PersonalFoodIdentity()
     }
 }

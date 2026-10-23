@@ -67,12 +67,11 @@ struct PersonalFoodEditorView: View {
                     HStack {
                         Spacer()
                         Button("完成") { focusedField = nil }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.glass)
                             .controlSize(.large)
                             .accessibilityIdentifier("personalFood.keyboardDone")
                     }
                     .padding()
-                    .background(.bar)
                 }
             }
             .navigationTitle(isEditing ? "编辑我的食物" : "新建我的食物")

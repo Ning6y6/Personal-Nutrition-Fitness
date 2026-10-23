@@ -7,6 +7,134 @@ import XCTest
 /// No app reset, database inspection, test-only launch mode, network, export or restore is used.
 @MainActor
 final class NativeNavigationUITests: XCTestCase {
+    /// Draft-only keyboard coverage across native forms, navigation and discard.
+    /// Never saves a meal, template, or goal, and never inspects the backing store.
+    func testKeyboardDoneSurvivesMealTemplateNavigationCancellationAndGoalReopening() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+
+        func finishAndCheckRawText(
+            _ field: XCUIElement, expectedRaw: String?, doneIdentifier: String, stage: String
+        ) throws {
+            try requireExists(app.keyboards.firstMatch, "Every focused form input must expose its actual keyboard.")
+            let visibleActions = app.buttons.matching(NSPredicate(
+                format: "identifier ENDSWITH %@", ".keyboardDone"
+            )).allElementsBoundByIndex.filter(\.isHittable)
+            XCTAssertEqual(visibleActions.count, 1, "Only the frontmost form may provide a visible keyboard Done action.")
+            XCTAssertEqual(visibleActions.first?.identifier, doneIdentifier)
+            XCTAssertEqual(field.value as? String, expectedRaw, "Focusing and navigating must retain the original input text.")
+            attachScreen(app, name: "KeyboardDoneUI-\(stage)")
+            try finishKeyboardEditing(identifier: doneIdentifier, in: app)
+            XCTAssertEqual(field.value as? String, expectedRaw, "Native Done must dismiss the keyboard without rewriting input.")
+        }
+
+        try openMealStart(in: app)
+        for prefix in ["meal", "template"] {
+            if prefix == "template" {
+                try tap(app.navigationBars["记录一餐"].buttons["管理常用模板"])
+                try requireExists(app.navigationBars["常用模板"])
+                try tap(app.navigationBars["常用模板"].buttons["新建"])
+            } else {
+                try tap(app.buttons["空白记录"])
+            }
+            let name = app.textFields["\(prefix).name"]
+            try requireExists(name)
+            let rawName = "[UI测试] 键盘草稿-\(prefix)-\(token)"
+            try replaceText(in: name, with: rawName, app: app, dismissKeyboard: false)
+            try finishAndCheckRawText(name, expectedRaw: rawName,
+                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-name-first-focus")
+
+            let weight = try visibleSingleComponentWeight(prefix: prefix, in: app)
+            let rowID = String(weight.identifier.dropFirst("\(prefix).weight.".count))
+            XCTAssertNotNil(UUID(uuidString: rowID))
+            try replaceText(in: weight, with: "100.0", app: app, dismissKeyboard: false)
+            try finishAndCheckRawText(weight, expectedRaw: "100.0",
+                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-decimal-weight")
+
+            try openFoodSelection(identifier: "\(prefix).food.\(rowID)", in: app)
+            try foodNavigationBack(from: "选择食物", in: app)
+            let returnedWeight = try componentWeight(rowID: rowID, prefix: prefix, in: app)
+            try tap(returnedWeight)
+            try finishAndCheckRawText(returnedWeight, expectedRaw: "100.0",
+                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-weight-after-selector-pop")
+            XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String,
+                "请选择", "Browsing the selector must not implicitly select food.")
+
+            let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
+            XCTAssertFalse(bar.buttons["保存"].isEnabled)
+            try tap(bar.buttons["取消"])
+            try requireExists(app.buttons["继续编辑"])
+            try tap(app.buttons["继续编辑"])
+            let continuedName = try draftNameAtFormTop(prefix: prefix, in: app)
+            try tap(continuedName)
+            try finishAndCheckRawText(continuedName, expectedRaw: rawName,
+                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-name-after-continue-editing")
+            XCTAssertEqual(try componentWeight(rowID: rowID, prefix: prefix, in: app).value as? String, "100.0")
+            try tap(bar.buttons["取消"])
+            try tap(app.buttons["放弃修改"])
+            XCTAssertTrue(name.waitForNonExistence(timeout: 5))
+            XCTAssertFalse(namedRecordButton(rawName, in: app).exists, "Only an unsaved fictitious draft was exercised.")
+
+            // Reopen a fresh sheet and verify keyboard creation is independent
+            // of the dismissed draft's old row UUID and toolbar lifetime.
+            if prefix == "meal" {
+                try tap(app.buttons["空白记录"])
+            } else {
+                try tap(app.navigationBars["常用模板"].buttons["新建"])
+            }
+            let reopenedName = app.textFields["\(prefix).name"]
+            try requireExists(reopenedName)
+            let originalReopenedName = reopenedName.value as? String
+            let reopenedWeight = try visibleSingleComponentWeight(prefix: prefix, in: app)
+            XCTAssertNotEqual(reopenedWeight.identifier, "\(prefix).weight.\(rowID)")
+            let currentName = try draftNameAtFormTop(prefix: prefix, in: app)
+            try tap(currentName)
+            try finishAndCheckRawText(currentName, expectedRaw: originalReopenedName,
+                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-fresh-sheet-reopened")
+            let reopenedBar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
+            try tap(reopenedBar.buttons["取消"])
+            XCTAssertTrue(reopenedName.waitForNonExistence(timeout: 5))
+            XCTAssertFalse(app.buttons["放弃修改"].exists, "Focusing without editing must not dirty a fresh form.")
+            if prefix == "template" { try tap(app.navigationBars["常用模板"].buttons["完成"]) }
+        }
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+        try requireExists(app.navigationBars["今日"])
+
+        try openGoalFromSettings(in: app)
+        let goalBar = app.navigationBars["每日预算与目标"]
+        let energy = goalField("热量预算 (kcal)", in: app)
+        let originalEnergy = energy.value as? String
+        try replaceText(in: energy, with: ".", app: app, dismissKeyboard: false)
+        try finishAndCheckRawText(energy, expectedRaw: ".",
+            doneIdentifier: "goal.keyboardDone", stage: "goal-invalid-budget")
+        XCTAssertFalse(goalBar.buttons["保存"].isEnabled)
+        try tap(goalBar.buttons["取消"])
+        try requireExists(app.buttons["继续编辑"])
+        try tap(app.buttons["继续编辑"])
+        let continuedEnergy = goalField("热量预算 (kcal)", in: app)
+        try reveal(continuedEnergy, in: app)
+        try tap(continuedEnergy)
+        try finishAndCheckRawText(continuedEnergy, expectedRaw: ".",
+            doneIdentifier: "goal.keyboardDone", stage: "goal-budget-after-continue-editing")
+        XCTAssertFalse(goalBar.buttons["保存"].isEnabled)
+        try tap(goalBar.buttons["取消"])
+        try tap(app.buttons["放弃修改"])
+        XCTAssertTrue(goalBar.waitForNonExistence(timeout: 5))
+
+        try openGoalFromSettings(in: app)
+        let reopenedEnergy = goalField("热量预算 (kcal)", in: app)
+        try reveal(reopenedEnergy, in: app)
+        XCTAssertEqual(reopenedEnergy.value as? String, originalEnergy, "Discard must retain the original persisted budget or absence.")
+        try tap(reopenedEnergy)
+        try finishAndCheckRawText(reopenedEnergy, expectedRaw: originalEnergy,
+            doneIdentifier: "goal.keyboardDone", stage: "goal-unchanged-sheet-reopened")
+        try tap(goalBar.buttons["取消"])
+        XCTAssertTrue(goalBar.waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+    }
+
     /// The bottomBar removal action must remain operable after native search.
     func testFoodSelectionRemovalRestoresTapTargetAfterSearchSubmission() throws {
         executionTimeAllowance = 180

@@ -52,15 +52,25 @@ struct MyFoodsView: View {
                             Button {
                                 foodToEdit = food
                             } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(food.name).foregroundStyle(.primary)
-                                    Text("每 100 g · \(KcalDisplay.amount(food.nutrientsPer100Units.energyKcal))")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(food.name).foregroundStyle(Color.primary)
+                                        Text("每 100 g · \(KcalDisplay.amount(food.nutrientsPer100Units.energyKcal))")
+                                            .font(.subheadline)
+                                            .foregroundStyle(Color.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    Image(systemName: "chevron.forward")
+                                        .font(.footnote.weight(.semibold))
+                                        .foregroundStyle(Color.secondary)
+                                        .accessibilityHidden(true)
                                 }
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                .contentShape(.rect)
                             }
+                            .buttonStyle(.plain)
                             .accessibilityHint("编辑个人食物卡")
                             .accessibilityIdentifier("myFoods.food.\(food.id.uuidString)")
                         }

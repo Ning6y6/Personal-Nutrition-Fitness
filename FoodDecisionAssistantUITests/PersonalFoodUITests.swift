@@ -198,6 +198,216 @@ final class PersonalFoodUITests: XCTestCase {
         try require(app.navigationBars["今日"], in: app)
     }
 
+    /// Exercises real responder transitions without creating a food card.
+    /// The same typed values must survive navigation, dismissal and activation.
+    func testPersonalFoodKeyboardCompletionSurvivesFocusNavigationAndAppActivation() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 焦点生命周期-\(UUID().uuidString.prefix(8))"
+        try openMyFoods(in: app)
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        let nameInput = try focusPersonalInput("name", towardTop: true, in: app)
+        nameInput.typeText(name)
+        XCTAssertEqual(nameInput.value as? String, name)
+        _ = try personalKeyboardCompletion(in: app)
+        attachScreen(app, name: "PersonalFoodPolish-name-keyboard-completion-visible")
+
+        // Do not dismiss the text keyboard before switching to decimal input.
+        let energy = try focusPersonalInput("energy", in: app)
+        energy.typeText("300")
+        XCTAssertEqual(energy.value as? String, "300")
+        _ = try personalKeyboardCompletion(in: app)
+        let fat = try focusPersonalInput("fat", in: app)
+        fat.typeText("0")
+        XCTAssertEqual(fat.value as? String, "0")
+        try closePersonalKeyboard(in: app)
+
+        _ = try focusPersonalInput("energy", towardTop: true, in: app)
+        let (form, viewport) = try contentViewport(keyboardDone: "personalFood.keyboardDone", in: app)
+        let keyboard = app.keyboards.firstMatch
+        try require(keyboard, in: app)
+        let formFrame = form.frame
+        let keyboardFrame = keyboard.frame
+        guard usable(formFrame), usable(keyboardFrame), app.frame.contains(keyboardFrame),
+              viewport.maxY <= keyboardFrame.minY else {
+            throw fail("Interactive dismissal requires the actual content viewport and visible keyboard bounds.", in: app)
+        }
+        // A short content-only scroll can move rows without dismissing an
+        // interactive keyboard. Continue this real drag through its lower edge.
+        let startY = (viewport.minY + viewport.height * 0.25 - formFrame.minY) / formFrame.height
+        let start = form.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: startY))
+        let end = keyboard.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.95))
+        start.press(forDuration: 0.05, thenDragTo: end)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "A real interactive scroll must dismiss this keyboard.")
+        let afterScroll = try focusPersonalInput("energy", towardTop: true, in: app)
+        XCTAssertEqual(afterScroll.value as? String, "300")
+        try closePersonalKeyboard(in: app)
+
+        try tapRevealed(field("personalFood.category", in: app), towardTop: true, in: app)
+        // Pick a concrete visible native option; AX5 menus can virtualize other
+        // options. Never tap a guessed coordinate or scroll the underlying Form.
+        var chosenCategory: String?
+        for title in ["蛋白质主食材", "主食与谷物", "混合餐食", "饮品", "油脂", "调味品"] {
+            let options = app.buttons.matching(NSPredicate(format: "label == %@", title))
+                .allElementsBoundByIndex.filter(\.isHittable)
+            if options.count == 1, let option = options.first {
+                chosenCategory = title
+                try tap(option, in: app)
+                break
+            }
+        }
+        guard let chosenCategory else { throw fail("The native category picker must expose one real visible category option.", in: app) }
+        let category = field("personalFood.category", in: app)
+        try reveal(category, towardTop: true, in: app)
+        XCTAssertTrue(([category.label, category.value as? String ?? ""]).joined(separator: " ").contains(chosenCategory))
+        let afterPicker = try focusPersonalInput("energy", in: app)
+        XCTAssertEqual(afterPicker.value as? String, "300")
+
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        try require(app.buttons["personalFood.cancel"], in: app)
+        if app.keyboards.firstMatch.exists {
+            _ = try personalKeyboardCompletion(in: app)
+        } else {
+            _ = try focusPersonalInput("energy", towardTop: true, in: app)
+        }
+        XCTAssertEqual(field("personalFood.energy", in: app).value as? String, "300", "Background and foreground transitions must preserve the actual raw input.")
+        try closePersonalKeyboard(in: app)
+
+        _ = try focusPersonalInput("energy", towardTop: true, in: app)
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try tap(app.buttons["继续编辑"], in: app)
+        let continued = try focusPersonalInput("energy", towardTop: true, in: app)
+        XCTAssertEqual(continued.value as? String, "300")
+        try closePersonalKeyboard(in: app)
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try tap(app.buttons["放弃修改"], in: app)
+        try require(app.navigationBars["我的食物"], in: app)
+        XCTAssertFalse(personalCard(named: name, in: app).exists)
+
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        let reopened = try focusPersonalInput("name", towardTop: true, in: app)
+        XCTAssertTrue(isBlank(reopened), "A discarded card must reopen as a clean new form.")
+        try closePersonalKeyboard(in: app)
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try require(app.navigationBars["我的食物"], in: app)
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+    }
+
+    /// Saves exactly one fictitious card, checks the long last-row editor and
+    /// captures the actual list appearance. It never records an intake.
+    func testPersonalFoodSourceKeyboardAndSavedListRemainUsable() throws {
+        executionTimeAllowance = 600
+        let app = try launchApp()
+        defer { app.terminate() }
+        let name = "[UI测试] 食物列表验收-\(UUID().uuidString.prefix(8))"
+        let source = "虚构验收样本，用于检查来源说明长文字输入、键盘完成按钮、保存后重新打开以及所有文字原样保留，不代表实际包装营养数据。"
+        try openMyFoods(in: app)
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        for (key, raw) in [
+            ("name", name), ("energy", "300"), ("fat", "0"),
+            ("saturatedFat", "0"), ("carbohydrate", "75"),
+            ("sugar", "75"), ("protein", "0"), ("salt", "0")
+        ] {
+            let input = try focusPersonalInput(key, in: app)
+            input.typeText(raw)
+            XCTAssertEqual(input.value as? String, raw)
+            try closePersonalKeyboard(in: app)
+        }
+        let sourceInput = try focusPersonalInput("sourceNote", in: app)
+        sourceInput.typeText(source)
+        XCTAssertEqual(sourceInput.value as? String, source)
+        _ = try personalKeyboardCompletion(in: app)
+        attachScreen(app, name: "PersonalFoodPolish-long-source-keyboard-completion-visible")
+        try closePersonalKeyboard(in: app)
+        try saveCard(in: app)
+        let cardID = try personalCardID(named: name, in: app)
+        let row = app.buttons["myFoods.food.\(cardID)"]
+        try reveal(row, in: app)
+        attachScreen(app, name: "PersonalFoodPolish-saved-list-native-row")
+        try tap(row, in: app)
+        try require(app.navigationBars["编辑我的食物"], in: app)
+        XCTAssertEqual(try revealedValue("personalFood.name", towardTop: true, in: app), name)
+        XCTAssertEqual(try revealedValue("personalFood.sourceNote", in: app), source)
+        _ = try focusPersonalInput("sourceNote", in: app)
+        try closePersonalKeyboard(in: app)
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try require(app.navigationBars["我的食物"], in: app)
+        XCTAssertFalse(app.buttons["放弃修改"].exists, "Focusing an unchanged saved card must not create a draft edit.")
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        _ = try focusPersonalInput("name", towardTop: true, in: app)
+        try closePersonalKeyboard(in: app)
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try require(app.navigationBars["我的食物"], in: app)
+    }
+
+    private func focusPersonalInput(_ key: String, towardTop: Bool = false, in app: XCUIApplication) throws -> XCUIElement {
+        let input = field("personalFood.\(key)", in: app)
+        try revealPersonalInput(input, towardTop: towardTop, in: app)
+        try tap(input, in: app)
+        _ = try personalKeyboardCompletion(in: app)
+        try revealPersonalInput(input, towardTop: towardTop, in: app)
+        return input
+    }
+
+    private func revealPersonalInput(_ input: XCUIElement, towardTop: Bool, in app: XCUIApplication) throws {
+        var geometry: [String] = []
+        for attempt in 0...12 {
+            _ = input.waitForExistence(timeout: 1)
+            let (container, viewport) = try contentViewport(in: app)
+            let frame = input.exists ? input.frame : .zero
+            geometry.append("\(attempt): target=\(frame), viewport=\(viewport)")
+            if input.exists, input.isHittable, usable(frame), viewport.contains(frame) { return }
+            guard attempt < 12 else { break }
+            guard usable(frame) else {
+                try scroll(towardTop: towardTop, in: app)
+                continue
+            }
+            // Centre the real control with a bounded, slow drag. Fixed large
+            // swipes oscillate past a short AX5 input while the keyboard stays up.
+            let desiredDelta = viewport.midY - frame.midY
+            let maximumStep = viewport.height * 0.35
+            let delta = max(-maximumStep, min(maximumStep, desiredDelta))
+            let bounds = container.frame
+            let start = container.coordinate(withNormalizedOffset: CGVector(
+                dx: 0.04, dy: (viewport.midY - delta / 2 - bounds.minY) / bounds.height
+            ))
+            let end = container.coordinate(withNormalizedOffset: CGVector(
+                dx: 0.04, dy: (viewport.midY + delta / 2 - bounds.minY) / bounds.height
+            ))
+            start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        let attachment = XCTAttachment(string: geometry.joined(separator: "\n"))
+        attachment.name = "PersonalFoodPolish-input-viewport-geometry"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        throw fail("The entire personal-food input must fit below navigation and above its actual keyboard completion after bounded positioning.", in: app)
+    }
+
+    private func personalKeyboardCompletion(in app: XCUIApplication) throws -> XCUIElement {
+        let keyboard = app.keyboards.firstMatch
+        try require(keyboard, in: app)
+        let completions = app.buttons.matching(identifier: "personalFood.keyboardDone")
+        try require(completions.firstMatch, in: app)
+        guard completions.count == 1 else { throw fail("Each actual personal-food keyboard must expose one unique completion action.", in: app) }
+        let done = completions.firstMatch
+        let frame = done.frame
+        let keyboardFrame = keyboard.frame
+        guard done.isHittable, usable(frame), app.frame.contains(frame),
+              frame.maxY <= keyboardFrame.minY else {
+            attachScreen(app, name: "PersonalFoodPolish-keyboard-completion-not-visible")
+            throw fail("The complete real keyboard completion button must remain hittable above the keyboard.", in: app)
+        }
+        XCTAssertEqual(done.label, "完成")
+        return done
+    }
+
+    private func closePersonalKeyboard(in app: XCUIApplication) throws {
+        try tap(personalKeyboardCompletion(in: app), in: app)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "The unique visible completion action must actually dismiss the software keyboard.")
+    }
+
     private func launchApp() throws -> XCUIApplication {
         continueAfterFailure = false
         #if !targetEnvironment(simulator)

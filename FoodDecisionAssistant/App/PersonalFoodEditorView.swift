@@ -62,18 +62,10 @@ struct PersonalFoodEditorView: View {
             .disabled(isSaving)
             .accessibilityIdentifier("personalFood.form")
             .scrollDismissesKeyboard(.interactively)
-            .safeAreaInset(edge: .bottom) {
-                if focusedField != nil {
-                    HStack {
-                        Spacer()
-                        Button("完成") { focusedField = nil }
-                            .buttonStyle(.glass)
-                            .controlSize(.large)
-                            .accessibilityIdentifier("personalFood.keyboardDone")
-                    }
-                    .padding()
-                }
-            }
+            .formKeyboardCompletion(
+                isPresented: focusedField != nil,
+                identifier: "personalFood.keyboardDone"
+            ) { focusedField = nil }
             .navigationTitle(isEditing ? "编辑我的食物" : "新建我的食物")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -144,6 +144,8 @@
 		261E395D6BAEC6F6477325B1 /* PersonalFoodSaveCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37395A3A481B43AAB34BE071 /* PersonalFoodSaveCommandTests.swift */; };
 		40E76D9016E6BA9706885642 /* PersonalFoodCompatibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E97BB94D379AD0487A77D04 /* PersonalFoodCompatibilityTests.swift */; };
 		25DC5979C7D74C9FEE902960 /* PersonalFoodUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E0DE943FF79116954DBD4F /* PersonalFoodUITests.swift */; };
+		B0066AEA5BD333B0BFDFC5BD /* FormKeyboardCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC77711CED3A84A17F4A233 /* FormKeyboardCompletion.swift */; };
+		053B52C2FC6916627C8083CA /* SettingsEntryLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71983479C2ED796B55364B74 /* SettingsEntryLabel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -304,6 +306,8 @@
 		37395A3A481B43AAB34BE071 /* PersonalFoodSaveCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/PersonalFoodSaveCommandTests.swift; sourceTree = SOURCE_ROOT; };
 		1E97BB94D379AD0487A77D04 /* PersonalFoodCompatibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/PersonalFoodCompatibilityTests.swift; sourceTree = SOURCE_ROOT; };
 		D2E0DE943FF79116954DBD4F /* PersonalFoodUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantUITests/PersonalFoodUITests.swift; sourceTree = SOURCE_ROOT; };
+		0FC77711CED3A84A17F4A233 /* FormKeyboardCompletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/FormKeyboardCompletion.swift; sourceTree = SOURCE_ROOT; };
+		71983479C2ED796B55364B74 /* SettingsEntryLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/SettingsEntryLabel.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -445,6 +449,8 @@
 			children = (
 				1A12C472B28656A668938952 /* MyFoodsView.swift */,
 				DE4324A6BC5031E8E04EBC93 /* PersonalFoodFormState.swift */,
+				0FC77711CED3A84A17F4A233 /* FormKeyboardCompletion.swift */,
+				71983479C2ED796B55364B74 /* SettingsEntryLabel.swift */,
 				3B27261D2FC114B6CF4B184D /* PersonalFoodEditorView.swift */,
 				39508B334C5C8FD560533E31 /* PersonalFoodsRoute.swift */,
 				C7F401B17EC80D82428E1463 /* FoodSourcePresentation.swift */,
@@ -717,6 +723,8 @@
 				775AE8EFD5EE7AB7D5C73FA9 /* PersonalFoodIdentity.swift in Sources */,
 				01574BBBFF0AF9585CC909AF /* MyFoodsView.swift in Sources */,
 				CE6980ED0B0AA0341E42EB46 /* PersonalFoodFormState.swift in Sources */,
+				B0066AEA5BD333B0BFDFC5BD /* FormKeyboardCompletion.swift in Sources */,
+				053B52C2FC6916627C8083CA /* SettingsEntryLabel.swift in Sources */,
 				A406E6C83F99F956FA50BEAA /* PersonalFoodEditorView.swift in Sources */,
 				BA1A0CFCA3C5DBC03F2CEAEC /* PersonalFoodsRoute.swift in Sources */,
 				3B66A250D7D08314B21E433C /* FoodSourcePresentation.swift in Sources */,

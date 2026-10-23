@@ -99,6 +99,10 @@ struct MealEntryView: View {
             .accessibilityIdentifier("meal.form")
             .onAppear(perform: finishPendingRemoval)
             .scrollDismissesKeyboard(.interactively)
+            .formKeyboardCompletion(
+                isPresented: focusedField != nil && navigationPath.isEmpty,
+                identifier: "meal.keyboardDone"
+            ) { focusedField = nil }
             .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -118,13 +122,6 @@ struct MealEntryView: View {
                             saveMeal()
                         }
                         .disabled(!canSave)
-                    }
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("完成") {
-                            focusedField = nil
-                        }
-                        .accessibilityIdentifier("meal.keyboardDone")
                     }
                 }
             }

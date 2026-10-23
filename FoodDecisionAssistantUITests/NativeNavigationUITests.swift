@@ -15,15 +15,26 @@ final class NativeNavigationUITests: XCTestCase {
         defer { app.terminate() }
         let token = String(UUID().uuidString.prefix(8))
 
-        func finishAndCheckRawText(
-            _ field: XCUIElement, expectedRaw: String?, doneIdentifier: String, stage: String
-        ) throws {
+        func requireCorrectKeyboardDone(_ identifier: String) throws {
             try requireExists(app.keyboards.firstMatch, "Every focused form input must expose its actual keyboard.")
             let visibleActions = app.buttons.matching(NSPredicate(
                 format: "identifier ENDSWITH %@", ".keyboardDone"
             )).allElementsBoundByIndex.filter(\.isHittable)
             XCTAssertEqual(visibleActions.count, 1, "Only the frontmost form may provide a visible keyboard Done action.")
-            XCTAssertEqual(visibleActions.first?.identifier, doneIdentifier)
+            XCTAssertEqual(visibleActions.first?.identifier, identifier)
+            guard let action = visibleActions.first else { throw NavigationUIFailure.missingControl }
+            let frame = action.frame
+            XCTAssertTrue(frame.origin.x.isFinite && frame.origin.y.isFinite && frame.width.isFinite && frame.height.isFinite)
+            XCTAssertGreaterThan(frame.width, 0)
+            XCTAssertGreaterThan(frame.height, 0)
+            XCTAssertTrue(app.frame.contains(frame), "The complete native Done action must remain inside the actual screen.")
+            XCTAssertLessThanOrEqual(frame.maxY, app.keyboards.firstMatch.frame.minY, "Done must remain above the actual keyboard.")
+        }
+
+        func finishAndCheckRawText(
+            _ field: XCUIElement, expectedRaw: String?, doneIdentifier: String, stage: String
+        ) throws {
+            try requireCorrectKeyboardDone(doneIdentifier)
             XCTAssertEqual(field.value as? String, expectedRaw, "Focusing and navigating must retain the original input text.")
             attachScreen(app, name: "KeyboardDoneUI-\(stage)")
             try finishKeyboardEditing(identifier: doneIdentifier, in: app)
@@ -53,17 +64,25 @@ final class NativeNavigationUITests: XCTestCase {
             try finishAndCheckRawText(weight, expectedRaw: "100.0",
                 doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-decimal-weight")
 
-            try openFoodSelection(identifier: "\(prefix).food.\(rowID)", in: app)
-            try foodNavigationBack(from: "选择食物", in: app)
-            let returnedWeight = try componentWeight(rowID: rowID, prefix: prefix, in: app)
-            try tap(returnedWeight)
-            try finishAndCheckRawText(returnedWeight, expectedRaw: "100.0",
-                doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-weight-after-selector-pop")
-            XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String,
-                "请选择", "Browsing the selector must not implicitly select food.")
+            for cycle in 1...2 {
+                try openFoodSelection(identifier: "\(prefix).food.\(rowID)", in: app)
+                try foodNavigationBack(from: "选择食物", in: app)
+                let returnedWeight = try componentWeight(rowID: rowID, prefix: prefix, in: app)
+                XCTAssertEqual(returnedWeight.identifier, "\(prefix).weight.\(rowID)")
+                try tap(returnedWeight)
+                try finishAndCheckRawText(returnedWeight, expectedRaw: "100.0",
+                    doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-weight-after-selector-pop-\(cycle)")
+                XCTAssertEqual(try uniqueFoodControl(identifier: "\(prefix).food.\(rowID)", in: app).value as? String,
+                    "请选择", "Repeated browsing must preserve the same initiating UUID without choosing food.")
+            }
 
             let bar = prefix == "meal" ? mealEntryBar(in: app) : app.navigationBars["新建常用模板"]
             XCTAssertFalse(bar.buttons["保存"].isEnabled)
+            let beforeCancel = try componentWeight(rowID: rowID, prefix: prefix, in: app)
+            try tap(beforeCancel)
+            try requireCorrectKeyboardDone("\(prefix).keyboardDone")
+            XCTAssertEqual(beforeCancel.value as? String, "100.0")
+            attachScreen(app, name: "KeyboardDoneUI-\(prefix)-keyboard-open-before-cancel")
             try tap(bar.buttons["取消"])
             try requireExists(app.buttons["继续编辑"])
             try tap(app.buttons["继续编辑"])
@@ -71,7 +90,10 @@ final class NativeNavigationUITests: XCTestCase {
             try tap(continuedName)
             try finishAndCheckRawText(continuedName, expectedRaw: rawName,
                 doneIdentifier: "\(prefix).keyboardDone", stage: "\(prefix)-name-after-continue-editing")
-            XCTAssertEqual(try componentWeight(rowID: rowID, prefix: prefix, in: app).value as? String, "100.0")
+            let continuedWeight = try componentWeight(rowID: rowID, prefix: prefix, in: app)
+            XCTAssertEqual(continuedWeight.value as? String, "100.0")
+            try tap(continuedWeight)
+            try requireCorrectKeyboardDone("\(prefix).keyboardDone")
             try tap(bar.buttons["取消"])
             try tap(app.buttons["放弃修改"])
             XCTAssertTrue(name.waitForNonExistence(timeout: 5))
@@ -133,6 +155,65 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(goalBar.buttons["取消"])
         XCTAssertTrue(goalBar.waitForNonExistence(timeout: 5))
         XCTAssertFalse(app.buttons["放弃修改"].exists)
+    }
+
+    /// Presentation-only settings acceptance: three existing sheets and two
+    /// navigation destinations, with no save, export, restore, or card creation.
+    func testSettingsFiveEntriesKeepNativePresentationAndReturnWithoutWrites() throws {
+        executionTimeAllowance = 300
+        let app = try launchApp()
+        defer { app.terminate() }
+        try selectTab("设置", in: app)
+        _ = try uniqueIdentifiedControl(identifier: "settings.form", in: app)
+        attachScreen(app, name: "SettingsNavigationUI-home")
+
+        let entries: [(identifier: String, title: String, sheetClose: String?)] = [
+            ("settings.goalSettings", "每日预算与目标", "取消"),
+            ("settings.goalHistory", "目标历史", "完成"),
+            ("settings.backup", "本地备份", "完成"),
+            ("settings.myFoods", "我的食物", nil),
+            ("settings.foodSources", "数据来源与许可", nil)
+        ]
+        for entry in entries {
+            let actions = app.buttons.matching(identifier: entry.identifier)
+            try reveal(actions.firstMatch, in: app)
+            guard actions.count == 1 else {
+                attachFailureEvidence(app: app, element: actions.firstMatch, context: "The settings entry \(entry.identifier) must identify one native action.")
+                XCTFail("Each of the five settings entries requires its own unique action.")
+                throw NavigationUIFailure.missingControl
+            }
+            attachScreen(app, name: "SettingsNavigationUI-entry-\(entry.identifier)")
+            try tap(actions.firstMatch)
+            let destination = app.navigationBars[entry.title]
+            try requireExists(destination)
+            attachScreen(app, name: "SettingsNavigationUI-destination-\(entry.identifier)")
+            if let close = entry.sheetClose {
+                // Use the original sheet's own cancellation/completion action;
+                // never substitute a navigation pop for these three sheets.
+                try requireExists(destination.buttons[close])
+                if entry.identifier == "settings.goalSettings" {
+                    try requireExists(destination.buttons["保存"])
+                }
+                try tap(destination.buttons[close])
+                XCTAssertFalse(app.buttons["放弃修改"].exists, "Reading settings must not manufacture an unsaved edit.")
+            } else {
+                // These two entries keep their native push/back behavior.
+                let backs = destination.buttons.matching(NSPredicate(
+                    format: "label IN %@", ["设置", "返回", "Back"]
+                ))
+                guard backs.count == 1 else {
+                    attachFailureEvidence(app: app, element: destination, context: "The pushed settings destination must expose exactly one native Back action.")
+                    XCTFail("A pushed settings page must return using its native Back action.")
+                    throw NavigationUIFailure.missingControl
+                }
+                try tap(backs.firstMatch)
+            }
+            XCTAssertTrue(destination.waitForNonExistence(timeout: 5))
+            try requireExists(app.navigationBars["设置"])
+            XCTAssertTrue(app.tabBars.buttons["设置"].isSelected)
+            _ = try uniqueIdentifiedControl(identifier: "settings.form", in: app)
+        }
+        attachScreen(app, name: "SettingsNavigationUI-home-after-five-readonly-visits")
     }
 
     /// The bottomBar removal action must remain operable after native search.

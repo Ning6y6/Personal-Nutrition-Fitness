@@ -8,12 +8,19 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                Button("每日预算与目标", systemImage: "slider.horizontal.3") {
+                Button {
                     isShowingGoalSettings = true
+                } label: {
+                    SettingsEntryLabel(title: "每日预算与目标", systemImage: "slider.horizontal.3", showsDisclosure: true)
                 }
-                Button("目标历史", systemImage: "clock.arrow.circlepath") {
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("settings.goalSettings")
+                Button {
                     isShowingGoalHistory = true
+                } label: {
+                    SettingsEntryLabel(title: "目标历史", systemImage: "clock.arrow.circlepath", showsDisclosure: true)
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("settings.goalHistory")
             } header: {
                 Text("营养设置")
@@ -22,9 +29,13 @@ struct SettingsView: View {
             }
 
             Section {
-                Button("本地备份", systemImage: "externaldrive") {
+                Button {
                     isShowingBackup = true
+                } label: {
+                    SettingsEntryLabel(title: "本地备份", systemImage: "externaldrive", showsDisclosure: true)
                 }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("settings.backup")
             } header: {
                 Text("数据保护")
             } footer: {
@@ -33,11 +44,11 @@ struct SettingsView: View {
 
             Section {
                 NavigationLink(value: PersonalFoodsRoute()) {
-                    Label("我的食物", systemImage: "fork.knife")
+                    SettingsEntryLabel(title: "我的食物", systemImage: "fork.knife", showsDisclosure: false)
                 }
                 .accessibilityIdentifier("settings.myFoods")
                 NavigationLink(value: FoodSourcesRoute()) {
-                    Label("数据来源与许可", systemImage: "doc.text")
+                    SettingsEntryLabel(title: "数据来源与许可", systemImage: "doc.text", showsDisclosure: false)
                 }
                 .accessibilityIdentifier("settings.foodSources")
             }

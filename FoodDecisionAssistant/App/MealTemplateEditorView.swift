@@ -121,6 +121,10 @@ struct MealTemplateEditorView: View {
             .accessibilityIdentifier("template.form")
             .onAppear(perform: finishPendingRemoval)
             .scrollDismissesKeyboard(.interactively)
+            .formKeyboardCompletion(
+                isPresented: focusedField != nil && navigationPath.isEmpty,
+                identifier: "template.keyboardDone"
+            ) { focusedField = nil }
             .navigationTitle(templateToEdit == nil ? "新建常用模板" : "编辑常用模板")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -140,13 +144,6 @@ struct MealTemplateEditorView: View {
                             saveTemplate()
                         }
                         .disabled(!canSave)
-                    }
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("完成") {
-                            focusedField = nil
-                        }
-                        .accessibilityIdentifier("template.keyboardDone")
                     }
                 }
             }

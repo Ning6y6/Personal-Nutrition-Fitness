@@ -200,6 +200,10 @@ struct GoalSettingsView: View {
             }
             .accessibilityIdentifier("goal.form")
             .scrollDismissesKeyboard(.interactively)
+            .formKeyboardCompletion(
+                isPresented: focusedField != nil,
+                identifier: "goal.keyboardDone"
+            ) { focusedField = nil }
             .navigationTitle("每日预算与目标")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -215,11 +219,6 @@ struct GoalSettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") { saveGoal() }.disabled(!canSave)
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("完成") { focusedField = nil }
-                        .accessibilityIdentifier("goal.keyboardDone")
                 }
             }
             .task { loadGoalOnce() }

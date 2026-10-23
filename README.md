@@ -1,65 +1,104 @@
-# 食衡 Evenfare
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-Calm precision for every bowl.
+# Evenfare / 食衡
 
-个人使用的原生 iOS 饮食、营养与训练平衡 App。第一阶段优先完成称重记录、拍照估算餐、动态目标、食品约束判断、营养标签扫描和 HealthKit 同步。
+Evenfare is my native iOS app for weighed meal logging and daily nutrition against self-set goals. I built offline food search, meal history, templates, personal food cards and validated local backup/restore for everyday cooking and repeat meals. No account is required; the current interface is Simplified Chinese.
 
-## 当前可用功能
+## What works today
 
-- 主动输入并确认热量、碳水、脂肪预算和蛋白质目标；可选饱和脂肪上限、纤维目标留空即未设置，不自动应用示例或医疗阈值。保存失败回滚本事务并保留输入，不影响其他草稿。
-- 从 12 项 CoFID 2021 个人种子食材中添加多个分项，按克重实时计算一餐营养。
-- 以称重/包装数据（证据 A）或标准份量估算（证据 B）保存到 SwiftData。
-- 今日热量环v2：预算内翡翠、超出叠加琥珀，最多两圈；达到2倍后文字保留实际倍数和差额。浅深色自动适配，最大辅助字体将数值移到圈外。无记录不是已确认0摄入。
-- 蛋白质、纤维按最低目标显示，达标不报超量红灯；热量等按预算、饱和脂肪按上限提示。未设置、未知或非法值不会冒充已知0或正常进度。
-- 纤维数据部分未知时显示已知小计及未知分项数；全未知和无记录分别提示，只有数据完整时计算精确目标缺口。历史未知值不被补成0。
-- 查看全部历史餐食与营养快照，并编辑或删除记录；今日汇总会随修改立即重算。
-- 今日 / 历史餐食可轻量就地展开食物与原营养快照，提供可见的编辑、复用及详情入口；每个列表同时只展开一项，不写入业务数据。
-- 从最近吃过或个人常用菜模板生成独立餐食草稿，只修改本次重量后保存。
-- 从历史餐食另存常用模板，并新建、重命名、编辑默认克重或删除模板。
-- 导出全部本地业务数据的版本化JSON，验证独立恢复库后经二次确认切换；保留原库，不合并或覆盖原库。
-- 数据库无法打开时显示恢复页，允许重试或恢复已有JSON，不自动删库。
-- 正式餐食执行严格数值和完整分项校验；旧异常记录与未确认草稿保留在历史中，不参与正式汇总，并显示提示。
-- 系统“今日、扫描、日历、设置”四栏，各自独立导航；目标与既有备份入口迁入设置，今日保留同一目标编辑流程的快捷入口。扫描 / 日历明确未开放，不代表业务已实现。
+- **Offline food search:** 357 curated CoFID 2021 foods, searchable by Chinese name, aliases, original English name and reviewed pinyin initials.
+- **Meal recording and daily totals:** multiple food items, gram-based quantities, nutrition previews, weighed/label-based or standard-portion records, and today's energy and nutrient progress. Incomplete items block saving; a day with no records does not imply zero intake.
+- **History and editing:** inspect, expand, edit, delete and reuse saved meals. Changes recalculate today's totals while preserving each meal's historical nutrition basis.
+- **Recent meals and templates:** start an independent draft from a recent meal or a personal template; create, rename and edit templates and their default gram quantities.
+- **Personal food cards:** create and edit foods using per-100-g label values, then select them when recording meals. Saving a card alone adds no intake. Energy, fat, saturated fat, carbohydrate, sugars, protein and salt are required; fibre may remain unknown.
+- **Goal history:** saved changes append versions with source, confirmation time and effective date. Changes default to tomorrow, with today or a future date available; the last confirmed version for an effective day wins. Unrecoverable past goals remain unknown.
+- **Local data protection:** SwiftData storage, unsaved-input protection, versioned JSON export, validated restore into a separate store, and a recovery screen when the selected store cannot open.
 
-拍照 AI、食品标签 OCR、HealthKit 和 CloudKit 尚未接入。复用与模板切片的落实和待完成真机验收见 [`docs/MEAL_REUSE_TEMPLATE_PLAN.md`](docs/MEAL_REUSE_TEMPLATE_PLAN.md)。
+## Current limits
 
-开发 skills、UI 采用范围和延后项见 [`docs/DEVELOPMENT_RESOURCES.md`](docs/DEVELOPMENT_RESOURCES.md)。
+Food cards, meals and templates use **grams**. There is no per-100-ml, scoop or serving conversion without an explicitly supported quantity model. Personal cards have no deletion, archiving or revision-history interface yet.
 
-当前已批准执行S0–S2可靠性加固，先保护已有数据再收紧校验，见[优化执行清单](docs/OPTIMIZATION_EXECUTION_PLAN.md)及[实际执行状态](docs/EXECUTION_STATUS.md)。个人或一两位朋友各自本机使用，不启用云或共享数据；分支与交付规范见AGENTS.md。
+The Scan and Calendar tabs are placeholders. Photo estimation has contracts, persistence and an offline fixture provider, but no delivered photo-confirmation flow or real AI integration. Label OCR, barcode lookup, HealthKit, CloudKit, accounts and cross-device sync are not connected. Recipe batches, day-completeness confirmation, full calendar/trends and a complete English interface are also unimplemented. History queries are not yet paginated; no large-library performance claim is made.
 
-S0–S2及UI-1已完成代码与自动化交付；Core108个测试声明/367次执行通过，16张原生卡片预览已检查，详见[UI-1交付证据](docs/UI1_DELIVERY_REPORT.md)。B-1显示名本地化独立交付，详见[品牌交付证据](docs/B1_DELIVERY_REPORT.md)。图标工程及App177个声明/398次执行、Debug构建通过；用户本轮确认Normal / Dark / Tinted / Clear与Settings缩小显示正常，详见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)。Spotlight、中英文显示名与UI-1真机视觉专项仍待验。此前真机备份 / 恢复 / 文件保护和既有数据检查由用户确认；未提供的VO、跨午夜 / 时区和复用计时证据不宣称通过。
+## Architecture and tradeoffs
 
-本轮另行批准原生整改 **UI-2A导航 / 设置迁移→UI-2B今日记录入口 / 原生表单→UI-2C轻量餐食展开**，已依次通过代码与适用功能门禁，不只交付底栏，也不等全部业务。UI-2A当轮Core108声明/367执行、App单元180声明/410执行及XCTest实际UI交互4/4通过，iOS合计184声明/414执行，零失败/跳过；10张整页原生PNG已检查，最终构建通过。该轮两条键盘frame警告保留历史，真机、VO与iOS26专项仍待验，见[原生UI交付证据](docs/NATIVE_UI_DELIVERY_REPORT.md)。完整计划见[NATIVE_UI_EXECUTION_PLAN](docs/NATIVE_UI_EXECUTION_PLAN.md)；食品搜索 / 日确认 / 目标历史等新业务及S4–S5未新增批准，不改Schema或已有保存保护。
+- **Domain rules stay outside the UI.** [`FoodDecisionCore`](Packages/FoodDecisionCore) contains models, validation, nutrition calculations, food search and goal selection. The app owns SwiftUI forms, SwiftData adapters, save commands and recovery. Rules remain independently testable but require explicit persistence adapters.
+- **Meals keep nutrition snapshots.** Name/time edits preserve them; gram changes scale the original item's snapshot. Added/replacement foods use current values. Personal-card updates therefore cannot rewrite old meals. This duplicates data and leaves past records unchanged when the catalogue improves. See the [snapshot design and validation](docs/OPT14A_SNAPSHOT_PROTECTION_REPORT.md).
+- **Unknown is not zero.** Incomplete fibre data shows coverage and a known subtotal where available, not an exact total or target gap. The other seven fields require numbers; missing source values cannot silently become zero. Arbitrary missing values for every nutrient are not yet supported.
+- **New-meal saves are isolated.** A private context commits the meal and template-use increment together. Pre-commit failure rolls back only that context, preserving unrelated drafts. Stable IDs and full-content comparison let an unchanged retry verify the saved result; conflicting content is rejected. A committed save survives refresh failure. Extra reads and retry state are the cost; related unsaved changes can block saving. See the [transaction design, tests and failure cases](docs/MEAL_CREATE_TRANSACTION_REPORT.md).
+- **Restore validates before switching.** JSON format 2 also reads format 1. Restore checks versions, types, IDs and relationships, writes a separate store, then closes/reopens and compares it before user-confirmed switching. The original is retained, without merging. This costs extra disk space and a confirmation step. Exports contain personal data and image references, not image bytes; JSON has no app-level password encryption. See the [goal-history migration and backup validation](docs/OPT09_GOAL_HISTORY_REPORT.md) and [restore implementation](FoodDecisionAssistant/Persistence/LocalStoreBackupService.swift).
 
-后续开发优先级见 [`docs/ROADMAP.md`](docs/ROADMAP.md)，本次完整变更见 [`CHANGELOG.md`](CHANGELOG.md)。
+The current store is [Schema V2, version 2.0.0](FoodDecisionAssistant/Persistence/VersionedSchemaV2.swift): the frozen twelve-entity V1 plus one goal-version entity, **13 entities in total**. Local uniqueness constraints remain, CloudKit is disabled, and unknown historical schemas are not automatically guessed or replaced. The app identity remains `com.ning6y6.ShiHeng`.
 
-UI-2B于2026-10-09通过适用门禁，独立提交`2b18a34`已推送任务分支与快进后的main：Core108/367，App单元181声明/432执行、实际UI交互10/10，iOS合计191声明/442执行，零失败 / 跳过；22张原生PNG检查和最终构建通过，8条未定位frame警告保留为该轮证据。今日默认采用安全区内带文字的底部系统记录按钮，保留原保存 / 草稿保护；合成视口及系统AX5专项的证据边界见[原生UI交付证据](docs/NATIVE_UI_DELIVERY_REPORT.md)。不宣称真机、VoiceOver、iOS26或真实单手 / 计时验收通过。
+## Build and run
 
-UI-2C于2026-10-09通过代码与适用功能门禁：Core108声明/367执行，完整R4 App189声明/465执行及实际UI15/15，合计204声明/480执行全部通过，零失败 / 跳过；最终构建成功，13条未定位Invalid frame dimension警告仍挂账。已检查R3的18张合成原生PNG（App源码与R4相同）及R4的4张实际操作截图，不冒称R4重看全部18张渲染。所有失败及低电量休眠污染保留历史，不作性能指标；本片按验证后独立提交规则以`feat/inline-meal-details`交付，实际提交 / 推送状态以Git记录为准。真机、VoiceOver、iOS26与未批准新业务仍未完成，见[原生UI交付证据](docs/NATIVE_UI_DELIVERY_REPORT.md)。
+Requirements: macOS 26 or later for the Core package, Xcode with the required iOS SDK/runtime, and Swift tools 6.2 or later. The project uses Swift 6 language mode and targets **iOS 26.0+**. The recorded development toolchain is **Xcode 27.0 / Apple Swift 6.4**; this is not a claim that every supported OS/device combination has been tested.
 
-## 当前技术栈
+From the repository root:
 
-- Xcode 27、Swift 6、SwiftUI
-- SwiftData（应用数据，VersionedSchema V1 已接入）
-- HealthKit（尚未接入，须先在隔离测试餐完成更新与删除实验）
-- 本地 Swift Package：`FoodDecisionCore`
-
-## 独立 UI 调色原型
-
-用户另行批准的 Flask 手机风格预览在 [`tools/ui-preview`](tools/ui-preview/README.md)。它提供实时配色、明暗主题、圆角/间距、热量状态和四页模拟交互，仅使用虚构数据；不是 iOS 模拟器，不改 SwiftData 或正式营养规则，不表示四栏导航、日历或扫描业务已实现。
-
-运行 `.build/ui-preview-venv/bin/python tools/ui-preview/app.py` 后打开 <http://127.0.0.1:5058>。首次依赖安装、测试与设计 JSON 契约见工具说明。
-
-## 本地验证
-
-```bash
-swift test --package-path Packages/FoodDecisionCore
-./scripts/test-ios.sh
-./scripts/build-ios.sh
+```sh
+open FoodDecisionAssistant.xcodeproj
 ```
 
-脚本自动选择可用iPhone模拟器；可用`SHIHENG_SIMULATOR_DESTINATION='platform=iOS Simulator,id=<UUID>'`指定。已保护旧库可运行`./scripts/verify-protected-store.sh /absolute/private/sample-directory`，目录须包含default.store及其sidecar。探针只打开新工作副本；不要把个人备份或探针输出提交Git。备份不含图片字节、Key或签名资料，JSON未加密；NaN/无穷值仅保留原始JSON，不会强行写回SQLite。
+Select the shared **FoodDecisionAssistant** scheme, choose an iPhone simulator and run. For a physical iPhone, choose your signing team and device in Xcode. Update the existing installation to retain local records; do not uninstall or clear its store. The built product is `ShiHeng.app`.
 
-Xcode失败后的诊断收集可能耗时很久；需要快速取得测试结果时可用`./scripts/test-ios.sh -parallel-testing-enabled NO -collect-test-diagnostics never`。当前冻结经真机磁盘哈希确认的12实体V1，早期9/10实体结构没有部署样本，不宣称自动迁移支持。详见[兼容与恢复契约](docs/STORE_COMPATIBILITY.md)。模拟器不报告iOS文件保护等级；用户已报告真机备份恢复及文件保护正常，相关证据与自动化分开记录，本轮没有重新操作真机数据。
+To compile for the simulator without choosing a particular device:
 
-主屏幕显示名已本地化：简体中文为 `食衡`，英文为 `Evenfare`，真机两语言专项尚未报告。这不是完整界面翻译，界面暂仍为中文。内部产物名仍为 `ShiHeng`，应用标识始终为 `com.ning6y6.ShiHeng`。用户制作的`Evenfare.icon`已接入工程，产物`CFBundleIconName`为`Evenfare`；四种外观 / Settings缩小显示的用户验收与剩余专项见[图标交付证据](docs/B1_ICON_DELIVERY_REPORT.md)，不自动修改艺术源。真机运行前在Xcode选择已登录开发团队；覆盖安装，不卸载以保留本地记录。
+```sh
+SHIHENG_SIMULATOR_DESTINATION='generic/platform=iOS Simulator' ./scripts/build-ios.sh
+```
+
+The script disables code signing for simulator builds. No food API key or backend setup is required.
+
+## Tests
+
+Run domain tests independently:
+
+```sh
+swift test --package-path Packages/FoodDecisionCore
+```
+
+**Use a dedicated QA iPhone simulator containing only synthetic data for App/UI tests.** UI tests launch the ordinary app and create, edit and delete records; some goal versions and personal cards remain afterward. The scripts do not isolate the app's data and otherwise auto-select an available simulator, preferring a booted device. Do not point them at an everyday simulator containing personal records or at a physical device.
+
+List available simulators, replace `QA_SIMULATOR_UDID` with the dedicated simulator's UUID, then run:
+
+```sh
+xcrun simctl list devices available
+export SHIHENG_SIMULATOR_DESTINATION='platform=iOS Simulator,id=QA_SIMULATOR_UDID'
+
+./scripts/test-ios.sh -only-testing:FoodDecisionAssistantTests \
+  -parallel-testing-enabled NO -collect-test-diagnostics never
+
+./scripts/test-ios.sh -only-testing:FoodDecisionAssistantUITests \
+  -parallel-testing-enabled NO -collect-test-diagnostics never
+```
+
+App tests need an installed iOS simulator runtime; UI tests also need an awake Mac and an available simulator UI. UI cases that check text-size or appearance behavior require the matching simulator settings. Simulator results do not replace physical-device, VoiceOver or external-keyboard acceptance.
+
+## Food data and attribution
+
+The bundled catalogue is a **357-food subset of [CoFID 2021](https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid)**, not the full source database or a branded-product/barcode database. Catalogue version: `cofid-2021-zh-v1`; import rules: `food-import-cofid-2021-v1`.
+
+A [reviewed selection file](data/food-catalog/cofid-2021-curation.json) and [importer](scripts/import_cofid.py) check the official workbook's hash, food identities and measurement basis. The selection adds Chinese search terms while keeping raw/cooked and food-part distinctions between entries. Ambiguous identities and missing required values are quarantined; the original 12 entries retain their IDs and values. The workbook is not committed.
+
+- Energy and carbohydrate retain CoFID's definitions; energy is not recomputed using 4/9/4, and carbohydrate/sugars use monosaccharide equivalents rather than being assumed identical to packaging labels.
+- Trace (`Tr`) is a documented calculation approximation of zero; `N` and blank cells are unavailable. Unknown AOAC fibre stays unknown and is not replaced by NSP fibre. Sodium is converted to salt as `sodium mg / 1000 × 2.5`.
+- Only a per-100-g food basis enters the current meal calculation. Brand recipes and cooking methods can differ from the selected generic food; generic meat entries do not certify halal status. The app records nutrition and user-set goals, not verified medical outcomes or food-safety guarantees.
+
+Public Health England (2021). McCance and Widdowson’s The Composition of Foods Integrated Dataset (CoFID). Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+Full selection, exclusions, modifications and provenance: [catalogue audit](docs/OPT12_CATALOG_AUDIT.md), [import rules](docs/OPT12_FOOD_IMPORT_RULES.md), and [catalogue manifest](data/food-catalog/catalog-manifest-v1.json). The app also includes a Data Sources and Licences page.
+
+## Validation and next steps
+
+The [latest recorded code-change validation](docs/MEAL_CREATE_TRANSACTION_REPORT.md), dated **2026-10-23** and delivered as commit `57ff859`, reports:
+
+| Suite | Test declarations | Executions |
+| --- | ---: | ---: |
+| FoodDecisionCore | 183 | 685 |
+| App unit tests | 359 | 901 |
+| Selected UI regression cases | 8 | 8 |
+
+Declarations count each parameterized test once; executions count its input cases separately. UI numbers cover selected cases only. The final build passed. The report preserves an intermittent existing migration-test failure and subsequent isolated/full passes; its cause remains unresolved. These are recorded results, **not tests rerun for this README-only update**. Physical acceptance steps and evidence limits are in the reports; [personal food-card validation](docs/OPT13_PERSONAL_FOOD_REPORT.md) is recorded separately.
+
+Next planned work is recipe batches and portion allocation, followed by day confirmation, bounded history queries and calendar/trend views. Photo confirmation, real AI, label scanning and HealthKit remain separate future work; cloud sync is only a later consideration. See the [longer-term roadmap](docs/ROADMAP.md), which also retains historical milestone notes. Future work requires its own scope and validation; the feature list above describes the current implementation.

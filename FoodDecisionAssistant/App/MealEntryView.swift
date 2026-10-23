@@ -9,7 +9,7 @@ struct MealEntryView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let mealToEdit: PersistentMealLog?
-    private let sourceTemplateID: UUID?
+    @State private var createSaveState: MealCreateFormSaveState
     @State private var editState: MealEditFormState?
     private let onSaved: () -> Void
 
@@ -40,7 +40,9 @@ struct MealEntryView: View {
     ) {
         precondition(meal == nil || draft == nil, "An entry cannot edit a meal and load a draft together.")
         mealToEdit = meal
-        sourceTemplateID = draft?.sourceTemplateID
+        _createSaveState = State(initialValue: MealCreateFormSaveState(
+            mealID: draft?.id ?? UUID(), sourceTemplateID: draft?.sourceTemplateID
+        ))
         self.onSaved = onSaved
         let initialTitle = meal?.title ?? draft?.title ?? Self.defaultMealTitle()
         let initialDate = meal?.eatenAt ?? draft?.eatenAt ?? .now
@@ -103,6 +105,7 @@ struct MealEntryView: View {
                 isPresented: focusedField != nil && navigationPath.isEmpty,
                 identifier: "meal.keyboardDone"
             ) { focusedField = nil }
+            .onChange(of: draftSnapshot) { createSaveState.invalidate() }
             .navigationTitle(mealToEdit == nil ? "记录一餐" : "编辑餐食")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -114,7 +117,9 @@ struct MealEntryView: View {
                                 // Popovers omit role.cancel; keep the safe exit explicitly visible.
                                 Button("继续编辑") {}
                             } message: {
-                                Text("本次输入尚未保存，放弃后无法恢复。")
+                                Text(createSaveState.hasCommittedResult
+                                     ? "餐食已保存。关闭只会放弃此后未保存的输入，不会撤销已保存餐食。"
+                                     : "本次输入尚未保存，放弃后无法恢复。")
                             }
                     }
                     ToolbarItem(placement: .confirmationAction) {
@@ -414,6 +419,7 @@ struct MealEntryView: View {
             if changes.eatenAt != nil && !eatenAt.timeIntervalSinceReferenceDate.isFinite { return false }
             return changes.components == nil || (!hasIncompleteRows && previewNutrients != nil)
         }
+        if createSaveState.canRetryCommittedRequest(comparedTo: draftSnapshot) { return true }
         return !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !hasIncompleteRows && previewNutrients != nil
     }
@@ -547,30 +553,15 @@ struct MealEntryView: View {
             return
         }
         do {
-            // Revalidate every draft row at the write boundary; never save a compacted subset.
-            let components = try MealDraftValidation.components(from: rows.map(\.domainDraft), foods: foodItems)
-            let meal = try MealLog(
-                id: mealToEdit?.id ?? UUID(),
-                eatenAt: eatenAt,
-                title: title,
-                entryMethod: entryMethod,
-                coverageStatus: coverageStatus,
-                components: components,
-                healthKitSyncVersion: mealToEdit?.healthKitSyncVersion ?? 1
+            let request = try createSaveState.request(
+                title: title, eatenAt: eatenAt, entryMethod: entryMethod,
+                coverageStatus: coverageStatus, rows: rows, foods: foodItems
             )
-            modelContext.insert(PersistentMealLog(domain: meal))
-            if let sourceTemplateID {
-                let templateID = sourceTemplateID
-                let descriptor = FetchDescriptor<PersistentMealTemplate>(
-                    predicate: #Predicate { $0.id == templateID }
-                )
-                try modelContext.fetch(descriptor).first?.markUsed(at: .now)
-            }
-            try modelContext.save()
+            try MealCreateCommand.save(request: request, in: modelContext.container)
             dismiss()
             onSaved()
         } catch {
-            modelContext.rollback()
+            createSaveState.handleSaveError(error)
             saveError = error
         }
     }

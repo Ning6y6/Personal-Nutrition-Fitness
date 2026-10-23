@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8998319D92E4E15296EB85B2 /* MealCreateFormSaveStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B779E9D7029153D7722CC7 /* MealCreateFormSaveStateTests.swift */; };
+		B345CB708C1B196A1B980361 /* MealCreateCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */; };
+		C7F5A0A25EC4FF217299AF01 /* MealCreateFormSaveState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C777F26FDCD387F89A770221 /* MealCreateFormSaveState.swift */; };
+		CB09ADE3BD5F42D23DAF0644 /* MealCreateCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4057C3218B16522EAF79309D /* MealCreateCommand.swift */; };
 		4AF7A0D67E55CEFF1C3B0F50 /* MealSnapshotEditingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B07C2DF6ED7DC1523C3CD8D3 /* MealSnapshotEditingUITests.swift */; };
 		0904BE318DDBEC6B3DF2E601 /* MealEditCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */; };
 		D5241EAB8B7987DF9E8AFB5F /* MealEditFormStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */; };
@@ -166,6 +170,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		63B779E9D7029153D7722CC7 /* MealCreateFormSaveStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/App/MealCreateFormSaveStateTests.swift; sourceTree = SOURCE_ROOT; };
+		157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/MealCreateCommandTests.swift; sourceTree = SOURCE_ROOT; };
+		C777F26FDCD387F89A770221 /* MealCreateFormSaveState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/MealCreateFormSaveState.swift; sourceTree = SOURCE_ROOT; };
+		4057C3218B16522EAF79309D /* MealCreateCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/MealCreateCommand.swift; sourceTree = SOURCE_ROOT; };
 		B07C2DF6ED7DC1523C3CD8D3 /* MealSnapshotEditingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantUITests/MealSnapshotEditingUITests.swift; sourceTree = SOURCE_ROOT; };
 		320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/MealEditCommandTests.swift; sourceTree = SOURCE_ROOT; };
 		582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/App/MealEditFormStateTests.swift; sourceTree = SOURCE_ROOT; };
@@ -348,6 +356,7 @@
 				1E97BB94D379AD0487A77D04 /* PersonalFoodCompatibilityTests.swift */,
 				37395A3A481B43AAB34BE071 /* PersonalFoodSaveCommandTests.swift */,
 				320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */,
+				157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */,
 				97BE81EA232B6A5389431E47 /* FoodCatalogImportCommandTests.swift */,
 				B80000000000000000000002 /* LocalStorePathValidatorTests.swift */,
 			);
@@ -360,6 +369,7 @@
 				71B9CEA39A06A7D1DC78C17C /* PersonalFoodSaveCommand.swift */,
 				8D738F11DB30B9BEE8DCE8A1 /* PersonalFoodIdentity.swift */,
 				6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */,
+				4057C3218B16522EAF79309D /* MealCreateCommand.swift */,
 				86C91545614813E59E8A646E /* FoodCatalogImportCommand.swift */,
 				09A000000000000000000009 /* LocalStoreFileSnapshot.swift */,
 				09A000000000000000000002 /* PersistentGoalVersion.swift */,
@@ -385,6 +395,7 @@
 				F61C868D70D18D00BAA04F1D /* PersonalFoodFormStateTests.swift */,
 				98723AA3F758C0B3092AB7ED /* FoodSourcePresentationTests.swift */,
 				582732D4FA375FFB24B52F96 /* MealEditFormStateTests.swift */,
+				63B779E9D7029153D7722CC7 /* MealCreateFormSaveStateTests.swift */,
 				0D436847C4E8A90BF94E9929 /* FoodSelectionDraftUpdateTests.swift */,
 				6B713DC69129B142A6C11F1E /* GoalFormSaveStateTests.swift */,
 				A2D21C22A37565CE981D15DF /* GoalContextPresentationTests.swift */,
@@ -455,6 +466,7 @@
 				39508B334C5C8FD560533E31 /* PersonalFoodsRoute.swift */,
 				C7F401B17EC80D82428E1463 /* FoodSourcePresentation.swift */,
 				566D8C0B62BAF3ADC51E7201 /* MealEditFormState.swift */,
+				C777F26FDCD387F89A770221 /* MealCreateFormSaveState.swift */,
 				14D0AE870B6BD1557A7FC8B4 /* FoodSourcesView.swift */,
 				6BB9F29A18B91BDEF5E95C77 /* FoodSourcesRoute.swift */,
 				4AC7EB2E0D1D58132E2BCBB1 /* FoodSelectionView.swift */,
@@ -678,7 +690,9 @@
 				76ED182FF4982C474378D95F /* PersonalFoodFormStateTests.swift in Sources */,
 				3A884C37C228B42D536A9D74 /* FoodSourcePresentationTests.swift in Sources */,
 				0904BE318DDBEC6B3DF2E601 /* MealEditCommandTests.swift in Sources */,
+				B345CB708C1B196A1B980361 /* MealCreateCommandTests.swift in Sources */,
 				D5241EAB8B7987DF9E8AFB5F /* MealEditFormStateTests.swift in Sources */,
+				8998319D92E4E15296EB85B2 /* MealCreateFormSaveStateTests.swift in Sources */,
 				B1916276B9385BDA9E8D89C6 /* FoodSelectionDraftUpdateTests.swift in Sources */,
 				6DDEC9C7F00AA033ADDFF140 /* FoodCatalogImportCommandTests.swift in Sources */,
 				53C50CF106BAD599E2B0A632 /* GoalFormSaveStateTests.swift in Sources */,
@@ -729,7 +743,9 @@
 				BA1A0CFCA3C5DBC03F2CEAEC /* PersonalFoodsRoute.swift in Sources */,
 				3B66A250D7D08314B21E433C /* FoodSourcePresentation.swift in Sources */,
 				E3B414281D6856349FA61E9A /* MealEditCommand.swift in Sources */,
+				CB09ADE3BD5F42D23DAF0644 /* MealCreateCommand.swift in Sources */,
 				51F16D0590C85BACC1FBB80D /* MealEditFormState.swift in Sources */,
+				C7F5A0A25EC4FF217299AF01 /* MealCreateFormSaveState.swift in Sources */,
 				4DEE17CF6531250A28FEB0A1 /* FoodCatalogImportCommand.swift in Sources */,
 				651020FEF19A7334155EA586 /* FoodSourcesView.swift in Sources */,
 				E775EBAEBB4ADFDBC121D4F9 /* FoodSourcesRoute.swift in Sources */,

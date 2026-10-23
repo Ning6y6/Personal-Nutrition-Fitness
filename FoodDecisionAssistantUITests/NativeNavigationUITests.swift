@@ -1695,6 +1695,7 @@ final class NativeNavigationUITests: XCTestCase {
         let mealName = "[UI测试] 中文午餐-\(suffix)"
         let templateName = "[UI测试] 米饭模板-\(suffix)"
         let reusedName = "[UI测试] 复用午餐-\(suffix)"
+        let recentSavedName = "[UI测试] 最近复用-\(suffix)"
         let rice = "熟长粒白米饭（无盐）"
 
         try openMealStart(in: app)
@@ -1763,7 +1764,6 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(app.navigationBars["编辑常用模板"].buttons["取消"])
         XCTAssertFalse(app.buttons["放弃修改"].exists, "Opening the unchanged template must not dirty it.")
         try requireExists(app.navigationBars["常用模板"])
-        try deleteSyntheticTemplate(named: templateName, in: app)
         try tap(app.navigationBars["常用模板"].buttons["完成"])
         try tap(app.navigationBars["记录一餐"].buttons["取消"])
 
@@ -1785,6 +1785,36 @@ final class NativeNavigationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["放弃修改"].exists, "Read-only search in an untouched reuse must not dirty the draft.")
         try tap(app.navigationBars["记录一餐"].buttons["取消"])
 
+        // Save from Recently Eaten as well: this route must create a new meal
+        // without changing the original meal or counting another template use.
+        try openMealStart(in: app)
+        let recentStart = try uniqueIdentifiedControl(identifier: "meal.start", in: app)
+        let recentToSave = recentStart.buttons.containing(.staticText, identifier: mealName)
+        try reveal(recentToSave.firstMatch, in: app)
+        XCTAssertEqual(recentToSave.count, 1)
+        try tap(recentToSave.firstMatch)
+        try requireExists(app.textFields["meal.name"])
+        try replaceText(in: app.textFields["meal.name"], with: recentSavedName, app: app)
+        try replaceText(in: singleField(prefix: "meal.weight.", in: app), with: "125.0", app: app)
+        try tap(mealEntryBar(in: app).buttons["保存"])
+        try requireExists(app.navigationBars["今日"])
+        try openMeal(named: recentSavedName, in: app)
+        try verifyRiceWeight(125, rice: rice, in: app)
+        attachScreen(app, name: "NativeMealEntryUI-recently-eaten-saved-125g")
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"])
+        try openMealStart(in: app)
+        try reveal(app.buttons["管理常用模板"], in: app)
+        try tap(app.buttons["管理常用模板"])
+        let finalTemplate = namedRecordButton(templateName, in: app)
+        try reveal(finalTemplate, in: app)
+        let finalUsage = finalTemplate.descendants(matching: .staticText)
+            .matching(identifier: "1 项 · 已使用 1 次").firstMatch
+        XCTAssertTrue(finalTemplate.label.contains("已使用 1 次") || finalUsage.exists,
+            "Recently Eaten must not increment a template's usage.")
+        try deleteSyntheticTemplate(named: templateName, in: app)
+        try tap(app.navigationBars["常用模板"].buttons["完成"])
+        try tap(app.navigationBars["记录一餐"].buttons["取消"])
+
         let history = app.buttons["查看全部历史"]
         try reveal(history, in: app)
         try tap(history)
@@ -1802,10 +1832,13 @@ final class NativeNavigationUITests: XCTestCase {
         try tap(app.navigationBars["餐食详情"].buttons["关闭"])
         try tap(app.navigationBars["历史餐食"].buttons["完成"])
 
-        // Only this run's two named meals and verified template are removed.
+        // Only this run's three named meals and verified template are removed.
         // Unknown records and append-only goal history are never touched.
         try openMeal(named: reusedName, in: app)
         try verifyRiceWeight(150, rice: rice, in: app)
+        try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
+        try openMeal(named: recentSavedName, in: app)
+        try verifyRiceWeight(125, rice: rice, in: app)
         try deleteCurrentlyOpenedMeal(cancelFirst: false, in: app)
         try openMeal(named: mealName, in: app)
         try verifyRiceWeight(200, rice: rice, in: app)

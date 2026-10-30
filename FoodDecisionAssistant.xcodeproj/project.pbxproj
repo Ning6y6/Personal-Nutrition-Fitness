@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		561F5A94516E43669F550C77 /* PersonalFoodDeleteCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C06393FBE54470D86AA77D6 /* PersonalFoodDeleteCommandTests.swift */; };
+		C25491F3116943F2A26F780B /* PersonalFoodDeleteCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E41CA93EA4152A7D4C5A4 /* PersonalFoodDeleteCommand.swift */; };
 		8998319D92E4E15296EB85B2 /* MealCreateFormSaveStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B779E9D7029153D7722CC7 /* MealCreateFormSaveStateTests.swift */; };
 		B345CB708C1B196A1B980361 /* MealCreateCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */; };
 		C7F5A0A25EC4FF217299AF01 /* MealCreateFormSaveState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C777F26FDCD387F89A770221 /* MealCreateFormSaveState.swift */; };
@@ -170,6 +172,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9C06393FBE54470D86AA77D6 /* PersonalFoodDeleteCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/PersonalFoodDeleteCommandTests.swift; sourceTree = SOURCE_ROOT; };
+		740E41CA93EA4152A7D4C5A4 /* PersonalFoodDeleteCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/Persistence/PersonalFoodDeleteCommand.swift; sourceTree = SOURCE_ROOT; };
 		63B779E9D7029153D7722CC7 /* MealCreateFormSaveStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/App/MealCreateFormSaveStateTests.swift; sourceTree = SOURCE_ROOT; };
 		157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistantTests/Persistence/MealCreateCommandTests.swift; sourceTree = SOURCE_ROOT; };
 		C777F26FDCD387F89A770221 /* MealCreateFormSaveState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDecisionAssistant/App/MealCreateFormSaveState.swift; sourceTree = SOURCE_ROOT; };
@@ -354,6 +358,7 @@
 			isa = PBXGroup;
 			children = (
 				1E97BB94D379AD0487A77D04 /* PersonalFoodCompatibilityTests.swift */,
+				9C06393FBE54470D86AA77D6 /* PersonalFoodDeleteCommandTests.swift */,
 				37395A3A481B43AAB34BE071 /* PersonalFoodSaveCommandTests.swift */,
 				320F16CD56340CF24E31ADA2 /* MealEditCommandTests.swift */,
 				157291BA184B4BCC7BE138C4 /* MealCreateCommandTests.swift */,
@@ -366,6 +371,7 @@
 		7C70F41D3070297A0089CDBC /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				740E41CA93EA4152A7D4C5A4 /* PersonalFoodDeleteCommand.swift */,
 				71B9CEA39A06A7D1DC78C17C /* PersonalFoodSaveCommand.swift */,
 				8D738F11DB30B9BEE8DCE8A1 /* PersonalFoodIdentity.swift */,
 				6885052CCB79DF6E0B38CD2D /* MealEditCommand.swift */,
@@ -686,6 +692,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				40E76D9016E6BA9706885642 /* PersonalFoodCompatibilityTests.swift in Sources */,
+				561F5A94516E43669F550C77 /* PersonalFoodDeleteCommandTests.swift in Sources */,
 				261E395D6BAEC6F6477325B1 /* PersonalFoodSaveCommandTests.swift in Sources */,
 				76ED182FF4982C474378D95F /* PersonalFoodFormStateTests.swift in Sources */,
 				3A884C37C228B42D536A9D74 /* FoodSourcePresentationTests.swift in Sources */,
@@ -733,6 +740,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C25491F3116943F2A26F780B /* PersonalFoodDeleteCommand.swift in Sources */,
 				109B583079EE00E28032A266 /* PersonalFoodSaveCommand.swift in Sources */,
 				775AE8EFD5EE7AB7D5C73FA9 /* PersonalFoodIdentity.swift in Sources */,
 				01574BBBFF0AF9585CC909AF /* MyFoodsView.swift in Sources */,

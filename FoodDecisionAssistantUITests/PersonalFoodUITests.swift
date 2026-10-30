@@ -2,8 +2,8 @@ import Foundation
 import XCTest
 
 /// Uses native forms only on a dedicated QA simulator with fictitious data.
-/// Cards remain in that QA library because OPT-13 intentionally has no deletion.
-/// Meals are uniquely named and only this run's own saved meals are deleted.
+/// Saved samples are uniquely named; deletion scenarios remove only the cards,
+/// meals and templates created by that exact run. Other QA records stay untouched.
 @MainActor
 final class PersonalFoodUITests: XCTestCase {
     private let rice = "熟长粒白米饭（无盐）"
@@ -340,6 +340,256 @@ final class PersonalFoodUITests: XCTestCase {
         try closePersonalKeyboard(in: app)
         try tap(app.buttons["personalFood.cancel"], in: app)
         try require(app.navigationBars["我的食物"], in: app)
+    }
+
+    func testDeletingPersonalCardCancelsWithoutLosingDraftAndPersistsOnlyAfterConfirmation() throws {
+        executionTimeAllowance = 900
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let foodName = "[UI测试] 删除确认蜂蜜-\(token)"
+        let unsavedName = "\(foodName)-未保存"
+        let mealName = "[UI测试] 删卡后搜索-\(token)"
+        try openMyFoods(in: app)
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        try fillCard(name: foodName, protein: false, in: app)
+        XCTAssertFalse(app.buttons["personalFood.delete"].exists, "An unsaved new card must not expose deletion of a saved record.")
+        try saveCard(in: app)
+        let cardID = try personalCardID(named: foodName, in: app)
+        try tap(app.buttons["myFoods.food.\(cardID)"], in: app)
+        try replace(field("personalFood.name", in: app), with: unsavedName, done: "personalFood.keyboardDone", towardTop: true, in: app)
+        try replace(field("personalFood.energy", in: app), with: ".", done: "personalFood.keyboardDone", in: app)
+        XCTAssertFalse(app.buttons["personalFood.save"].isEnabled)
+        let confirmation = try requestPersonalCardDeletion(named: foodName, in: app)
+        try tap(try personalCardDeletionAction("personalFood.cancelDelete", label: "取消", in: confirmation, app: app), in: app)
+        XCTAssertTrue(app.staticTexts["删除“\(foodName)”这张食物卡？"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(try revealedValue("personalFood.name", towardTop: true, in: app), unsavedName)
+        XCTAssertEqual(try revealedValue("personalFood.energy", in: app), ".")
+        XCTAssertFalse(app.buttons["personalFood.save"].isEnabled, "Cancelling deletion must neither repair invalid raw input nor persist it.")
+        attachScreen(app, name: "PersonalFoodDelete-cancel-preserves-name-and-invalid-energy")
+        try tap(app.buttons["personalFood.cancel"], in: app)
+        try tap(app.buttons["放弃修改"], in: app)
+        try require(app.navigationBars["我的食物"], in: app)
+        try tapRevealed(app.buttons["myFoods.food.\(cardID)"], in: app)
+        XCTAssertEqual(try revealedValue("personalFood.name", towardTop: true, in: app), foodName)
+        XCTAssertEqual(try revealedValue("personalFood.energy", in: app).flatMap(Double.init), 300)
+        try confirmPersonalCardDeletion(named: foodName, in: app)
+        let deletedStatus = app.staticTexts["myFoods.savedStatus"]
+        try reveal(deletedStatus, towardTop: true, in: app)
+        try require(deletedStatus, in: app)
+        XCTAssertEqual(deletedStatus.label, "食物卡已删除，已有餐食的营养记录保持不变。")
+        XCTAssertFalse(app.buttons["myFoods.food.\(cardID)"].exists)
+
+        app.terminate()
+        app.launch()
+        try require(app.tabBars.buttons["设置"], timeout: 15, in: app)
+        try openMyFoods(in: app)
+        XCTAssertFalse(personalCard(named: foodName, in: app).exists, "Confirmed deletion must persist after reopening the actual file-backed App.")
+        XCTAssertFalse(personalCard(named: unsavedName, in: app).exists, "The discarded name must never create another card.")
+        try newMeal(named: mealName, in: app)
+        let row = try singleRow(prefix: "meal", in: app)
+        try openSelector(row: row, prefix: "meal", in: app)
+        try search(foodName, in: app)
+        try require(app.staticTexts["没有找到食物"], in: app)
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "food.select.", foodName)).count, 0)
+        try search(rice, in: app)
+        let publicRice = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "food.select.", rice))
+        try reveal(publicRice.firstMatch, in: app)
+        guard publicRice.count == 1 else { throw fail("Deleting an owned card must leave the exact public-catalog rice selectable.", in: app) }
+        try tap(publicRice.firstMatch, in: app)
+        try reveal(app.buttons["meal.food.\(row)"], in: app)
+        XCTAssertEqual(app.buttons["meal.food.\(row)"].value as? String, rice)
+        let untouchedWeight = field("meal.weight.\(row)", in: app)
+        try reveal(untouchedWeight, in: app)
+        XCTAssertTrue(isBlank(untouchedWeight), "Selecting an unaffected catalog food must not invent an intake quantity.")
+        attachScreen(app, name: "PersonalFoodDelete-public-rice-still-selectable")
+        try cancelChangedForm(prefix: "meal", in: app)
+        try tap(app.navigationBars["记录一餐"].buttons["取消"], in: app)
+        XCTAssertFalse(savedMealHeader(name: mealName, in: app).exists)
+    }
+
+    func testDeletedCardRetainsMealSnapshotAndBlocksIncompleteRecentAndTemplateReuse() throws {
+        executionTimeAllowance = 1200
+        let app = try launchApp()
+        defer { app.terminate() }
+        let token = String(UUID().uuidString.prefix(8))
+        let foodName = "[UI测试] 删除快照蛋白粉-\(token)"
+        let mealName = "[UI测试] 删除快照原餐-\(token)"
+        let renamedMeal = "[UI测试] 删除快照蛋白粉改名-\(token)"
+        let templateName = "[UI测试] 删除快照模板-\(token)"
+        try openMyFoods(in: app)
+        try tapRevealed(app.buttons["myFoods.create"], towardTop: true, in: app)
+        try fillCard(name: foodName, protein: true, in: app)
+        try saveCard(in: app)
+        let cardID = try personalCardID(named: foodName, in: app)
+        try record(foodName, grams: 30, named: mealName, expectedKcal: 120, in: app)
+        try openMeal(mealName, in: app)
+        try assertDetailFood(foodName, grams: 30, in: app)
+        try tapRevealed(app.buttons["保存为常用模板"], in: app)
+        try require(app.navigationBars["新建常用模板"], in: app)
+        try replace(field("template.name", in: app), with: templateName, done: "template.keyboardDone", towardTop: true, in: app)
+        let templateRow = try singleRow(prefix: "template", in: app)
+        XCTAssertEqual(try revealedValue("template.weight.\(templateRow)", in: app).flatMap(Double.init), 30)
+        try tap(app.navigationBars["新建常用模板"].buttons["保存"], in: app)
+        XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"], in: app)
+        try openMyFoods(in: app)
+        try tapRevealed(app.buttons["myFoods.food.\(cardID)"], in: app)
+        try confirmPersonalCardDeletion(named: foodName, in: app)
+        XCTAssertFalse(app.buttons["myFoods.food.\(cardID)"].exists)
+
+        try tap(app.tabBars.buttons["今日"], in: app)
+        try openMeal(mealName, in: app)
+        try assertEnergy(120, preview: false, in: app)
+        try assertDetailFood(foodName, grams: 30, in: app)
+        try openMealEditor(in: app)
+        let savedRow = try singleRow(prefix: "meal", in: app)
+        try replace(field("meal.name", in: app), with: renamedMeal, done: "meal.keyboardDone", towardTop: true, in: app)
+        try saveMeal(title: "编辑餐食", in: app)
+        try assertEnergy(120, preview: false, in: app)
+        try openMealEditor(in: app)
+        XCTAssertEqual(try singleRow(prefix: "meal", in: app), savedRow)
+        try replace(field("meal.weight.\(savedRow)", in: app), with: "40", done: "meal.keyboardDone", in: app)
+        try assertEnergy(160, preview: true, in: app)
+        try saveMeal(title: "编辑餐食", in: app)
+        try assertEnergy(160, preview: false, in: app)
+        try assertDetailFood(foodName, grams: 40, in: app)
+        attachScreen(app, name: "PersonalFoodDelete-historical-snapshot-scales-without-food-card")
+        try tap(app.navigationBars["餐食详情"].buttons["关闭"], in: app)
+
+        try openMealStart(in: app)
+        let start = field("meal.start", in: app)
+        let recent = start.buttons.containing(.staticText, identifier: renamedMeal)
+        try reveal(recent.firstMatch, in: app)
+        guard recent.count == 1 else { throw fail("The test's saved meal must identify exactly one Recently Eaten row.", in: app) }
+        try tap(recent.firstMatch, in: app)
+        let recentRow = try singleRow(prefix: "meal", in: app)
+        try assertMissingFood(row: recentRow, prefix: "meal", grams: 40, in: app)
+        let entryBars = app.navigationBars.matching(identifier: "记录一餐").containing(.button, identifier: "保存")
+        guard entryBars.count == 1 else { throw fail("Recently Eaten must open one actual new-meal form.", in: app) }
+        XCTAssertFalse(entryBars.firstMatch.buttons["保存"].isEnabled, "The deleted component must not silently disappear to make an incomplete meal savable.")
+        attachScreen(app, name: "PersonalFoodDelete-recent-reuse-keeps-missing-row-and-blocks-save")
+        try tap(entryBars.firstMatch.buttons["取消"], in: app)
+        XCTAssertTrue(app.textFields["meal.name"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+        try tap(app.navigationBars["记录一餐"].buttons["管理常用模板"], in: app)
+        try require(app.navigationBars["常用模板"], in: app)
+        let template = templateManagerRow(named: templateName, in: app)
+        try reveal(template, in: app)
+        let templateID = String(template.identifier.dropFirst("template.manage.".count))
+        guard UUID(uuidString: templateID) != nil else { throw fail("The retained synthetic template must expose its stable UUID.", in: app) }
+        try tap(template, in: app)
+        try require(app.navigationBars["编辑常用模板"], in: app)
+        XCTAssertEqual(try singleRow(prefix: "template", in: app), templateRow)
+        try assertMissingFood(row: templateRow, prefix: "template", grams: 30, in: app)
+        XCTAssertFalse(app.navigationBars["编辑常用模板"].buttons["保存"].isEnabled, "Deleting a card must preserve the template's unresolved component, not drop it.")
+        attachScreen(app, name: "PersonalFoodDelete-template-retains-missing30g-component")
+        try tap(app.navigationBars["编辑常用模板"].buttons["取消"], in: app)
+        XCTAssertTrue(app.textFields["template.name"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+        try deleteOwnTemplate(named: templateName, id: templateID, in: app)
+        try tap(app.navigationBars["常用模板"].buttons["完成"], in: app)
+        try tap(app.navigationBars["记录一餐"].buttons["取消"], in: app)
+
+        app.terminate()
+        app.launch()
+        try require(app.tabBars.buttons["今日"], timeout: 15, in: app)
+        try openMeal(renamedMeal, in: app)
+        try assertEnergy(160, preview: false, in: app)
+        try assertDetailFood(foodName, grams: 40, in: app)
+        try deleteOwnMeal(renamedMeal, in: app)
+    }
+
+    private func requestPersonalCardDeletion(named originalName: String, in app: XCUIApplication) throws -> XCUIElement {
+        guard originalName.hasPrefix("[UI测试] ") else { throw fail("Deletion may target only this test's explicitly named fictitious card.", in: app) }
+        let trigger = app.buttons["personalFood.delete"]
+        try reveal(trigger, in: app)
+        let sourceFrame = trigger.frame
+        try tap(trigger, in: app)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "Requesting deletion must clear the current editor focus.")
+        let title = "删除“\(originalName)”这张食物卡？"
+        try require(app.staticTexts[title], in: app)
+        let popovers = app.popovers.containing(.staticText, identifier: title)
+        let dialogs = popovers.count > 0 ? popovers : app.sheets.containing(.staticText, identifier: title)
+        guard dialogs.count == 1 else { throw fail("Card deletion must show one native confirmation for the persisted card's original name.", in: app) }
+        let dialog = dialogs.element(boundBy: 0)
+        let confirm = try personalCardDeletionAction("personalFood.confirmDelete", label: "删除食物卡", in: dialog, app: app)
+        _ = try personalCardDeletionAction("personalFood.cancelDelete", label: "取消", in: dialog, app: app)
+        let description = dialog.staticTexts.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        for expected in ["我的食物", "搜索", "已有餐食", "模板", "最近", "内置"] {
+            XCTAssertTrue(description.contains(expected), "The confirmation must explain its actual scope: \(expected).")
+        }
+        let geometry = XCTAttachment(string: "source=\(sourceFrame)\nconfirmation=\(dialog.frame)\nconfirm=\(confirm.frame)")
+        geometry.name = "PersonalFoodDelete-native-confirmation-source-geometry"
+        geometry.lifetime = .keepAlways
+        add(geometry)
+        attachScreen(app, name: "PersonalFoodDelete-native-confirmation-original-card-and-impact")
+        return dialog
+    }
+
+    private func personalCardDeletionAction(
+        _ identifier: String, label: String, in confirmation: XCUIElement, app: XCUIApplication
+    ) throws -> XCUIElement {
+        // iOS 27 can expose the same native confirmation action as a parent
+        // Button containing an identically identified leaf Button. Resolve that
+        // observed shape within this exact card's dialog, never an arbitrary
+        // global first match or a point inside the button's frame.
+        let candidates = confirmation.buttons.matching(identifier: identifier).allElementsBoundByIndex
+        let leaves = candidates.filter { candidate in
+            candidate.descendants(matching: .button).matching(identifier: identifier).count == 0
+        }
+        guard leaves.count == 1 else {
+            throw fail("The exact card confirmation must expose one leaf action for \(identifier), found \(leaves.count).", in: app)
+        }
+        let action = leaves[0]
+        guard action.label == label, action.isHittable else {
+            throw fail("The unique leaf confirmation action must be visibly hittable and labelled exactly \(label).", in: app)
+        }
+        return action
+    }
+
+    private func confirmPersonalCardDeletion(named originalName: String, in app: XCUIApplication) throws {
+        let confirmation = try requestPersonalCardDeletion(named: originalName, in: app)
+        try tap(try personalCardDeletionAction("personalFood.confirmDelete", label: "删除食物卡", in: confirmation, app: app), in: app)
+        XCTAssertTrue(app.navigationBars["编辑我的食物"].waitForNonExistence(timeout: 5))
+        try require(app.navigationBars["我的食物"], in: app)
+    }
+
+    private func openMealStart(in app: XCUIApplication) throws {
+        try tap(app.tabBars.buttons["今日"], in: app)
+        try tap(app.buttons["today.recordMeal"], in: app)
+        try require(app.navigationBars["记录一餐"], in: app)
+    }
+
+    private func assertMissingFood(row: String, prefix: String, grams: Int, in app: XCUIApplication) throws {
+        let food = app.buttons["\(prefix).food.\(row)"]
+        try reveal(food, towardTop: true, in: app)
+        XCTAssertEqual(food.value as? String, "原食物已不可用，请重新选择")
+        XCTAssertEqual(try revealedValue("\(prefix).weight.\(row)", in: app).flatMap(Double.init), Double(grams))
+    }
+
+    private func templateManagerRow(named name: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND (label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@)", "template.manage.", name, "\(name)、", "\(name), ")).firstMatch
+    }
+
+    private func deleteOwnTemplate(named name: String, id: String, in app: XCUIApplication) throws {
+        guard name.hasPrefix("[UI测试] 删除快照模板-"), UUID(uuidString: id) != nil else {
+            throw fail("Cleanup may delete only this run's verified synthetic template UUID.", in: app)
+        }
+        let row = templateManagerRow(named: name, in: app)
+        try reveal(row, in: app)
+        XCTAssertEqual(row.identifier, "template.manage.\(id)")
+        row.swipeLeft()
+        try tap(app.buttons["template.delete.\(id)"], in: app)
+        let title = "确定删除“\(name)”吗？"
+        try require(app.staticTexts[title], in: app)
+        let popovers = app.popovers.containing(.staticText, identifier: title)
+        let dialogs = popovers.count > 0 ? popovers : app.sheets.containing(.staticText, identifier: title)
+        guard dialogs.count == 1 else { throw fail("Template cleanup requires its exact run-specific native confirmation.", in: app) }
+        let actions = dialogs.firstMatch.buttons.matching(NSPredicate(format: "label == %@", "删除模板"))
+        guard actions.count == 1 else { throw fail("Only one explicit destructive template confirmation is allowed.", in: app) }
+        try tap(actions.firstMatch, in: app)
+        XCTAssertTrue(row.waitForNonExistence(timeout: 5))
     }
 
     private func focusPersonalInput(_ key: String, towardTop: Bool = false, in app: XCUIApplication) throws -> XCUIElement {
@@ -758,6 +1008,7 @@ final class PersonalFoodUITests: XCTestCase {
             || id.hasPrefix("food.personal.") || id.hasPrefix("meal.food.")
             || id.hasPrefix("template.food.") || id.hasPrefix("meal.row.")
             || id.hasPrefix("meal.details.") || id == "meal.delete"
+            || id == "personalFood.delete" || id.hasPrefix("template.manage.")
         if isInput || isBodyAction {
             try reveal(element, in: app)
             let (_, viewport) = try contentViewport(in: app)

@@ -9,21 +9,27 @@ struct PersonalFoodEditorView: View {
 
     private let isEditing: Bool
     private let onSaved: (FoodItem) -> Void
+    private let onDeleted: () -> Void
 
     @State private var formState: PersonalFoodFormState
     @State private var loadError: String?
     @State private var saveError: String?
+    @State private var deleteError: String?
     @State private var isSaving = false
     @State private var isConfirmingDiscard = false
+    @State private var isConfirmingDelete = false
+    @State private var hasCommittedDeletion = false
     @FocusState private var focusedField: Field?
 
     init(
         food: FoodItem? = nil,
         initialName: String = "",
+        onDeleted: @escaping () -> Void = {},
         onSaved: @escaping (FoodItem) -> Void
     ) {
         isEditing = food != nil
         self.onSaved = onSaved
+        self.onDeleted = onDeleted
         do {
             if let food {
                 _formState = State(initialValue: try PersonalFoodFormState(originalFood: food))
@@ -57,6 +63,9 @@ struct PersonalFoodEditorView: View {
                                 .accessibilityIdentifier("personalFood.validation")
                         }
                     }
+                    if let originalFood = formState.originalFood {
+                        deletionSection(for: originalFood)
+                    }
                 }
             }
             .disabled(isSaving)
@@ -77,7 +86,9 @@ struct PersonalFoodEditorView: View {
                             Button("放弃修改", role: .destructive) { dismiss() }
                             Button("继续编辑") {}
                         } message: {
-                            Text("本次输入尚未保存，放弃后无法恢复。")
+                            Text(hasCommittedDeletion
+                                 ? "食物卡已删除。关闭会放弃本页未保存的输入，不会恢复这张食物卡。"
+                                 : "本次输入尚未保存，放弃后无法恢复。")
                         }
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -93,6 +104,14 @@ struct PersonalFoodEditorView: View {
                 Button("好", role: .cancel) {}
             } message: {
                 Text(saveError ?? "此次食物未保存，输入仍保留，请重试。")
+            }
+            .alert("无法完成食物卡删除", isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("好", role: .cancel) {}
+            } message: {
+                Text(deleteError ?? "未能确认删除结果，已有餐食和本页输入保留，请重试核对。")
             }
         }
         .interactiveDismissDisabled(isSaving || (loadError == nil && formState.hasUnsavedChanges))
@@ -140,6 +159,35 @@ struct PersonalFoodEditorView: View {
         } footer: {
             Text("用户手动录入。保存食物卡不会记录摄入；记餐时需另外选择食物并填写克重。")
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func deletionSection(for originalFood: FoodItem) -> some View {
+        Section {
+            Button(hasCommittedDeletion ? "重试核对删除结果" : "删除食物卡",
+                   role: hasCommittedDeletion ? nil : .destructive) {
+                focusedField = nil
+                if hasCommittedDeletion {
+                    deleteFood()
+                } else {
+                    isConfirmingDelete = true
+                }
+            }
+            .accessibilityIdentifier("personalFood.delete")
+            .confirmationDialog(
+                "删除“\(originalFood.name)”这张食物卡？",
+                isPresented: $isConfirmingDelete,
+                titleVisibility: .visible
+            ) {
+                Button("删除食物卡", role: .destructive, action: deleteFood)
+                    .accessibilityIdentifier("personalFood.confirmDelete")
+                // Keep a visible safe exit on popover-style presentations too.
+                Button("取消") {}
+                    .accessibilityIdentifier("personalFood.cancelDelete")
+            } message: {
+                Text("删除后将从“我的食物”和食品搜索中移除。已有餐食和营养记录保留；引用它的模板或最近餐食，复用时需要重新选择食物。内置食品不受影响。"
+                     + (formState.hasUnsavedChanges ? "\n本页未保存的修改也将放弃。" : ""))
+            }
         }
     }
 
@@ -208,7 +256,7 @@ struct PersonalFoodEditorView: View {
     }
 
     private var canSave: Bool {
-        !isSaving && loadError == nil && validationMessage == nil
+        !isSaving && !hasCommittedDeletion && loadError == nil && validationMessage == nil
     }
 
     private func cancelEditing() {
@@ -238,6 +286,30 @@ struct PersonalFoodEditorView: View {
             // Framework errors can contain a private file path. Keep the error
             // visible without exposing it or replacing the user's raw input.
             saveError = "此次食物未保存，输入仍保留。请核对完整数值后重试。"
+        }
+    }
+
+    private func deleteFood() {
+        guard !isSaving, loadError == nil, let originalFood = formState.originalFood else { return }
+        focusedField = nil
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            // Delete the persisted baseline, never a partially edited/invalid draft.
+            try PersonalFoodDeleteCommand.delete(
+                request: PersonalFoodDeleteRequest(originalFood: originalFood),
+                container: modelContext.container,
+                verifyOnly: hasCommittedDeletion
+            )
+            onDeleted()
+            dismiss()
+        } catch let error as PersonalFoodDeleteCommandError {
+            if error == .deletedButRefreshFailed { hasCommittedDeletion = true }
+            deleteError = error.localizedDescription
+        } catch let error as PersonalFoodIdentityError {
+            deleteError = error.localizedDescription
+        } catch {
+            deleteError = "未能确认删除结果，已有餐食和本页输入保留。请重试核对，不要重复新建这张食物卡。"
         }
     }
 

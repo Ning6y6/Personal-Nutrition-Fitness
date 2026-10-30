@@ -150,6 +150,12 @@ struct MealDetailView: View {
 
     var body: some View {
         let validatedMeal = try? meal.domainModel()
+        // Pass current values into Form rows. A private-context edit can update
+        // a held component without changing the model identity used by ForEach.
+        let componentRows = meal.components.sorted { $0.sortIndex < $1.sortIndex }.map { component in
+            (id: component.id, name: component.foodName,
+             quantity: "\(component.consumedWeightGrams.formatted(.number.precision(.fractionLength(0...1)))) \(component.unit)")
+        }
         NavigationStack {
             Form {
                 if validatedMeal == nil {
@@ -170,12 +176,8 @@ struct MealDetailView: View {
                 }
 
                 Section("食物分项") {
-                    ForEach(meal.components.sorted { $0.sortIndex < $1.sortIndex }) { component in
-                        LabeledContent(component.foodName) {
-                            Text(
-                                "\(component.consumedWeightGrams.formatted(.number.precision(.fractionLength(0...1)))) \(component.unit)"
-                            )
-                        }
+                    ForEach(componentRows, id: \.id) { row in
+                        LabeledContent(row.name, value: row.quantity)
                     }
                 }
 

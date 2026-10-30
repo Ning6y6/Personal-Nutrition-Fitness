@@ -10,13 +10,13 @@ Evenfare is my native iOS app for weighed meal logging and daily nutrition again
 - **Meal recording and daily totals:** multiple food items, gram-based quantities, nutrition previews, weighed/label-based or standard-portion records, and today's energy and nutrient progress. Incomplete items block saving; a day with no records does not imply zero intake.
 - **History and editing:** inspect, expand, edit, delete and reuse saved meals. Changes recalculate today's totals while preserving each meal's historical nutrition basis.
 - **Recent meals and templates:** start an independent draft from a recent meal or a personal template; create, rename and edit templates and their default gram quantities.
-- **Personal food cards:** create and edit foods using per-100-g label values, then select them when recording meals. Saving a card alone adds no intake. Energy, fat, saturated fat, carbohydrate, sugars, protein and salt are required; fibre may remain unknown.
+- **Personal food cards:** create and edit foods using per-100-g label values, then select them when recording meals. Saved personal cards can be deleted after confirmation without removing old meal snapshots or built-in foods; affected templates/recent meals need a replacement food when reused. Saving a card alone adds no intake. Energy, fat, saturated fat, carbohydrate, sugars, protein and salt are required; fibre may remain unknown.
 - **Goal history:** saved changes append versions with source, confirmation time and effective date. Changes default to tomorrow, with today or a future date available; the last confirmed version for an effective day wins. Unrecoverable past goals remain unknown.
 - **Local data protection:** SwiftData storage, unsaved-input protection, versioned JSON export, validated restore into a separate store, and a recovery screen when the selected store cannot open.
 
 ## Current limits
 
-Food cards, meals and templates use **grams**. There is no per-100-ml, scoop or serving conversion without an explicitly supported quantity model. Personal cards have no deletion, archiving or revision-history interface yet.
+Food cards, meals and templates use **grams**. There is no per-100-ml, scoop or serving conversion without an explicitly supported quantity model. Personal cards have no archiving or revision-history interface yet. See the [personal-card deletion design and acceptance](docs/PERSONAL_FOOD_DELETION_REPORT.md) for its data boundaries.
 
 The Scan and Calendar tabs are placeholders. Photo estimation has contracts, persistence and an offline fixture provider, but no delivered photo-confirmation flow or real AI integration. Label OCR, barcode lookup, HealthKit, CloudKit, accounts and cross-device sync are not connected. Recipe batches, day-completeness confirmation, full calendar/trends and a complete English interface are also unimplemented. History queries are not yet paginated; no large-library performance claim is made.
 
@@ -91,14 +91,14 @@ Full selection, exclusions, modifications and provenance: [catalogue audit](docs
 
 ## Validation and next steps
 
-The [latest recorded code-change validation](docs/MEAL_CREATE_TRANSACTION_REPORT.md), dated **2026-10-23** and delivered as commit `57ff859`, reports:
+The [latest code-change validation](docs/PERSONAL_FOOD_DELETION_REPORT.md), dated **2026-10-30**, covers baseline `f091a58` plus this personal-card deletion slice:
 
 | Suite | Test declarations | Executions |
 | --- | ---: | ---: |
 | FoodDecisionCore | 183 | 685 |
-| App unit tests | 359 | 901 |
-| Selected UI regression cases | 8 | 8 |
+| App unit tests | 370 | 929 |
+| Selected UI regression methods | 4 | 5 |
 
-Declarations count each parameterized test once; executions count its input cases separately. UI numbers cover selected cases only. The final build passed. The report preserves an intermittent existing migration-test failure and subsequent isolated/full passes; its cause remains unresolved. These are recorded results, **not tests rerun for this README-only update**. Physical acceptance steps and evidence limits are in the reports; [personal food-card validation](docs/OPT13_PERSONAL_FOOD_REPORT.md) is recorded separately.
+Declarations count each parameterized test once; executions count its input cases separately. The UI total comprises four distinct methods and five passing executions across configurations, including an AX5 repeat; it is not a full UI-suite result. The final affected UI flow and build passed. The report retains unsuccessful attempts, test-locator corrections and a stale detail-row display bug caught and fixed during regression. Physical-device acceptance for deletion is pending; [earlier personal food-card validation](docs/OPT13_PERSONAL_FOOD_REPORT.md) is recorded separately. These figures describe this code-change validation, not coverage, performance or CI guarantees.
 
 Next planned work is recipe batches and portion allocation, followed by day confirmation, bounded history queries and calendar/trend views. Photo confirmation, real AI, label scanning and HealthKit remain separate future work; cloud sync is only a later consideration. See the [longer-term roadmap](docs/ROADMAP.md), which also retains historical milestone notes. Future work requires its own scope and validation; the feature list above describes the current implementation.

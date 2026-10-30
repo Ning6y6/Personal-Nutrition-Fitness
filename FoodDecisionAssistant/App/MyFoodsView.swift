@@ -88,7 +88,9 @@ struct MyFoodsView: View {
             }
         }
         .sheet(item: $foodToEdit) { food in
-            PersonalFoodEditorView(food: food) { _ in
+            PersonalFoodEditorView(food: food, onDeleted: {
+                savedMessage = "食物卡已删除，已有餐食的营养记录保持不变。"
+            }) { _ in
                 savedMessage = "食物卡已更新，已有餐食的营养记录保持不变。"
             }
         }
